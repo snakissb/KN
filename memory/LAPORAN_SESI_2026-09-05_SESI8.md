@@ -16,4 +16,5 @@
 - `LiveTrackingView.loadTrail()` menarik `/hr/field-tracks?page=&page_size=500` **halaman demi halaman** (maks 40 halaman = 20.000 titik), garis diperpanjang tiap halaman tiba (`setLatLngs`), `fitBounds` hanya pada halaman pertama; teks `live-trail-info` "Memuat jejak… n/total titik".
 
 ## 4. Bukti
-- `scripts/probe_sesi8_ratchet.py` **10/10 PASS** (self-clean). Testing agent: `test_reports/iteration_319.json`.
+- `scripts/probe_sesi8_ratchet.py` **10/10 PASS** (self-clean). Testing agent: `test_reports/iteration_319.json` (temuan 1 bug: tombol cetak hilang karena kartu tugas unmount) → perbaikan: banner hasil + tombol cetak diangkat ke `TaskList` (`mw-sample-done-{task}`) → retest `iteration_320.json` **PASS**.
+- Self-test guard atomic-claim: fixture "service nyata TANPA klaim" dipindah ke `putaway_order_service.dispatch` (karena `resolve_exception` kini berklaim).
