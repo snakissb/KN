@@ -4,6 +4,8 @@ import { LoginScreen, MetricCard, Sidebar, TopBar } from "./components/CoreWidge
 import { formatQty } from "./utils/formatters";
 import useIsMobile from "./hooks/useIsMobile";
 import MobileSalesApp from "./features/sales/mobile/MobileSalesApp";
+import MobileWarehouseApp from "./features/mobile/MobileWarehouseApp";
+import MobileOpsApp from "./features/mobile/MobileOpsApp";
 import DetailDrawer from "./components/DetailDrawer";
 import TourMenu from "./components/TourMenu";
 import OnboardingPanel from "./components/OnboardingPanel";
@@ -294,7 +296,17 @@ function App() {
 
   // F-6 — Sales di perangkat mobile → tampilan mobile-first dedicated (device-aware).
   // 'Tampilan Desktop' (forceDesktop) memberi escape-hatch ke antarmuka penuh.
-  if (user.role === "sales" && (isMobile || forceMobile) && !forceDesktop) {
+  // §3-A (2026-09) — SEMUA peran mendapat tampilan mobile di perangkat mobile: sales →
+  // MobileSalesApp; gudang → MobileWarehouseApp (satu tugas per layar, pindai RFID);
+  // peran lain → inbox persetujuan + KPI + jalan ke desktop. forceDesktop = escape-hatch.
+  const wantMobile = (isMobile || forceMobile) && !forceDesktop;
+  const goDesktop = () => { localStorage.setItem("kn_force_desktop", "1"); setForceDesktop(true); };
+  if (wantMobile && user.role !== "sales") {
+    const MobileApp = ["warehouse", "warehouse_admin", "driver"].includes(user.role) ? MobileWarehouseApp : MobileOpsApp;
+    return <MobileApp user={user} onLogout={logout} entities={entities} selectedEntity={selectedEntity}
+      unreadCount={unreadCount} onForceDesktop={goDesktop} />;
+  }
+  if (user.role === "sales" && wantMobile) {
     return (
       <MobileSalesApp
         user={user}

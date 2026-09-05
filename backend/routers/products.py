@@ -116,6 +116,11 @@ async def create_product(payload: ProductPayload, request: Request) -> Dict[str,
                     "needs_review_reasons": check["needs_review_reasons"],
                     "created_at": now_iso(), "updated_at": now_iso()})
     await db.products.insert_one(product)
+    # §D (keputusan pemilik 2026-09) — INDUK WAJIB: varian tanpa `template_id` hidup
+    # ditautkan/diciptakan induknya dari nama; tidak ada produk yatim.
+    from services import product_variant_service as pvs
+    parent = await pvs.ensure_parent(product, actor.get("name", "System"))
+    product["template_id"] = parent["id"]
     await audit(actor["name"], "product_created", "product", product["id"], product)
     out = safe_doc(product)
     out["domain_warnings"] = check["warnings"]

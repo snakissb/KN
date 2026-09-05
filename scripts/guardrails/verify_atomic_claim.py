@@ -26,7 +26,7 @@ import inventaris_multi_koleksi as inv  # noqa: E402
 
 # Baseline "BELUM DITINJAU" saat penjaga lahir (2026-09-05). Turunkan angka ini setiap
 # kali satu endpoint selesai ditinjau — jangan pernah dinaikkan.
-BASELINE_UNREVIEWED = 55
+BASELINE_UNREVIEWED = 54
 
 # (berkas router, potongan path) → (mekanisme, alasan). mekanisme ∈ {claim, cas, service, log}
 REVIEWED: dict[tuple[str, str], tuple[str, str]] = {
@@ -53,6 +53,7 @@ REVIEWED: dict[tuple[str, str], tuple[str, str]] = {
     ("sales_returns.py", "/sales-returns/{return_id}/reverse"): ("service", "klaim sales_returns di service sesudah guard, sebelum JE/roll/kas/CN; finish_set", "return_service.reverse_settlement"),
     ("sales_returns.py", "/sales-returns/{return_id}/reverse-writeoff"): ("service", "klaim sales_returns sesudah target roll scrap ditentukan, sebelum JE write-off dibalik/roll dipulihkan/mutasi; finish_set", "return_service.reverse_writeoff"),
     ("sales_returns.py", "/sales-returns/{return_id}/relocate"): ("service", "klaim sales_returns sesudah roll karantina ditentukan, sebelum roll/tag/mutasi ditulis; finish_set + $push relocation_legs", "return_service.relocate_return_rolls"),
+    ("sales_returns.py", "/sales-returns/{return_id}/quarantine/release"): ("service", "klaim sales_returns (quarantine_released != True) sesudah roll karantina & keputusan ditentukan, sebelum roll/JE write-off/mutasi; finish_set quarantine_released", "return_service.release_quarantine"),
     ("ar_receipts.py", "/ar-receipts/{receipt_id}/void"): ("service", "klaim ar_receipts (status != void) sebelum keputusan selisih/payments SO/kas/deposit dibalik; release bila reverse_decision gagal; finish_set status void", "ar_receipt_service.void_receipt"),
     ("inventory.py", "/inventory/initial-stock"): ("compensate", "roll baru per permintaan (tak ada dokumen bersama); mutasi+rebuild di try, except → rollback_initial_stock menghapus roll & mutasi yang lahir"),
     ("inbound_receiving.py", "/inbound/tasks/{task_id}/resolve-escalation"): ("cas", "find_one_and_update wms_tasks berprasyarat escalation.status != resolved → 409 bila kalah (pola outbound)"),

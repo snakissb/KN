@@ -5,8 +5,13 @@ import CrmView from "../../crm/CrmView";
 import SalesReturns from "../SalesReturns";
 import SpecialOrders from "../SpecialOrders";
 import PricelistView from "../PricelistView";
+import { BadgePercent, MapPin, Boxes } from "lucide-react";
+import { MobileSpecialPrice, MobileVisits, MobileStock } from "./MobileFieldViews";
 
 const MENU = [
+  { id: "special-price", label: "Minta Harga Khusus", desc: "Ajukan harga nego pelanggan + bukti chat", icon: BadgePercent },
+  { id: "visits", label: "Kunjungan Sales", desc: "Check-in / check-out di lokasi pelanggan", icon: MapPin },
+  { id: "stock", label: "Status Stok", desc: "Tersedia vs dipesan per gudang (hanya-lihat)", icon: Boxes },
   { id: "crm", label: "Pelanggan (CRM)", desc: "Kelola pelanggan & insentif", icon: Users },
   { id: "returns", label: "Retur Jual", desc: "Pengajuan & status retur", icon: RotateCcw },
   { id: "special", label: "Pesanan Khusus (OD)", desc: "Pesanan khusus / dibuat sesuai pesanan", icon: FileStack },
@@ -26,6 +31,9 @@ export default function MobileMore({ user, token, selectedEntity, entities, onLo
           <span className="m-subpage-title">{TITLES[sub]}</span>
         </div>
         <div className="m-subpage-body">
+          {sub === "special-price" && <MobileSpecialPrice selectedEntity={selectedEntity} />}
+          {sub === "visits" && <MobileVisits />}
+          {sub === "stock" && <MobileStock />}
           {sub === "crm" && <CrmView currentUser={user} selectedEntity={selectedEntity} />}
           {sub === "returns" && <SalesReturns currentUser={user} />}
           {sub === "special" && <SpecialOrders currentUser={user} />}

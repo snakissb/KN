@@ -1,4 +1,5 @@
 import KNDatePicker from "@/components/KNDatePicker";
+import KNPager from "@/components/KNPager";
 import { useEffect, useMemo, useState } from "react";
 import axios, { API } from "../../services/apiClient";
 import KNMonthPicker from "@/components/KNMonthPicker";
@@ -60,6 +61,9 @@ export default function AttendanceView({ currentUser, selectedEntity }) {
   const [date, setDate] = useState(todayStr());
   const [statusFilter, setStatusFilter] = useState("");
   const [rows, setRows] = useState([]);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const PAGE_SIZE = 50;
   const [loadingDaily, setLoadingDaily] = useState(true);
   const [approveTarget, setApproveTarget] = useState(null);
 
@@ -83,15 +87,17 @@ export default function AttendanceView({ currentUser, selectedEntity }) {
   const [importResult, setImportResult] = useState(null);
 
   useEffect(() => { axios.get(`${API}/hr/employees`, { params }).then((r) => setEmployees(Array.isArray(r.data) ? r.data : [])).catch(() => {}); }, [selectedEntity]); // eslint-disable-line
-  useEffect(() => { if (tab === "harian") loadDaily(); }, [tab, date, selectedEntity]); // eslint-disable-line
+  useEffect(() => { if (tab === "harian") loadDaily(); }, [tab, date, selectedEntity, page]); // eslint-disable-line
   useEffect(() => { if (tab === "rekap") loadRecap(); }, [tab, month, selectedEntity]); // eslint-disable-line
   useEffect(() => { if (tab === "import") axios.get(`${API}/hr/devices`, { params }).then((r) => setDevices(Array.isArray(r.data) ? r.data : [])).catch(() => {}); }, [tab, selectedEntity]); // eslint-disable-line
 
   async function loadDaily() {
     setLoadingDaily(true);
     try {
-      const r = await axios.get(`${API}/hr/attendance`, { params: { ...params, date_from: date, date_to: date } });
-      setRows(Array.isArray(r.data) ? r.data : []);
+      // T-03 Lapis 4 — paginasi server (envelope) supaya ribuan baris tidak dimuat sekaligus.
+      const r = await axios.get(`${API}/hr/attendance`, { params: { ...params, date_from: date, date_to: date, page, page_size: PAGE_SIZE } });
+      setRows(Array.isArray(r.data?.items) ? r.data.items : []);
+      setTotal(Number(r.data?.total || 0));
       setError("");
     } catch (e) { setError(e.response?.data?.detail || "Gagal memuat kehadiran."); }
     finally { setLoadingDaily(false); }
@@ -169,11 +175,12 @@ export default function AttendanceView({ currentUser, selectedEntity }) {
       {tab === "harian" && (
         <>
           <div className="grid gap-3 grid-cols-2 lg:grid-cols-4 mb-3">
-            <Stat label="Total Hari Ini" value={counts.total} />
+            <Stat label="Total Hari Ini" value={total || counts.total} />
             <Stat label="Hadir" value={counts.hadir} color="#1F9D55" />
             <Stat label="Telat" value={counts.telat} color="#B7791F" />
             <Stat label="Perlu Review" value={counts.flagged} color="#C0392B" />
           </div>
+          <KNPager page={page} pageSize={PAGE_SIZE} total={total} onChange={setPage} testId="attendance-pager" />
           <div className="section-card mb-3">
             <div className="section-body grid gap-2 md:grid-cols-[180px_180px_1fr]">
               <div>

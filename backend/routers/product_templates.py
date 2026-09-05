@@ -20,6 +20,27 @@ async def list_templates(request: Request, search: str = Query("")) -> List[Dict
     return await svc.list_templates(search=search)
 
 
+@router.get("/product-templates/{template_id}/summary")
+async def template_summary(template_id: str, request: Request) -> Dict[str, Any]:
+    """Induk = katalog & agregasi: varian + stok tersedia/dipesan + roll (bertag) per varian."""
+    await require_permission(request, "product", "view")
+    from services import product_variant_service as pvs
+    out = await pvs.family_summary(template_id)
+    if not out:
+        raise HTTPException(status_code=404, detail="Template tidak ditemukan")
+    return out
+
+
+@router.post("/product-templates/resolve-orphans")
+async def resolve_orphans(request: Request) -> Dict[str, Any]:
+    """Migrasi idempoten: setiap produk (varian) mendapat induk hidup (tak ada `template_id` yatim)."""
+    actor = await require_permission(request, "product", "update")
+    from services import product_variant_service as pvs
+    res = await pvs.resolve_orphans(actor.get("name", "System"))
+    await audit(actor.get("name", ""), "product_variants_reparented", "product_template", "all", res)
+    return res
+
+
 @router.get("/product-templates/{template_id}")
 async def get_template(template_id: str, request: Request) -> Dict[str, Any]:
     await require_permission(request, "product", "view")

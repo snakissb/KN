@@ -7117,6 +7117,12 @@ async def main():
     # (md@, wh.admin@) hilang sampai backend di-restart; gate/korpus lalu memerah 401 di
     # tempat yang salah. Kini fondasi bootstrap (akun MD/Admin Gudang, COA, hr_*, config)
     # ditanam ulang DI DALAM seed — idempoten, hasil akhir identik dengan restart backend.
+    # §D (2026-09) — INDUK WAJIB: setiap produk demo ditautkan ke induk hidup
+    # (sebelum bootstrap, karena bootstrap menutup koneksi modul `db` backend).
+    sys.path.insert(0, str(Path(__file__).resolve().parent / "backend"))
+    from services import product_variant_service as _pvs
+    _pv = await _pvs.resolve_orphans("System Seed")
+    print(f"  - Induk produk: {_pv['templates_created']} induk baru, {_pv['products_linked']} varian ditautkan, yatim {_pv['orphans_left']}")
     await _replant_bootstrap()
     print("\n📋 Summary:")
     print(f"  - {summary['users']} Users (admin, sales, manager, warehouse×2)")

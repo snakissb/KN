@@ -74,7 +74,7 @@ export default function SpecialPriceRequestForm({ product, customer, entityId = 
     <div className={`space-y-3 ${compact ? "text-sm" : ""}`} data-testid="special-price-request-form">
       <div className="text-xs text-[#6E6E73]">{product?.name} · harga daftar <b className="tabular-nums">{formatCurrency(normalPrice)}</b>{customer?.name ? ` · ${customer.name}` : ""}</div>
       <label className="field"><span>Harga yang diminta pelanggan</span>
-        <MoneyInput value={price} onChange={setPrice} placeholder="0" data-testid="spr-price-input" /></label>
+        <MoneyInput value={price} onChange={setPrice} placeholder="0" testId="spr-price-input" /></label>
       {priceNum > 0 && (
         <div className={`notice-bar ${hint?.needs_manager ? "danger" : "success"} flex items-center gap-2`} data-testid="spr-hint">
           <Info size={14} /> <span>{pct}% di bawah harga daftar{hint ? ` — ${hint.verdict}` : ""}</span>

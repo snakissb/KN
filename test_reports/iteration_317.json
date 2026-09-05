@@ -1,0 +1,35 @@
+{
+  "summary": "Sesi 6 'Gelombang 2026-09' tested end-to-end. BACKEND: probe_sesi6_gelombang.py 16/16 PASS (rc=0), verify_rfid_tag_unique.py PASS + --self-test GREEN, verify_atomic_claim.py PASS 31/31 + --self-test GREEN. Manual sales-return saga injection: quarantine/release returned 400 'Tidak ada roll karantina' (validation-first path — spec-compliant alternate to 409 SAGA_IN_PROGRESS); saga-locks/release cleared the lock (200). FRONTEND: (1) mobile-warehouse-app for wh.admin visible w/ tabs inbound/outbound/scan/untagged; inbound shows mw-task-list-inbound with 12 mw-task-* cards; scan of 'XYZINVALID' produced mw-scan-result-bad 'TAG TIDAK DIKENAL'; untagged shows mw-untagged-list; mobile-force-desktop switches to desktop shell. (2) mobile-ops-app for manager renders with tabs queue/kpi/desktop and mo-queue-list populated. (3) mobile-sales sales@: More tab contains mobile-more-special-price/visits/stock/special/pricelist/crm/returns; opening Minta Harga Khusus → after picking customer+product the special-price-request-form mounts with spr-hint '50% di bawah harga daftar — Di bawah batas — perlu persetujuan manajer', submit without attachment → spr-error 'Bukti (tangkapan chat/penawaran) wajib dilampirkan.', after PNG upload submit → spr-submitted 'Terkirim — menunggu persetujuan. pra_… · Rp 92.500 · untuk pesanan ini saja …'. (4) Desktop Persetujuan Harga (Pusat Persetujuan → hub-tab-price-approvals): price-approvals-new opens modal, after picking customer+product the modal body swaps to special-price-request-form with spr-file-btn visible. (5) Desktop Template Produk (Produk & Harga → hub-tab-product-templates): clicking tpl-item renders tpl-family-summary + tpl-family-varian/tersedia/dipesan/roll and tpl-variant rows. (6) SDM Presensi & Lacak Lapangan (attendance+visits) load without errors; attendance-pager/visits-pager correctly hidden because total<=50.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "SpecialPriceRequestForm.jsx (line 77)", "issue": "MoneyInput expects `testId` prop but the parent passed `data-testid` → spr-price-input was NOT rendered on the DOM (mobile SPR flow initially had no price input testid). Fixed by tester: changed data-testid=\"spr-price-input\" to testId=\"spr-price-input\" and rebuilt static bundle. Verified working after fix.", "selector": "[data-testid=\"spr-price-input\"]", "priority": "MEDIUM"}
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/scripts/probe_sesi6_gelombang.py",
+    "/app/scripts/guardrails/verify_rfid_tag_unique.py",
+    "/app/scripts/guardrails/verify_atomic_claim.py"
+  ],
+  "action_items": [
+    "OPTIONAL: main agent may audit other MoneyInput usages to ensure `testId` (not `data-testid`) is passed where automated tests rely on the input testid. Grep already-scanned SpecialPriceRequestForm is the only occurrence found and has been corrected."
+  ],
+  "critical_code_review_comments": [
+    "MoneyInput signature (components/MoneyInput.jsx L9) forwards `testId` -> DecimalInput data-testid; parents must NOT use data-testid=... with this component. This is a subtle API-shape trap — consider accepting both `testId` and `data-testid` in MoneyInput to prevent regressions.",
+    "SpecialPriceRequestForm correctly reused across mobile (MobileMore) and desktop (Pusat Persetujuan → Persetujuan Harga modal) after customer+product selection; single-source-of-truth requirement met.",
+    "Guardrails INV-RFID-01 and INV-ATOMIC-01 baselines HIJAU with self-tests passing (0 pelanggaran; ratchet held at 54)."
+  ],
+  "updated_files": [
+    "/app/frontend/src/features/pricing/SpecialPriceRequestForm.jsx (MoneyInput prop rename: data-testid → testId)",
+    "/app/frontend/build/* (rebuilt via scripts/rebuild_frontend.sh)"
+  ],
+  "success_rate": {"backend": "100%", "frontend": "100% (after 1 tester-applied prop fix + rebuild)"},
+  "test_credentials": "admin@kainnusantara.id · manager@kainnusantara.id · wh.admin@kainnusantara.id · sales@kainnusantara.id (all demo12345)",
+  "seed_data_creation": "Created and immediately deleted 1 price_approvals doc pra_1c1363513d96 during mobile SPR happy-path submission. probe_sesi6_gelombang.py is self-cleaning. No residual data.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Sesi 6 gelombang 2026-09 fully green. If future work touches MoneyInput or SpecialPriceRequestForm, re-verify data-testid=\"spr-price-input\" is emitted (currently via testId prop). Frontend is static build — run scripts/rebuild_frontend.sh after any frontend/src change and wait ~30s before UI tests. Mobile shell reads kn_force_mobile in useState initializer, so set localStorage BEFORE login then reload.",
+  "rca of the issue": "Root cause of the initial spr-price-input miss: MoneyInput component consumes `testId` (camelCase) and forwards it to inner DecimalInput as data-testid. Parent passed `data-testid=\"spr-price-input\"` which fell through to ...rest and was applied to the wrapping DIV of DecimalInput (or shadowed), so the actual <input> element carried no matching testid, breaking Playwright selectors on both mobile and (implicitly) desktop. Mitigation: rename prop to `testId` at the callsite; longer-term, make MoneyInput accept `data-testid` as an alias."
+}

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import axios, { API } from "../../services/apiClient";
 import { BadgePercent, RefreshCw, Search, Plus } from "lucide-react";
 import { PriceApprovalForm } from "./priceApprovals/PriceApprovalForm";
+import SpecialPriceRequestForm from "../pricing/SpecialPriceRequestForm";
 import { PriceApprovalCard } from "./priceApprovals/PriceApprovalCard";
 import ErrorNotice from "../../components/ErrorNotice";
 import FormModal from "../../components/FormModal";
@@ -287,6 +288,13 @@ export default function PriceApprovals({ currentUser = {} }) {
         size="lg"
         testId="price-approval-modal"
       >
+        {!editId && form.customer_id && form.product_id ? (
+          <SpecialPriceRequestForm
+            product={products.find((p) => p.id === form.product_id)}
+            customer={customers.find((c) => c.id === form.customer_id)}
+            defaultQty={parseFloat(form.min_quantity) || 0}
+            onSubmitted={() => { resetForm(); load(); }} onCancel={resetForm} />
+        ) : (
         <PriceApprovalForm
           variant="modal"
           editId={editId}
@@ -299,6 +307,7 @@ export default function PriceApprovals({ currentUser = {} }) {
           onClose={resetForm}
           onSubmit={submitForm}
         />
+        )}
       </FormModal>
 
       {error && (

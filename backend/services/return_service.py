@@ -901,6 +901,11 @@ async def release_quarantine(return_id: str, actor: str,
     _ret_doc = await db.sales_returns.find_one({"id": return_id}, {"_id": 0, "number": 1}) or {}
     ret_number = _ret_doc.get("number", return_id)
     dmap = {d.get("roll_id"): d for d in (decisions or []) if d.get("roll_id")}
+    # INV-ATOMIC-01 — klaim retur sesudah roll karantina ditentukan, sebelum roll/JE/mutasi
+    # ditulis: dua pelepasan karantina bersamaan tidak boleh menulis write-off ganda.
+    from services import atomic_claim as _saga
+    await _saga.claim("sales_returns", return_id, "sales_return_quarantine_release",
+                      precondition={"quarantine_released": {"$ne": True}}, actor=actor)
     now = now_iso()
     combos: set = set()
     released, scrapped, regraded = 0, 0, 0
@@ -987,9 +992,9 @@ async def release_quarantine(return_id: str, actor: str,
         await rebuild_balance(pid, wid, eid)
     await db.sales_returns.update_one(
         {"id": return_id},
-        {"$set": {"quarantine_released": True, "quarantine_released_by": actor,
-                  "quarantine_released_at": now, "quarantine_release_notes": notes,
-                  "updated_at": now}})
+        _saga.finish_set({"quarantine_released": True, "quarantine_released_by": actor,
+                          "quarantine_released_at": now, "quarantine_release_notes": notes,
+                          "updated_at": now}))
     ret = await db.sales_returns.find_one({"id": return_id})
     ret.pop("_id", None)
     ret["_release_summary"] = {"released": released, "scrapped": scrapped, "regraded": regraded,

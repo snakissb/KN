@@ -37,6 +37,14 @@ Admin · Manajer · Admin Sales · Finance · Sales · Gudang · Desainer · Sop
 - Lingkungan: `backend/.env` wajib `CORS_ORIGINS` eksplisit (template `*` membuat backend menolak start).
 - Testing agent iteration_314: semua PASS. `gate.sh --quick`: 5 merah pra-eksisting saja.
 
+## Yang dikerjakan 2026-09-05 sesi 6 — GELOMBANG 2026-09 (laporan: `memory/LAPORAN_SESI_2026-09-05_GELOMBANG.md`)
+- Semua vonis auditor diverifikasi SAH. Gelombang 0: P-1 (potongan tidak mewarisi tag RFID) + penjaga INV-RFID-01 + skrip diagnosa; P-2 siap.
+- Mobile SEMUA peran (cangkang bersama): gudang (tugas/pindai/belum tag), peran lain (persetujuan/KPI/desktop), sales +Minta Harga/Kunjungan/Stok.
+- §3-B: satu komponen `SpecialPriceRequestForm` di 4 pintu; bukti WAJIB (400 EVIDENCE_REQUIRED); scope bawaan `order`; `GET /price-approvals/hint`.
+- §D: induk WAJIB (`product_variant_service`), migrasi 15 induk/20 varian/0 yatim, `GET /product-templates/{id}/summary`.
+- Paginasi layar SDM; ratchet 55→54 (quarantine/release); 5 gate merah pra-eksisting ditutup.
+- Probe `scripts/probe_sesi6_gelombang.py` 16/16.
+
 ## Yang dikerjakan 2026-09-05 sesi 5 (repo `snakissb/KN`; probe: `scripts/probe_sesi5_saga.py` 27/27 PASS)
 - Lingkungan: repo di-clone ke `/app`, `.env` backend diberi `CORS_ORIGINS` eksplisit (template `*` ditolak backend), deps + seed + build FE.
 - **Ratchet INV-ATOMIC-01 58 → 55**: klaim saga di `return_service.reverse_writeoff` (sesudah target roll scrap ditentukan) & `relocate_return_rolls` (finish_set + `$push relocation_legs`), `ar_receipt_service.void_receipt` (klaim `status != void`, release bila `reverse_decision` gagal, finish_set) → `saga_locks.LOCKED_COLLECTIONS` + `ar_receipts` (label panel "Kwitansi pembayaran"); `POST /inventory/initial-stock` kompensasi (`rollback_initial_stock` hapus roll+mutasi bila mutasi/rebuild gagal); `inbound resolve-escalation` CAS `escalation.status != resolved` → balapan `[200, 409]`.
@@ -45,7 +53,10 @@ Admin · Manajer · Admin Sales · Finance · Sales · Gudang · Desainer · Sop
 - Verifikasi: probe 27/27 · `verify_data_integrity` 247/0/2 WARN (pra-eksisting) · `gate.sh --quick` 52 PASS, 5 merah = persis pra-eksisting · panel Kunci Saga menampilkan kunci `ar_receipts`.
 
 ## Backlog (prioritas)
-- P0 55 endpoint multi-koleksi BELUM DITINJAU (INV-ATOMIC-01 ratchet): berikutnya kandidat dari `memory/INVENTARIS_MULTI_KOLEKSI_2026-09.md` (mis. quarantine/release retur, cash/bank, interco).
+- P0 §3-C modul jual sampel (6 keputusan pemilik sudah ada di laporan gelombang §7): master harga sampel terpisah, potong roll dengan klaim atomik (P-2), FIFO, RFID pindai-dengan-alasan.
+- P0 §D lanjutan: bersihkan 5 field warna ganda di `products`; SKU varian = SKU induk + kode warna; UI "buat varian dari induk" jadi jalur utama.
+- P1 Mobile Tahap 2: aksi tugas gudang di mobile (terima/selesai) + mobile sales PIN/persetujuan; paginasi `/hr/field-tracks` di layar peta.
+- P0 54 endpoint multi-koleksi BELUM DITINJAU (INV-ATOMIC-01 ratchet).
 - P1 T-05: 2 REGISTRY GAP (P2); T-04 perbaiki 2 lokasi `PERBAIKI`.
 - P1 `warehouse_id` saran reorder (keputusan pemilik masih terbuka).
 - P2 5 gate `--quick` merah pra-eksisting (INV-UI-01/UI-10/UX-01/i18n); T-10 daftar saudara 459 endpoint; jalankan CI di GitHub.

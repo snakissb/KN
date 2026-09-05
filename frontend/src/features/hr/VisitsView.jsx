@@ -1,4 +1,5 @@
 import KNDatePicker from "@/components/KNDatePicker";
+import KNPager from "@/components/KNPager";
 import { useEffect, useMemo, useState } from "react";
 import axios, { API } from "../../services/apiClient";
 import KNMonthPicker from "@/components/KNMonthPicker";
@@ -34,6 +35,9 @@ function VisitsLog({ currentUser, selectedEntity }) {
   const [empFilter, setEmpFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [rows, setRows] = useState([]);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const PAGE_SIZE = 50;
   const [summary, setSummary] = useState(null);
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -42,7 +46,7 @@ function VisitsLog({ currentUser, selectedEntity }) {
   useEffect(() => {
     axios.get(`${API}/hr/employees`, { params }).then((r) => setEmployees(Array.isArray(r.data) ? r.data : [])).catch(() => {});
   }, [selectedEntity]); // eslint-disable-line
-  useEffect(() => { loadVisits(); }, [dateFrom, dateTo, empFilter, statusFilter, selectedEntity]); // eslint-disable-line
+  useEffect(() => { loadVisits(); }, [dateFrom, dateTo, empFilter, statusFilter, selectedEntity, page]); // eslint-disable-line
   useEffect(() => { loadSummary(); }, [month, selectedEntity]); // eslint-disable-line
 
   async function loadVisits() {
@@ -51,8 +55,9 @@ function VisitsLog({ currentUser, selectedEntity }) {
       const q = { ...params, date_from: dateFrom, date_to: dateTo };
       if (empFilter) q.employee_id = empFilter;
       if (statusFilter) q.status = statusFilter;
-      const r = await axios.get(`${API}/hr/visits`, { params: q });
-      setRows(Array.isArray(r.data) ? r.data : []); setError("");
+      // T-03 Lapis 4 — paginasi server (envelope).
+      const r = await axios.get(`${API}/hr/visits`, { params: { ...q, page, page_size: PAGE_SIZE } });
+      setRows(Array.isArray(r.data?.items) ? r.data.items : []); setTotal(Number(r.data?.total || 0)); setError("");
     } catch (e) { setError(e.response?.data?.detail || "Gagal memuat kunjungan."); }
     finally { setLoading(false); }
   }
@@ -106,6 +111,7 @@ function VisitsLog({ currentUser, selectedEntity }) {
             <div className="grid grid-cols-[1.4fr_1.4fr_84px_84px_72px_96px_96px] px-3 py-1.5 bg-[#FAFBFC] text-[10px] font-bold uppercase text-[#6B6B73] border-b border-[#EFF0F2]">
               <span>Sales</span><span>Pelanggan</span><span>Masuk</span><span>Keluar</span><span className="text-right">Durasi</span><span>Hasil</span><span>Status</span>
             </div>
+            <KNPager page={page} pageSize={PAGE_SIZE} total={total} onChange={setPage} testId="visits-pager" />
             {loading ? (
               <div className="py-10 text-center text-[12px] text-[#6B6B73]" data-testid="visits-loading">Memuat kunjungan...</div>
             ) : rows.length === 0 ? (

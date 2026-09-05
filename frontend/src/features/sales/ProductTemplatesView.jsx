@@ -18,6 +18,7 @@ import useDomainEnums from "../../hooks/useDomainEnums";
 import PantoneFinder, { ColorChip } from "../../components/PantoneFinder";
 import { formatCurrency } from "../../utils/formatters";
 import { Modal, Field, Kpi, AssignModal } from "./ProductTemplatesParts";
+import TemplateFamilySummary from "./TemplateFamilySummary";
 import { askConfirm } from "@/services/confirmService";
 
 // Fase A · R1 — opsi grade TIDAK boleh teks bebas: placeholder mengikuti enum resmi
@@ -180,6 +181,7 @@ export default function ProductTemplatesView({ currentUser }) {
                 )}
               </div>
               <div className="section-body">
+                <TemplateFamilySummary templateId={selected.id} />
                 {/* Axes */}
                 <div className="flex flex-wrap gap-2 mb-3">
                   {(selected.axes || []).length === 0 ? (
