@@ -99,6 +99,9 @@ async def insert_child_roll(child: Dict[str, Any], parent: Dict[str, Any]) -> Di
     doc = dict(child)
     doc.pop("_id", None)
     doc["roll_no"] = await child_roll_no(parent.get("roll_no") or "")
+    # P-1 (INV-RFID-01) — potongan adalah BENDA FISIK BARU: tidak mewarisi tag RFID induk.
+    # Ia muncul di /rfid/untagged-rolls sampai gudang menempel tag sendiri.
+    doc["rfid_tag_id"] = None
     if not doc.get("unit"):
         doc["unit"] = parent.get("unit") or "meter"
     await db.inventory_rolls.insert_one(dict(doc))

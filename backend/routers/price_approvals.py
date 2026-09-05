@@ -29,6 +29,31 @@ from services import price_guard_service as guard
 
 router = APIRouter(prefix="/api")
 
+# §3-B KEPUTUSAN PEMILIK 2026-09: bukti chat/penawaran WAJIB sebelum pengajuan masuk antrean.
+EVIDENCE_REQUIRED = True
+
+
+@router.get("/price-approvals/hint")
+async def price_hint(request: Request, product_id: str = Query(...), price: float = Query(...),
+                     entity_id: str = Query("")) -> Dict[str, Any]:
+    """§3-B isyarat untuk sales TANPA membocorkan HPP: % di bawah harga daftar + apakah
+    harga itu biasanya langsung berlaku atau perlu persetujuan manajer (penilai yang
+    sama dengan yang dipakai saat pengajuan dibuat). Hanya-baca."""
+    await require_permission(request, "price_approval", "create")
+    product = await db.products.find_one({"id": product_id}, {"_id": 0})
+    if not product:
+        raise HTTPException(status_code=404, detail="Produk tidak ditemukan")
+    ctx = await entity_ctx(request)
+    eid = entity_id or ctx.active_entity_id or DEFAULT_ENTITY_ID
+    verdict = await guard.evaluate(float(price), eid, product)
+    list_price = float(product.get("price") or 0)
+    gap_pct = round((1 - float(price) / list_price) * 100, 1) if list_price > 0 and price > 0 else 0.0
+    needs = bool(verdict.get("below_floor") or verdict.get("needs_approval"))
+    return {"list_price": list_price, "gap_pct": gap_pct, "needs_manager": needs,
+            "verdict": ("Di bawah batas — perlu persetujuan manajer" if needs
+                        else "Dalam batas — biasanya disetujui"),
+            "approver_roles": ["manager", "admin"] if needs else ["admin_sales", "manager", "admin"]}
+
 EDITABLE_STATUSES = pas.EDITABLE_STATUSES
 DECIDABLE_STATUSES = pas.DECIDABLE_STATUSES
 
@@ -181,6 +206,13 @@ async def create_price_approval(payload: PriceApprovalCreate, request: Request) 
     if req_price <= 0:
         raise HTTPException(status_code=400, detail="Harga khusus harus lebih dari 0")
     entity_id = await _resolve_entity(payload.entity_id, customer)
+    # §3-B keputusan pemilik: bukti (chat) WAJIB saat submit. `submit_now` tidak bisa
+    # membawa lampiran (butuh id) → jalur sah: buat draft → unggah bukti → /submit.
+    if payload.submit_now and EVIDENCE_REQUIRED:
+        raise HTTPException(status_code=400, detail={
+            "code": "EVIDENCE_REQUIRED",
+            "message": "Bukti (tangkapan chat/penawaran) wajib dilampirkan sebelum diajukan. "
+                       "Simpan sebagai draf, unggah bukti, lalu ajukan."})
     status = "pending" if payload.submit_now else "draft"
     # F1b — SATU penilaian "harga terlalu murah" (harga PT / HPP), sama seperti yang
     # dipakai Daftar Harga per Pelanggan. Disimpan sebagai snapshot supaya approver
@@ -278,10 +310,15 @@ async def submit_price_approval(approval_id: str, request: Request) -> Dict[str,
     _ensure_owner_or_privileged(doc, user)
     if doc["status"] != "draft":
         raise HTTPException(status_code=409, detail="Hanya pengajuan draft yang dapat disubmit")
+    if EVIDENCE_REQUIRED and not [a for a in (doc.get("attachments") or []) if not a.get("is_deleted")]:
+        raise HTTPException(status_code=400, detail={
+            "code": "EVIDENCE_REQUIRED",
+            "message": "Bukti (tangkapan chat/penawaran) wajib dilampirkan sebelum diajukan."})
     updated = await db.price_approvals.find_one_and_update(
         {"id": approval_id}, {"$set": {"status": "pending", "updated_at": now_iso()}},
         projection={"_id": 0}, return_document=ReturnDocument.AFTER,
     )
+    await pas.notify_pending(updated, why=((updated.get("guard") or {}).get("summary") or ""))
     await audit(user.get("name", ""), "price_approval_submitted", "price_approval", approval_id, {"status": "pending"})
     return _decorate(safe_doc(updated))
 

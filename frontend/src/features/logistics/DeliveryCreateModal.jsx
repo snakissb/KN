@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import KNDatePicker from "../../components/KNDatePicker";
 import { X } from "lucide-react";
+import { useEscapeClose } from "../../utils/escapeLayers";
 import KNSelect from "../../components/KNSelect";
 import { createDelivery, listDrivers, unassignedShipments } from "./logisticsApi";
 
@@ -21,11 +22,7 @@ export default function DeliveryCreateModal({ params, onClose, onCreated, presel
     }).catch((e) => setErr(e.response?.data?.detail || "Gagal memuat Surat Jalan."));
     listDrivers(params).then(setDrivers).catch(() => setDrivers([]));
   }, []); // eslint-disable-line
-  useEffect(() => {
-    const onKey = (e) => { if (e.key === "Escape" && !busy) onClose(); };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [busy, onClose]);
+  useEscapeClose(true, onClose, busy);
   function pickDriver(uid) {
     const u = drivers.find((x) => x.id === uid);
     setF({ ...f, driver_user_id: uid, driver_name: u ? u.name : f.driver_name });

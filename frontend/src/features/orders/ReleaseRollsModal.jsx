@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Unlock, X, AlertTriangle } from "lucide-react";
+import { overlayDismiss } from "../../utils/overlayDismiss";
 import axios, { API } from "../../services/apiClient";
 import { formatQty } from "../../utils/formatters";
 
@@ -36,7 +37,7 @@ export default function ReleaseRollsModal({ order, item, onClose, onDone }) {
   };
 
   return (
-    <div className="modal-overlay" style={{ zIndex: 180 }} data-testid="release-rolls-modal" onClick={onClose}>
+    <div className="modal-overlay" style={{ zIndex: 180 }} data-testid="release-rolls-modal" {...overlayDismiss(onClose)}>
       <div className="modal-card" style={{ maxWidth: 560 }} onClick={(e) => e.stopPropagation()}>
         <div className="flex items-start justify-between gap-2">
           <div>

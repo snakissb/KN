@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Pencil, X } from "lucide-react";
 import axios, { API } from "../../services/apiClient";
 import { formatQty } from "../../utils/formatters";
+import { overlayDismiss } from "../../utils/overlayDismiss";
 
 /**
  * PrLineQtyModal (AS-02) — MD/pembelian mengubah qty beli satu baris PR. Qty boleh NAIK
@@ -28,7 +29,7 @@ export default function PrLineQtyModal({ pr, line, onClose, onDone }) {
   };
 
   return (
-    <div className="modal-overlay" data-testid="pr-line-qty-modal" onClick={onClose}>
+    <div className="modal-overlay" data-testid="pr-line-qty-modal" {...overlayDismiss(onClose)}>
       <div className="modal-card small" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-start justify-between gap-2">
           <div>

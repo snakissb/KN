@@ -6,6 +6,7 @@
 import KNDatePicker from "@/components/KNDatePicker";
 import { useEffect, useState } from "react";
 import { MessageSquareWarning, X } from "lucide-react";
+import { overlayDismiss } from "../../utils/overlayDismiss";
 import axios, { API } from "../../services/apiClient";
 import KNSelect from "../../components/KNSelect";
 
@@ -56,7 +57,7 @@ export default function FeedbackFormModal({ order, meta, row, onClose, onDone })
   const canSave = !busy && (isEdit ? !needResolution : f.title.trim().length >= 5);
 
   return (
-    <div className="modal-overlay" style={{ zIndex: 190 }} data-testid="feedback-form-modal" onClick={onClose}>
+    <div className="modal-overlay" style={{ zIndex: 190 }} data-testid="feedback-form-modal" {...overlayDismiss(onClose)}>
       <div className="modal-card" style={{ maxWidth: 600 }} onClick={(e) => e.stopPropagation()}>
         <div className="flex items-start justify-between gap-2">
           <div>

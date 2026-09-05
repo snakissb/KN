@@ -4,8 +4,8 @@
 // PAGE META (SSOT untuk TopBar kicker + title)
 export const PAGE_META = {
   // S#094 — nama menu 1–2 kata; istilah teknis/singkatan (POS, CRM, WMS, PO, AP, BOM, R&D) hidup di judul halaman.
-  "orders":               { kicker: "Penjualan",      title: "Pesanan Penjualan (Sales Order) & Retur" },
-  "purchasing":           { kicker: "Pembelian",      title: "Pesanan Pembelian (Purchase Order)" },
+  "orders":               { kicker: "Penjualan",      title: "Pesanan Penjualan (SO) & Retur" },
+  "purchasing":           { kicker: "Pembelian",      title: "Pesanan Pembelian (PO)" },
   "operations":           { kicker: "Gudang",         title: "Operasi Gudang (WMS) · Barang Masuk, Keluar, Opname & Transfer" },
   "suppliers":            { kicker: "Pembelian",      title: "Pemasok (Supplier) · Master & Kinerja" },
   "makloons":             { kicker: "Pembelian",      title: "Pengadaan (Sourcing) · Makloon & RFQ" },

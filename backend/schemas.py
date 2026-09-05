@@ -627,7 +627,7 @@ class PriceApprovalCreate(BaseModel):
     reason: str = ""
     entity_id: str = ""                  # kosong → resolve dari entitas customer
     submit_now: bool = False             # True → langsung status pending (skip draft)
-    scope: str = "standing"              # "standing" (aturan customer+produk, pakai valid_until) | "order" (khusus 1 order)
+    scope: str = "order"                 # KEPUTUSAN PEMILIK 2026-09 (§3-B): bawaan "order" (sekali-pakai, tak bocor ke /effective); "standing" = pilihan sadar (aturan customer+produk, pakai valid_until)
     so_id: str = ""                      # bila scope=="order": SO terkait (order-scoped, tak bocor ke /effective)
     override: bool = False               # True → override/replace harga khusus aktif yg sudah ada (supersede saat approved)
 

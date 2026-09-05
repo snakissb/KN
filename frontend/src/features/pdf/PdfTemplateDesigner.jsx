@@ -252,7 +252,7 @@ export default function PdfTemplateDesigner({ currentUser, selectedEntity, entit
         <div className="px-4 pb-3 flex flex-wrap items-center gap-2 text-[11.5px]" data-testid="pdf-layer-info">
           <Layers size={13} className="text-[#0058CC]" />
           {isDefault ? (
-            <span className="text-[#3C3C43]">Gaya & kop di sini dipakai <b>SEMUA</b> dokumen. Pilih jenis dokumen untuk menimpanya (mis. kolom tanda tangan Surat Jalan berbeda dari Invoice).</span>
+            <span className="text-[#3C3C43]">Gaya & kop di sini dipakai <b>SEMUA</b> dokumen. Pilih jenis dokumen untuk menimpanya (mis. kolom tanda tangan Surat Jalan berbeda dari Faktur).</span>
           ) : (
             <span className="text-[#3C3C43]">Hanya <b>perbedaan</b> dari bawaan yang disimpan untuk jenis ini{meta?.override_keys?.length ? <>: <span className="font-mono text-[10.5px]">{meta.override_keys.join(", ")}</span></> : " — saat ini mengikuti bawaan sepenuhnya"}.</span>
           )}

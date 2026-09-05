@@ -500,6 +500,11 @@ if [ -n "${MONGO_URL:-}" ]; then
   # lapisan DATA dibuktikan memerah untuk keempat pemeriksaannya (D1–D4) dengan nol residu.
   run_gate "guard:roll_identity SELF-TEST (bukti-merah + anti tuduh palsu)" "python scripts/guardrails/verify_roll_identity.py --self-test"
   run_gate "guard:roll_identity (INV-ROLL-01, satu nomor untuk satu roll)" "python scripts/guardrails/verify_roll_identity.py"
+  # INV-RFID-01 (P-1 gelombang 2026-09) — potongan roll dulu MEWARISI rfid_tag_id induk
+  # (dua benda fisik, satu tag; terukur 3 tag kembar di data demo). Pintu tunggal
+  # insert_child_roll() kini me-reset tag; lapisan DATA menolak tag yang dipakai >1 roll aktif.
+  run_gate "guard:rfid_tag_unique SELF-TEST (bukti-merah dua arah, 7 kasus)" "python scripts/guardrails/verify_rfid_tag_unique.py --self-test"
+  run_gate "guard:rfid_tag_unique (INV-RFID-01, satu tag untuk satu roll aktif)" "python scripts/guardrails/verify_rfid_tag_unique.py"
 else
   skip_gate "seed_realistic" "MONGO_URL tak tersedia"
   skip_gate "verify_data_integrity" "MONGO_URL tak tersedia"

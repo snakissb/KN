@@ -9,7 +9,7 @@ import PricelistView from "../PricelistView";
 const MENU = [
   { id: "crm", label: "Pelanggan (CRM)", desc: "Kelola pelanggan & insentif", icon: Users },
   { id: "returns", label: "Retur Jual", desc: "Pengajuan & status retur", icon: RotateCcw },
-  { id: "special", label: "Pesanan Khusus (MTO)", desc: "Pesanan khusus / dibuat sesuai pesanan", icon: FileStack },
+  { id: "special", label: "Pesanan Khusus (OD)", desc: "Pesanan khusus / dibuat sesuai pesanan", icon: FileStack },
   { id: "pricelist", label: "Daftar Harga", desc: "Lihat harga per entitas", icon: Tags },
 ];
 

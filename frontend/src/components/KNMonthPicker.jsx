@@ -34,7 +34,7 @@ export default function KNMonthPicker({ value, onChange, placeholder = "Pilih pe
           <button type="button" className="icon-button" aria-label="Tahun berikutnya" onClick={() => setYear((y) => y + 1)}
             data-testid={testId ? `${testId}-next-year` : undefined}><ChevronRight size={14} /></button>
         </div>
-        <div className="grid grid-cols-3 gap-1">
+        <div className="grid grid-cols-3 gap-1" role="listbox" aria-label="Pilih bulan (12 bulan selalu tersedia, tidak pernah kosong)">
           {BULAN.map((b, i) => {
             const active = selMonth === i + 1;
             return (

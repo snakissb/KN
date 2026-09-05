@@ -4,6 +4,7 @@ import KNMonthPicker from "@/components/KNMonthPicker";
 import axios, { API } from "../../services/apiClient";
 import { TrendingUp, Target, Award, X, BarChart3, ArrowUpRight, ArrowDownRight, Landmark, CheckCircle2 } from "lucide-react";
 import { formatCurrency } from "../../utils/formatters";
+import { useEscapeClose } from "../../utils/escapeLayers";
 import KNSelect from "../../components/KNSelect";
 import ErrorNotice from "../../components/ErrorNotice";
 import { KpiTile, currentPeriod, pct } from "./crmUtils";
@@ -266,11 +267,7 @@ function SetTargetModal({ salesUsers, period, defaultSales, onClose, onDone, onE
   const [coll, setColl] = useState("");
   const [newC, setNewC] = useState("");
   const [busy, setBusy] = useState(false);
-  useEffect(() => {
-    const onKey = (e) => { if (e.key === "Escape" && !document.querySelector("[data-radix-popper-content-wrapper]")) onClose(); };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  useEscapeClose(true, onClose, false);
   async function go() {
     if (!sid) { onError?.("Pilih sales."); return; }
     setBusy(true);

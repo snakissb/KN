@@ -19,7 +19,7 @@ const DESKS = {
   },
   warehouse_admin: {
     icon: Warehouse, kicker: "Admin Gudang", title: "Meja Admin Gudang", load: warehouseAdminDesk, testPrefix: "wh-desk",
-    intro: <>Memimpin operasi gudang: <b>SJ yang sudah dispatch tetapi belum diangkut logistik</b>, tugas outbound, PO menunggu penerimaan, SPK belum ditugaskan, persetujuan opname/transfer, dan pengiriman gagal/belum ditutup.</>,
+    intro: <>Memimpin operasi gudang: <b>SJ yang sudah diberangkatkan tetapi belum diangkut logistik</b>, tugas outbound, PO menunggu penerimaan, SPK belum ditugaskan, persetujuan opname/transfer, dan pengiriman gagal/belum ditutup.</>,
   },
 };
 
