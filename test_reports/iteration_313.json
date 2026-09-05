@@ -1,0 +1,34 @@
+{
+  "summary": "Iteration 313 backend verification for audit fixes T-01..T-11. Created pytest suite /app/backend/tests/test_iter313_audit_fixes.py with 17 tests — all PASS. Also ran both ready-made probes: T-01 (iter313_t01_resolve_escalation_probe.py) → PASS, T-09 (iter313_t09_reorder_lifecycle_probe.py) → PASS. No regressions found on touched endpoints.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "Set-Cookie via k8s ingress (public URL)", "issue": "Kubernetes ingress rewrites Set-Cookie for the preview URL adding 'Secure; SameSite=None; Partitioned', overriding app-level SESSION_COOKIE_SECURE=false / SameSite=lax. Verified by calling backend directly on http://localhost:8001 where the cookie is correct: 'HttpOnly; Max-Age=86400; Path=/; SameSite=lax' (no Secure). App fix is correct; the mismatch is infrastructure-level only."},
+      {"endpoint": "CORS via k8s ingress (public URL)", "issue": "Ingress overrides Access-Control-Allow-Origin to '*' for OPTIONS preflight, so strict allow-list cannot be observed from the public URL. Direct call to http://localhost:8001 confirms the app returns ACAO only for the whitelisted origin and 400 (no ACAO) for evil.example. App fix works correctly."}
+    ]
+  },
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_iter313_audit_fixes.py",
+    "/app/test_reports/pytest/iter313.xml",
+    "/app/backend/tests/iter313_t01_resolve_escalation_probe.py",
+    "/app/backend/tests/iter313_t09_reorder_lifecycle_probe.py"
+  ],
+  "action_items": [
+    "None required for the audit fixes themselves; all T-01..T-11 checks succeed at the application layer.",
+    "Optional/informational: document in /app/memory that the k8s preview ingress mutates Set-Cookie (adds Secure/SameSite=None/Partitioned) and forces Access-Control-Allow-Origin=* on preflight. Any future T-02-style checks against the public URL must be run against http://localhost:8001 to observe application-level behaviour."
+  ],
+  "critical_code_review_comments": [
+    "Ordering of AR-Receipts guards is fine but note: the entity-scope guard fires before the RBAC dependency when X-Entity-Id=all. If audit intent is 'RBAC first for writes', consider swapping order. Current behaviour: with a concrete entity (ent_ksc) warehouse → 403 (ar_receipt.create), finance → 422; this matches T-10.",
+    "sales_orders_extra.approve_order idempotency verified: repeating approve on an already-approved SO returns 200 with status=approved; done/shipped/confirmed → 409 INVALID_TRANSITION.",
+    "purchase_requisition_service.reorder_suggestions correctly emits 'lifecycle' and 'lifecycle_warning' on every item across block/warn/off modes (probe passes)."
+  ],
+  "updated_files": ["/app/backend/tests/test_iter313_audit_fixes.py"],
+  "success_rate": {"backend": "100% (17/17 pytest + 2/2 probes)", "frontend": "not tested (backend-only request)"},
+  "test_credentials": "All demo accounts admin@/manager@/finance@/warehouse@/sales@ kainnusantara.id with password demo12345 (per /app/memory/test_credentials.md).",
+  "seed_data_creation": "None. Both probes are self-cleanup; no persistent data changed.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Use /app/backend/tests/test_iter313_audit_fixes.py as a regression suite for these audit fixes. Important: T-02 cookie/CORS assertions target http://localhost:8001 because the k8s preview ingress rewrites Set-Cookie and CORS headers. All other tests use REACT_APP_BACKEND_URL. Write endpoints require X-Entity-Id=ent_ksc (a concrete entity) — 'all' triggers a 409 scope guard before RBAC. To run: `cd /app && python3 -m pytest backend/tests/test_iter313_audit_fixes.py -v -o addopts=''` (pytest.ini adds xdist load-scope which needs -o addopts='' to skip).",
+  "rca of the issue": "No app-level regressions. The only observed 'failures' (cookie Secure/SameSite=None, CORS *) are caused by the Kubernetes ingress rewriting response headers on the public preview URL, not by backend code. Confirmed by comparing responses from https://audit-improve-6.preview.emergentagent.com vs http://localhost:8001."
+}

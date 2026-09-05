@@ -1,0 +1,35 @@
+{
+  "summary": "Sesi 4 saga_lock (reallocate/release-rolls SO, vendor_bill cancel, payment_variance reverse, saga_lock_watch job, inbound complete regression) tested end-to-end. Backend: probe_sesi4_saga.py passes 30/32 functional PASS lines; 2 FAILs are test-data artifacts from a pre-injected probe lock vb_85c94019674f (mentioned in agent context as intentional). Guardrails static check verify_atomic_claim.py PASS (0 violations) & --self-test GREEN. FASE C lot POC test_fase_c_lot_poc.py: 51 PASS / 0 FAIL (inbound-complete regression + lot governance). Frontend: cfg-tab-saga panel renders lock row (label 'Tagihan supplier'), error text, release flow (ConfirmModal saga-lock-release-confirm-confirm) → row disappears; Penjadwal & Notifikasi shows job 'Kunci Saga Menggantung / Setiap 10 menit'; manager role does NOT see cfg-tab-saga (correct RBAC).",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "scripts/probe_sesi4_saga.py", "issue": "Two probe checks ('jurnal pembalik vendor bill tepat 1' and 'job saga_lock_watch tanpa kunci → created 0') can FAIL when the intentional leftover lock vb_85c94019674f is the only 'posted amount_paid<=0.01' vendor bill available: probe overwrites its saga_lock, cancels it (no reversal JE because that bill was a synthetic probe bill), and thus n_rev=0. All underlying functional behaviour (409 SAGA_IN_PROGRESS, saga-locks GET/release, race → 200+409, cancelled without saga_lock, notification addressing to recipient_user, dedupe, job registration 'Setiap 10 menit') pass. Not a real product bug — probe should skip synthetic locked bills."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/scripts/probe_sesi4_saga.py",
+    "/app/backend/test_fase_c_lot_poc.py",
+    "/app/scripts/guardrails/verify_atomic_claim.py"
+  ],
+  "action_items": [
+    "Optional (probe hygiene, not a product bug): update /app/scripts/probe_sesi4_saga.py to exclude vendor bills that already carry a saga_lock (line 90/92 vendor_bills query) so it doesn't cannibalise the pre-injected UI-demo lock vb_85c94019674f."
+  ],
+  "critical_code_review_comments": [
+    "saga_lock_watch: recipient_role empty + recipient_user=user_admin_01 correctly addresses admin user; daily dedupe verified idempotent.",
+    "SagaLocksPanel: prefixed ConfirmModal testids used correctly (saga-lock-release-confirm-*); RBAC correctly hides cfg-tab-saga for manager.",
+    "Inbound complete: pagar-lot 400 no longer leaves saga_lock (validated via test_fase_c_lot_poc.py 51/51 PASS)."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100% functional (probe test-data artifacts aside)", "frontend": "100%"},
+  "test_credentials": "admin@kainnusantara.id/demo12345 · manager@kainnusantara.id/demo12345",
+  "seed_data_creation": "None. Cleaned up 1 saga_lock_stuck notification produced during probe. No lingering saga_lock in sales_orders/vendor_bills/payment_variance_decisions/wms_tasks after tests.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend saga session 4 fully validated. The two probe 'FAIL' lines are test-data artifacts, not product bugs (probe cannibalises the intentional UI-demo lock vb_85c94019674f). If a new run of the probe is needed, first release vb_85c94019674f OR patch the probe query to exclude {saga_lock:{$exists:false}}. Frontend Saga panel + Scheduler tab labels verified visually.",
+  "rca of the issue": "N/A — no product bugs found."
+}

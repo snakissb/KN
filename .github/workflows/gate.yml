@@ -1,0 +1,32 @@
+name: gate
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  gate-statik:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Dependensi minimal gate statik
+        run: pip install -q python-dotenv pymongo requests
+      - name: Gate statik (--ci menulis memory/GATE_RECEIPT.json)
+        run: bash scripts/gate.sh --ci --quick
+      - name: Verifikator temuan audit 2026-09 (melapor, tidak memblokir)
+        run: python3 scripts/audit_temuan_2026_09.py || true
+      - name: INV-DOC-01 — CODEBASE_MAP.md selaras kode
+        run: python3 scripts/guardrails/verify_codebase_map.py
+      - name: INV-PERF-01 — to_list(n>20000) dilarang
+        run: python3 scripts/guardrails/verify_to_list_bound.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gate-receipt
+          path: |
+            memory/GATE_RECEIPT.md
+            memory/GATE_RECEIPT.json

@@ -1,0 +1,31 @@
+{
+  "summary": "Frontend-only verification of the 9 new KNMonthPicker month selectors that replaced native <input type=\"month\">. All 9 were reached through the real UI (admin, manager, designer, sales logins) and all behaved correctly: trigger is a BUTTON showing Indonesian long month ('September 2026'), clicking opens the Radix popover {id}-popover with 12/12 month buttons + prev/next year, selecting a month closes the popover, updates the label, and fires the reload request with period=YYYY-MM. Zero console errors / pageerrors across all screens. Static grep confirms no remaining <input type=\"month\"> anywhere in frontend/src.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "SalesForceDashboard (Set Target modal)", "issue": "Escape key does not close the modal; overlay keeps intercepting clicks until 'Batal' is pressed (blocked sidebar/tab clicks in automation). Pre-existing, unrelated to month picker.", "selector": "[data-testid=\"set-target-modal\"]", "priority": "LOW"},
+      {"component": "SalesForceDashboard KPI card", "issue": "'RATE BERLAKU' renders 'null%' when no tier rate applies (manager@ / Ayu Permatasari, 2026-09). Should be 0% or '—'.", "selector": "[data-testid=\"salesforce-dashboard\"]", "priority": "LOW"}
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Kunjungan Sales (VisitsView)", "issues": ["'Dari'/'Sampai' still use native browser date inputs (data-testid visits-date-from / visits-date-to, <input type=\"date\">) while the month picker beside them is now KNMonthPicker — visually inconsistent. Out of scope for this session, but ~20+ files still contain type=\"date\" if full migration is intended."]}
+    ]
+  },
+  "test_report_links": [],
+  "action_items": [
+    "Optional: migrate remaining native <input type=\"date\"> (starting with visits-date-from/to on the same screen as visits-month) to KNDatePicker for consistency",
+    "Optional low priority: wire Escape/overlay-click to close the Set Target modal; fix 'null%' rate label on Sales Force KPI card"
+  ],
+  "critical_code_review_comments": [
+    "KNMonthPicker keeps `year` in local useState initialised from `value`; if the parent later changes `value` programmatically (e.g. reset to today) the popover year will not follow. Not hit by any current screen but a latent sync bug.",
+    "InputTaxView passes onChange={(v) => setPeriod(v || period)} — harmless, but KNMonthPicker never emits an empty value, so the guard is dead code."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "not tested (frontend-only request)", "frontend": "100% (9/9 month pickers pass)"},
+  "seed_data_creation": "None — read-only verification; no target/scheme was saved.",
+  "should_call_test_agent_after_fix": false,
+  "should_main_agent_self_test": true,
+  "test_credentials": "admin@ / manager@ / designer@ / sales@ kainnusantara.id, password demo12345",
+  "context_for_next_testing_agent": "Verified pickers: it-period-input (Keuangan>Pajak>hub-tab-input-tax> text 'Rekap PPN' → GET /tax/vat-summary?period=), recap-month (SDM>Kehadiran> text 'Rekap Periode' → /hr/attendance/recap?month=), visits-month + my-visits-history-month (Penjualan>Pelanggan>hub-tab-hr-visits — VisitsView is a hub tab of customers-crm, there is NO nav-hr-visits sidebar item; sales role sees MyVisitsHistory), sf-period & target-period (crm-tab-salesforce, sf-set-target), incentive-period (crm-tab-schemes, manager/admin only), dsr-report-period (nav-designer-hub > dsr-tab-report), dsr-myreport-period (designer@ > dsr-tab-myreport). Header of Rekap PPN stays single line (picker wrapper fixed 190px). Iteration 309 already covered the 34 KNDatePicker + fa-period-input.",
+  "rca_of_the_issue": "N/A — no functional defect found in the KNMonthPicker migration."
+}

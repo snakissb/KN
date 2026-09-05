@@ -1,0 +1,1102 @@
+{
+ "commit": "fa4c25a",
+ "cmd": "scripts/run_corpus_subset.py /tmp/tt_files.json coverage_data/corpus_tt_2026-09-05.json",
+ "total": 76,
+ "ok": 2,
+ "results": [
+  {
+   "file": "backend/tests/test_audit_findings_reproduction.py",
+   "mode": "pytest",
+   "rc": 1,
+   "timeout": false,
+   "dur": 2.3,
+   "passed": 5,
+   "total": 6,
+   "errors": [
+    "FAILED tests/test_audit_findings_reproduction.py::test_D1_pagar_menuduh_saat_papan_hilang"
+   ],
+   "tail": "======================\nE   AssertionError: tuduhan palsu untuk beranda manajer\n    assert not ['manager: payload beranda TIDAK memuat `special_orders_waiting` — papan PO Custom hilang dari beranda peran ini, dan ...uhan ini seluruh invarian H akan terlewat diam-diam (pagar yang bisa dimatikan dengan menghapus datanya bukan pagar).']\n     +  where ['manager: payload beranda TIDAK memuat `special_orders_waiting` — papan PO Custom hilang dari beranda peran ini, dan ...uhan ini seluruh invarian H akan terlewat diam-diam (pagar yang bisa dimatikan dengan menghapus datanya bukan pagar).'] = <_common.Guard object at 0xffb43c29f3d0>.violations\n----------------------------- Captured stdout call -----------------------------\n\nD1 pelanggaran saat papan DIHAPUS dari payload admin: 1\n/app/backend/tests/test_audit_findings_reproduction.py:228: AssertionError: tuduhan palsu untuk beranda manajer\n=============================== warnings summary ===============================\ntests/test_audit_findings_reproduction.py::test_A2_satu_penagih_per_dokumen\n  /root/.venv/lib/python3.11/site-packages/starlette/formparsers.py:12: PendingDeprecationWarning: Please use `import python_multipart` instead.\n    import multipart\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n=========================== short test summary info ============================\nFAILED tests/test_audit_findings_reproduction.py::test_D1_pagar_menuduh_saat_papan_hilang\n1 failed, 5 passed, 1 warning in 1.07s\n"
+  },
+  {
+   "file": "backend/tests/test_config_clear_layer.py",
+   "mode": "pytest",
+   "rc": 5,
+   "timeout": false,
+   "dur": 0.4,
+   "passed": null,
+   "total": null,
+   "errors": [],
+   "tail": "\nno tests ran in 0.14s\n"
+  },
+  {
+   "file": "backend/tests/test_f0b_entity_scoping.py",
+   "mode": "pytest",
+   "rc": 1,
+   "timeout": false,
+   "dur": 79.0,
+   "passed": 90,
+   "total": 91,
+   "errors": [
+    "FAILED tests/test_f0b_entity_scoping.py::test_cash_kas_besar_visible_in_all_contexts"
+   ],
+   "tail": "......................................................................F. [ 79%]\n...................                                                      [100%]\n=================================== FAILURES ===================================\nE   AssertionError: kas_besar tidak konsisten lintas konteks: [(None, 10), ('ent_ksc', 10), ('ent_kanda', 2), ('all', 12)]\n    assert 3 == 1\n     +  where 3 = len({2, 10, 12})\n/app/backend/tests/test_f0b_entity_scoping.py:211: AssertionError: kas_besar tidak konsisten lintas konteks: [(None, 10), ('ent_ksc', 10), ('ent_kanda', 2), ('all', 12)]\n=========================== short test summary info ============================\nFAILED tests/test_f0b_entity_scoping.py::test_cash_kas_besar_visible_in_all_contexts\n1 failed, 90 passed in 78.76s (0:01:18)\n"
+  },
+  {
+   "file": "backend/tests/test_f0cdef_multientity.py",
+   "mode": "pytest",
+   "rc": 1,
+   "timeout": false,
+   "dur": 42.6,
+   "passed": 57,
+   "total": 64,
+   "errors": [
+    "FAILED tests/test_f0cdef_multientity.py::TestF0C_OperationalIsolation::test_header_ent_kanda[/inventory/rolls]",
+    "FAILED tests/test_f0cdef_multientity.py::TestF0C_OperationalIsolation::test_header_ent_kanda[/inventory/balances]",
+    "FAILED tests/test_f0cdef_multientity.py::TestF0C_OperationalIsolation::test_header_ent_kanda[/inventory/movements]"
+   ],
+   "tail": "ertionError: TB all(1233294088.44) ≠ ksc(1131094797.56) + kanda(106999290.88) = 1238094088.44\nE   AssertionError: ppn_rate ksc != 11: 12.0\n    assert 12.0 == 11.0\n     +  where 12.0 = float(12.0)\n     +    where 12.0 = <built-in method get of dict object at 0xfcb70df80400>('ppn_rate', 0)\n     +      where <built-in method get of dict object at 0xfcb70df80400> = {'allocation_policy': {'location_pref': 'single_warehouse', 'lot_mode': 'prefer_single', 'lot_selection': 'fefo', 'mod...1', 'dye_lot_strict': False, 'dye_lots': ['LOT-001'], ...}], 'allow_backorder': True, 'approval_amount': 410700.0, ...}.get\n/app/backend/tests/test_f0cdef_multientity.py:344: AssertionError: ppn_rate ksc != 11: 12.0\n=========================== short test summary info ============================\nFAILED tests/test_f0cdef_multientity.py::TestF0C_OperationalIsolation::test_header_ent_kanda[/inventory/rolls]\nFAILED tests/test_f0cdef_multientity.py::TestF0C_OperationalIsolation::test_header_ent_kanda[/inventory/balances]\nFAILED tests/test_f0cdef_multientity.py::TestF0C_OperationalIsolation::test_header_ent_kanda[/inventory/movements]\nFAILED tests/test_f0cdef_multientity.py::TestF0D_NumberingPerEntity::test_po_ksc_prefix\nFAILED tests/test_f0cdef_multientity.py::TestF0D_NumberingPerEntity::test_po_kanda_prefix\nFAILED tests/test_f0cdef_multientity.py::TestF0E_GLSeparation::test_tb_all_equals_sum\nFAILED tests/test_f0cdef_multientity.py::TestF0E_PKPPerEntity::test_so_ksc_kena_ppn\n7 failed, 57 passed in 42.34s\n"
+  },
+  {
+   "file": "backend/tests/test_f1a_pricelist.py",
+   "mode": "pytest",
+   "rc": 1,
+   "timeout": false,
+   "dur": 6.3,
+   "passed": 13,
+   "total": 16,
+   "errors": [
+    "FAILED tests/test_f1a_pricelist.py::TestCreatePrice::test_create_then_grid_shows_entity_only_for_ksc",
+    "FAILED tests/test_f1a_pricelist.py::TestSOIntegration::test_so_uses_entity_price_for_ksc",
+    "FAILED tests/test_f1a_pricelist.py::TestSOIntegration::test_so_uses_global_for_kanda"
+   ],
+   "tail": ".....F.FF.......                                                         [100%]\n=================================== FAILURES ===================================\nE   AssertionError: assert 'entity' == 'global'\n      \n      - global\n      + entity\n/app/backend/tests/test_f1a_pricelist.py:166: AssertionError: assert 'entity' == 'global'\nE   AssertionError: expected entity price 199000, got 217628.99\n    assert 18628.98999999999 < 0.01\n     +  where 18628.98999999999 = abs((217628.99 - 199000))\n/app/backend/tests/test_f1a_pricelist.py:233: AssertionError: expected entity price 199000, got 217628.99\nE   AssertionError: expected global 185000, got 188648.24\n    assert 3648.2399999999907 < 0.01\n     +  where 3648.2399999999907 = abs((188648.24 - 185000))\n/app/backend/tests/test_f1a_pricelist.py:256: AssertionError: expected global 185000, got 188648.24\n=========================== short test summary info ============================\nFAILED tests/test_f1a_pricelist.py::TestCreatePrice::test_create_then_grid_shows_entity_only_for_ksc\nFAILED tests/test_f1a_pricelist.py::TestSOIntegration::test_so_uses_entity_price_for_ksc\nFAILED tests/test_f1a_pricelist.py::TestSOIntegration::test_so_uses_global_for_kanda\n3 failed, 13 passed in 6.02s\n"
+  },
+  {
+   "file": "backend/tests/test_f1b_product_templates.py",
+   "mode": "pytest",
+   "rc": 1,
+   "timeout": false,
+   "dur": 4.1,
+   "passed": 7,
+   "total": 20,
+   "errors": [
+    "FAILED tests/test_f1b_product_templates.py::test_create_template_ok - Asserti...",
+    "FAILED tests/test_f1b_product_templates.py::test_generate_variants_cartesian",
+    "FAILED tests/test_f1b_product_templates.py::test_generate_variants_idempotent"
+   ],
+   "tail": "\n/app/backend/tests/test_f1b_product_templates.py:297: IndexError: list index out of range\nE   IndexError: list index out of range\n/app/backend/tests/test_f1b_product_templates.py:304: IndexError: list index out of range\nE   IndexError: list index out of range\n/app/backend/tests/test_f1b_product_templates.py:312: IndexError: list index out of range\n=========================== short test summary info ============================\nFAILED tests/test_f1b_product_templates.py::test_create_template_ok - Asserti...\nFAILED tests/test_f1b_product_templates.py::test_generate_variants_cartesian\nFAILED tests/test_f1b_product_templates.py::test_generate_variants_idempotent\nFAILED tests/test_f1b_product_templates.py::test_generate_variants_subset_axes\nFAILED tests/test_f1b_product_templates.py::test_get_template_detail - IndexE...\nFAILED tests/test_f1b_product_templates.py::test_list_templates - assert 0 == 1\nFAILED tests/test_f1b_product_templates.py::test_list_templates_search - asse...\nFAILED tests/test_f1b_product_templates.py::test_assign_and_detach - IndexErr...\nFAILED tests/test_f1b_product_templates.py::test_products_include_template_fields\nFAILED tests/test_f1b_product_templates.py::test_patch_product_template_id - ...\nFAILED tests/test_f1b_product_templates.py::test_rbac_sales_cannot_generate\nFAILED tests/test_f1b_product_templates.py::test_rbac_sales_cannot_delete - I...\nFAILED tests/test_f1b_product_templates.py::test_delete_template_non_destructive\n13 failed, 7 passed in 3.32s\n"
+  },
+  {
+   "file": "backend/tests/test_fb01_ai_illustration.py",
+   "mode": "pytest",
+   "rc": 1,
+   "timeout": false,
+   "dur": 4.7,
+   "passed": 6,
+   "total": 13,
+   "errors": [
+    "FAILED tests/test_fb01_ai_illustration.py::TestIllustrateMockup::test_mockup_creates_ai_illustration_file",
+    "FAILED tests/test_fb01_ai_illustration.py::TestValidation::test_modify_without_artwork_400",
+    "FAILED tests/test_fb01_ai_illustration.py::TestValidation::test_mockup_without_artwork_ok_text_only"
+   ],
+   "tail": "idak ditemukan.\"}\nE   AssertionError: {\"detail\":\"Entri galeri tidak ditemukan.\"}\n    assert 404 == 400\n     +  where 404 = <Response [404]>.status_code\n/app/backend/tests/test_fb01_ai_illustration.py:155: AssertionError: {\"detail\":\"Entri galeri tidak ditemukan.\"}\nE   AssertionError: {\"detail\":\"Entri galeri tidak ditemukan.\"}\n    assert 404 == 400\n     +  where 404 = <Response [404]>.status_code\n/app/backend/tests/test_fb01_ai_illustration.py:201: AssertionError: {\"detail\":\"Entri galeri tidak ditemukan.\"}\nE   AssertionError: {\"detail\":\"Entri galeri tidak ditemukan.\"}\n    assert 404 == 200\n     +  where 404 = <Response [404]>.status_code\n/app/backend/tests/test_fb01_ai_illustration.py:232: AssertionError: {\"detail\":\"Entri galeri tidak ditemukan.\"}\n=========================== short test summary info ============================\nFAILED tests/test_fb01_ai_illustration.py::TestIllustrateMockup::test_mockup_creates_ai_illustration_file\nFAILED tests/test_fb01_ai_illustration.py::TestValidation::test_modify_without_artwork_400\nFAILED tests/test_fb01_ai_illustration.py::TestValidation::test_mockup_without_artwork_ok_text_only\nFAILED tests/test_fb01_ai_illustration.py::TestValidation::test_invalid_mode_400\nFAILED tests/test_fb01_ai_illustration.py::TestValidation::test_invalid_source_file_400\nFAILED tests/test_fb01_ai_illustration.py::TestIntegrations::test_disable_then_restore\nFAILED tests/test_fb01_ai_illustration.py::TestRBAC::test_designer_can_illustrate\n7 failed, 6 passed in 4.37s\n"
+  },
+  {
+   "file": "backend/tests/test_fb02_logistics.py",
+   "mode": "pytest",
+   "rc": 1,
+   "timeout": false,
+   "dur": 4.9,
+   "passed": 23,
+   "total": 29,
+   "errors": [
+    "FAILED tests/test_fb02_logistics.py::TestLogisticsRead::test_list_deliveries",
+    "FAILED tests/test_fb02_logistics.py::TestRBAC::test_driver_update_allowed - A...",
+    "FAILED tests/test_fb02_logistics.py::TestJourney::test_journey_logistics - As..."
+   ],
+   "tail": "an yang boleh mengubahnya.\"}\nE   AssertionError: ['KSC/LG-00001']\n    assert None\n/app/backend/tests/test_fb02_logistics.py:302: AssertionError: ['KSC/LG-00001']\nE   AssertionError: {\"detail\":\"Entri galeri tidak ditemukan.\"}\n    assert 404 == 200\n     +  where 404 = <Response [404]>.status_code\n/app/backend/tests/test_fb02_logistics.py:318: AssertionError: {\"detail\":\"Entri galeri tidak ditemukan.\"}\nE   AssertionError: {\"detail\":\"Entri galeri tidak ditemukan.\"}\n    assert 404 == 200\n     +  where 404 = <Response [404]>.status_code\n/app/backend/tests/test_fb02_logistics.py:327: AssertionError: {\"detail\":\"Entri galeri tidak ditemukan.\"}\nE   AssertionError: {\"detail\":\"Entri galeri tidak ditemukan.\"}\n    assert 404 == 400\n     +  where 404 = <Response [404]>.status_code\n/app/backend/tests/test_fb02_logistics.py:343: AssertionError: {\"detail\":\"Entri galeri tidak ditemukan.\"}\n=========================== short test summary info ============================\nFAILED tests/test_fb02_logistics.py::TestLogisticsRead::test_list_deliveries\nFAILED tests/test_fb02_logistics.py::TestRBAC::test_driver_update_allowed - A...\nFAILED tests/test_fb02_logistics.py::TestJourney::test_journey_logistics - As...\nFAILED tests/test_fb02_logistics.py::TestIllustrationComments::test_admin_comment\nFAILED tests/test_fb02_logistics.py::TestIllustrationComments::test_designer_comment_and_persist\nFAILED tests/test_fb02_logistics.py::TestIllustrationComments::test_artwork_file_rejected\n6 failed, 23 passed in 4.62s\n"
+  },
+  {
+   "file": "backend/tests/test_g6_poc.py",
+   "mode": "pytest",
+   "rc": 1,
+   "timeout": false,
+   "dur": 8.3,
+   "passed": 17,
+   "total": 21,
+   "errors": [
+    "FAILED tests/test_g6_poc.py::test_US6_netting_dua_transaksi - AssertionError:...",
+    "FAILED tests/test_g6_poc.py::test_US10_jejak_dokumen_dua_arah - AssertionErro...",
+    "FAILED tests/test_g6_poc.py::test_US7b_eliminasi_ikut_mengecil_setelah_settlement"
+   ],
+   "tail": " <Response [400]>.status_code\n/app/backend/tests/test_g6_poc.py:300: AssertionError: {\"detail\":\"Netting Rp 777.000 melebihi piutang balik ent_kanda→ent_ksc yang terbuka (Rp 0). Pilih metode transfer/kas, atau batasi netting sebesar piutang balik.\"}\nE   AssertionError: settlement tidak tercermin di dokumen\n    assert False\n     +  where False = any(<generator object test_US10_jejak_dokumen_dua_arah.<locals>.<genexpr> at 0xfa88724749d0>)\n/app/backend/tests/test_g6_poc.py:369: AssertionError: settlement tidak tercermin di dokumen\nE   AssertionError: POC US6 seharusnya sudah melunasi minimal satu transaksi\n    assert []\n/app/backend/tests/test_g6_poc.py:519: AssertionError: POC US6 seharusnya sudah melunasi minimal satu transaksi\nE   assert (14 > 0 and 2 > 0 and 0 > 0)\n----------------------------- Captured stdout call -----------------------------\n\n\n=== POC G-6 RINGKASAN ===\n  interco_transactions: 14\n  interco_accounts:     2\n  interco_settlements:  0\n  eliminations G-6:     5\n/app/backend/tests/test_g6_poc.py:863: assert (14 > 0 and 2 > 0 and 0 > 0)\n=========================== short test summary info ============================\nFAILED tests/test_g6_poc.py::test_US6_netting_dua_transaksi - AssertionError:...\nFAILED tests/test_g6_poc.py::test_US10_jejak_dokumen_dua_arah - AssertionErro...\nFAILED tests/test_g6_poc.py::test_US7b_eliminasi_ikut_mengecil_setelah_settlement\nFAILED tests/test_g6_poc.py::test_ZZ_poc_ringkasan - assert (14 > 0 and 2 > 0...\n4 failed, 17 passed in 7.52s\n"
+  },
+  {
+   "file": "backend/tests/test_g6b_poc.py",
+   "mode": "pytest",
+   "rc": 1,
+   "timeout": false,
+   "dur": 10.8,
+   "passed": 12,
+   "total": 15,
+   "errors": [
+    "FAILED tests/test_g6b_poc.py::test_a2_siklus_faktur_pajak_internal_penuh - As...",
+    "FAILED tests/test_g6b_poc.py::test_b3_siklus_retur_demo_penuh - AssertionErro...",
+    "FAILED tests/test_g6b_poc.py::test_e2_invarian_global_hijau_dan_nol_residu - ..."
+   ],
+   "tail": "ikat)\n        \u001b[92m[PASS]\u001b[0m purchase_orders.po_number: 17 nomor unik (tidak ada duplikat)\n      \n      \u001b[96m\u001b[1mL3 — Invarian INTENT lintas-endpoint (KPI dashboard == sumber data)\u001b[0m\n        \u001b[92m[PASS]\u001b[0m dashboard: products KPI 20 == /products 20\n        \u001b[92m[PASS]\u001b[0m dashboard: available KPI 4189.82 == Σbalances 4189.82\n        \u001b[92m[PASS]\u001b[0m dashboard: reserved KPI 226.0 == Σbalances 226.0\n        \u001b[92m[PASS]\u001b[0m orders: stats total 15 == /sales-orders 15\n        \u001b[92m[PASS]\u001b[0m dashboard: active_orders KPI 13 == hitung penuh 13\n      \n      \u001b[1m================================================================\u001b[0m\n        \u001b[92mPASS 246\u001b[0m  |  \u001b[91mFAIL 1\u001b[0m  |  \u001b[93mWARN 2\u001b[0m\n        \u001b[91m\u001b[1mINTEGRITY VIOLATION — blokir seed/deploy sampai diperbaiki.\u001b[0m\n      \n      \n    assert ('FAIL 0' in '\\x1b[1m\\x1b[96m================================================================\\x1b[0m\\n\\x1b[1m  KN3 — DATA INTEGRITY...[0m  |  \\x1b[93mWARN 2\\x1b[0m\\n  \\x1b[91m\\x1b[1mINTEGRITY VIOLATION — blokir seed/deploy sampai diperbaiki.\\x1b[0m\\n\\n')\n/app/backend/tests/test_g6b_poc.py:588: AssertionError:  nol di kedua sisi)\n=========================== short test summary info ============================\nFAILED tests/test_g6b_poc.py::test_a2_siklus_faktur_pajak_internal_penuh - As...\nFAILED tests/test_g6b_poc.py::test_b3_siklus_retur_demo_penuh - AssertionErro...\nFAILED tests/test_g6b_poc.py::test_e2_invarian_global_hijau_dan_nol_residu - ...\n3 failed, 12 passed, 1 skipped in 10.04s\n"
+  },
+  {
+   "file": "backend/tests/test_gelombang1_gl_integrity.py",
+   "mode": "pytest",
+   "rc": 1,
+   "timeout": false,
+   "dur": 2.1,
+   "passed": 8,
+   "total": 18,
+   "errors": [
+    "FAILED tests/test_gelombang1_gl_integrity.py::TestFlow2_GoodsReceipt_GL::test_a_create_po",
+    "FAILED tests/test_gelombang1_gl_integrity.py::TestFlow2_GoodsReceipt_GL::test_b_approve_if_needed",
+    "FAILED tests/test_gelombang1_gl_integrity.py::TestFlow2_GoodsReceipt_GL::test_c_scan_receive"
+   ],
+   "tail": "y.py:173: AssertionError: Flow 2 belum jalan.\nE   KeyError: 'po'\n/app/backend/tests/test_gelombang1_gl_integrity.py:177: KeyError: 'po'\nE   KeyError: 'bill'\n/app/backend/tests/test_gelombang1_gl_integrity.py:208: KeyError: 'bill'\nE   KeyError: 'bill'\n/app/backend/tests/test_gelombang1_gl_integrity.py:218: KeyError: 'bill'\nE   KeyError: 'bill'\n/app/backend/tests/test_gelombang1_gl_integrity.py:256: KeyError: 'bill'\n=========================== short test summary info ============================\nFAILED tests/test_gelombang1_gl_integrity.py::TestFlow2_GoodsReceipt_GL::test_a_create_po\nFAILED tests/test_gelombang1_gl_integrity.py::TestFlow2_GoodsReceipt_GL::test_b_approve_if_needed\nFAILED tests/test_gelombang1_gl_integrity.py::TestFlow2_GoodsReceipt_GL::test_c_scan_receive\nFAILED tests/test_gelombang1_gl_integrity.py::TestFlow2_GoodsReceipt_GL::test_d_complete_and_verify_gl\nFAILED tests/test_gelombang1_gl_integrity.py::TestFlow2_GoodsReceipt_GL::test_e_idempotency_check\nFAILED tests/test_gelombang1_gl_integrity.py::TestFlow3_VendorBill_GL::test_a_prerequisite\nFAILED tests/test_gelombang1_gl_integrity.py::TestFlow3_VendorBill_GL::test_b_create_and_submit_bill\nFAILED tests/test_gelombang1_gl_integrity.py::TestFlow3_VendorBill_GL::test_c_approve_if_pending\nFAILED tests/test_gelombang1_gl_integrity.py::TestFlow3_VendorBill_GL::test_d_verify_gl_posted\nFAILED tests/test_gelombang1_gl_integrity.py::TestFlow3_VendorBill_GL::test_e_pay_bill_and_verify_cash_je\n10 failed, 8 passed in 1.77s\n"
+  },
+  {
+   "file": "backend/tests/test_gelombang3_auth_ppn12.py",
+   "mode": "pytest",
+   "rc": 1,
+   "timeout": false,
+   "dur": 21.4,
+   "passed": 10,
+   "total": 11,
+   "errors": [
+    "FAILED tests/test_gelombang3_auth_ppn12.py::TestSalesOrderGL::test_payment_creates_balanced_je_with_revenue_equals_grand_minus_ppn"
+   ],
+   "tail": ".........Fss.                                                            [100%]\n=================================== FAILURES ===================================\nE   AssertionError: JE sales_order tidak ditemukan untuk so_a7c924ae48a1\n    assert None is not None\n/app/backend/tests/test_gelombang3_auth_ppn12.py:256: AssertionError: JE sales_order tidak ditemukan untuk so_a7c924ae48a1\n=========================== short test summary info ============================\nFAILED tests/test_gelombang3_auth_ppn12.py::TestSalesOrderGL::test_payment_creates_balanced_je_with_revenue_equals_grand_minus_ppn\n1 failed, 10 passed, 2 skipped in 21.04s\n"
+  },
+  {
+   "file": "backend/tests/test_interco_g6.py",
+   "mode": "pytest",
+   "rc": 1,
+   "timeout": false,
+   "dur": 2.0,
+   "passed": 7,
+   "total": 13,
+   "errors": [
+    "FAILED tests/test_interco_g6.py::test_05_fixed_price_without_contract_rejected",
+    "FAILED tests/test_interco_g6.py::test_08_gl_entries_balanced_and_correct_accounts",
+    "FAILED tests/test_interco_g6.py::test_09_ship_receive_invoice_cycle - Asserti..."
+   ],
+   "tail": "batasi netting sebesar piutang balik.\"}\n    assert 400 == 200\n     +  where 400 = <Response [400]>.status_code\n/app/backend/tests/test_interco_g6.py:206: AssertionError: {\"detail\":\"Netting Rp 200.000 melebihi piutang balik ent_kanda→ent_ksc yang terbuka (Rp 0). Pilih metode transfer/kas, atau batasi netting sebesar piutang balik.\"}\nE   AssertionError: {\"detail\":\"Netting Rp 555.000 melebihi piutang balik ent_kanda→ent_ksc yang terbuka (Rp 0). Pilih metode transfer/kas, atau batasi netting sebesar piutang balik.\"}\n    assert 400 == 200\n     +  where 400 = <Response [400]>.status_code\n/app/backend/tests/test_interco_g6.py:233: AssertionError: {\"detail\":\"Netting Rp 555.000 melebihi piutang balik ent_kanda→ent_ksc yang terbuka (Rp 0). Pilih metode transfer/kas, atau batasi netting sebesar piutang balik.\"}\nE   assert 0 >= 2\n     +  where 0 = len([])\n/app/backend/tests/test_interco_g6.py:255: assert 0 >= 2\n=========================== short test summary info ============================\nFAILED tests/test_interco_g6.py::test_05_fixed_price_without_contract_rejected\nFAILED tests/test_interco_g6.py::test_08_gl_entries_balanced_and_correct_accounts\nFAILED tests/test_interco_g6.py::test_09_ship_receive_invoice_cycle - Asserti...\nFAILED tests/test_interco_g6.py::test_10_partial_settlement - AssertionError:...\nFAILED tests/test_interco_g6.py::test_11_full_settlement_marks_settled - Asse...\nFAILED tests/test_interco_g6.py::test_12_list_settlements - assert 0 >= 2\n6 failed, 7 passed in 1.37s\n"
+  },
+  {
+   "file": "backend/tests/test_iter252_critical_cross_entity.py",
+   "mode": "pytest",
+   "rc": 1,
+   "timeout": false,
+   "dur": 3.4,
+   "passed": 6,
+   "total": 9,
+   "errors": [
+    "FAILED tests/test_iter252_critical_cross_entity.py::test_recon_shows_kanda_drift_900k",
+    "FAILED tests/test_iter252_critical_cross_entity.py::test_drift_explain_kanda_has_pointing_suspect",
+    "FAILED tests/test_iter252_critical_cross_entity.py::test_critical_kanda_drift_visible_under_ksc_context"
+   ],
+   "tail": "backend/tests/test_iter252_critical_cross_entity.py:52: AssertionError: expected Δ Rp 900.000 for Kanda, got -1760000.0\nE   AssertionError: expected nilai_cocok_selisih; got {'tanpa_jurnal', 'true_up_sebelumnya', 'roll_tanpa_hpp'}\n    assert 'nilai_cocok_selisih' in {'roll_tanpa_hpp', 'tanpa_jurnal', 'true_up_sebelumnya'}\n/app/backend/tests/test_iter252_critical_cross_entity.py:68: AssertionError: expected nilai_cocok_selisih; got {'tanpa_jurnal', 'true_up_sebelumnya', 'roll_tanpa_hpp'}\nE   AssertionError: assert '900' in 'Persediaan berselisih Rp 1.760.000 — CV Kanda Suka Nilai fisik (roll × HPP): Rp 1.840.000\\nSaldo GL 1-1300: Rp 3.600....n untuk menelusuri penyebabnya SEBELUM memposting true-up: true-up menyamakan angka, ia tidak menjelaskan penyebabnya.'\n/app/backend/tests/test_iter252_critical_cross_entity.py:83: AssertionError: assert '900' in 'Persediaan berselisih Rp 1.760.000 — CV Kanda Suka Nilai fisik (roll × HPP): Rp 1.840.000\\nSaldo GL 1-1300: Rp 3.600....n untuk menelusuri penyebabnya SEBELUM memposting true-up: true-up menyamakan angka, ia tidak menjelaskan penyebabnya.'\n=========================== short test summary info ============================\nFAILED tests/test_iter252_critical_cross_entity.py::test_recon_shows_kanda_drift_900k\nFAILED tests/test_iter252_critical_cross_entity.py::test_drift_explain_kanda_has_pointing_suspect\nFAILED tests/test_iter252_critical_cross_entity.py::test_critical_kanda_drift_visible_under_ksc_context\n3 failed, 6 passed in 3.04s\n"
+  },
+  {
+   "file": "backend/tests/test_iter253_session_2026_06b.py",
+   "mode": "pytest",
+   "rc": 1,
+   "timeout": false,
+   "dur": 2.8,
+   "passed": 6,
+   "total": 7,
+   "errors": [
+    "FAILED tests/test_iter253_session_2026_06b.py::test_finance_home_boards - ass..."
+   ],
+   "tail": ".....F.                                                                  [100%]\n=================================== FAILURES ===================================\nE   assert 403 == 200\n     +  where 403 = <Response [403]>.status_code\n/app/backend/tests/test_iter253_session_2026_06b.py:131: assert 403 == 200\n=========================== short test summary info ============================\nFAILED tests/test_iter253_session_2026_06b.py::test_finance_home_boards - ass...\n1 failed, 6 passed in 2.57s\n"
+  },
+  {
+   "file": "backend/tests/test_iter258_purchase_e2e_and_recon.py",
+   "mode": "pytest",
+   "rc": 1,
+   "timeout": false,
+   "dur": 3.4,
+   "passed": 4,
+   "total": 13,
+   "errors": [
+    "FAILED tests/test_iter258_purchase_e2e_and_recon.py::TestRantaiBeli::test_03_create_po",
+    "FAILED tests/test_iter258_purchase_e2e_and_recon.py::TestRantaiBeli::test_04_po_approve_sod",
+    "FAILED tests/test_iter258_purchase_e2e_and_recon.py::TestRantaiBeli::test_05_find_inbound_task"
+   ],
+   "tail": " 'po_id'\nE   KeyError: 'vb_id'\n/app/backend/tests/test_iter258_purchase_e2e_and_recon.py:270: KeyError: 'vb_id'\nE   KeyError: 'po_id'\n/app/backend/tests/test_iter258_purchase_e2e_and_recon.py:291: KeyError: 'po_id'\nE   AssertionError: entity ent_ksc drift 3219000.01 > Rp 1\n    assert 3219000.01 <= (1.0 + 0.005)\n     +  where 3219000.01 = abs(3219000.01)\n     +    where 3219000.01 = float(3219000.01)\n/app/backend/tests/test_iter258_purchase_e2e_and_recon.py:362: AssertionError: entity ent_ksc drift 3219000.01 > Rp 1\n=========================== short test summary info ============================\nFAILED tests/test_iter258_purchase_e2e_and_recon.py::TestRantaiBeli::test_03_create_po\nFAILED tests/test_iter258_purchase_e2e_and_recon.py::TestRantaiBeli::test_04_po_approve_sod\nFAILED tests/test_iter258_purchase_e2e_and_recon.py::TestRantaiBeli::test_05_find_inbound_task\nFAILED tests/test_iter258_purchase_e2e_and_recon.py::TestRantaiBeli::test_06_scan_receive_and_complete\nFAILED tests/test_iter258_purchase_e2e_and_recon.py::TestRantaiBeli::test_07_verify_roll_created\nFAILED tests/test_iter258_purchase_e2e_and_recon.py::TestRantaiBeli::test_08_create_vendor_bill\nFAILED tests/test_iter258_purchase_e2e_and_recon.py::TestRantaiBeli::test_09_vb_approve_sod\nFAILED tests/test_iter258_purchase_e2e_and_recon.py::TestRantaiBeli::test_10_journals_balanced\nFAILED tests/test_iter258_purchase_e2e_and_recon.py::TestReconPrecision::test_no_new_drift_beyond_rp1\n9 failed, 4 passed, 2 skipped in 3.11s\n"
+  },
+  {
+   "file": "backend/tests/test_iter266_r6_cc_r7.py",
+   "mode": "pytest",
+   "rc": 1,
+   "timeout": false,
+   "dur": 3.0,
+   "passed": 22,
+   "total": 31,
+   "errors": [
+    "FAILED tests/test_iter266_r6_cc_r7.py::TestR6Incidents::test_01_ingest_red_creates_incident",
+    "FAILED tests/test_iter266_r6_cc_r7.py::TestR6Incidents::test_02_dedupe_10_minutes",
+    "FAILED tests/test_iter266_r6_cc_r7.py::TestR6Incidents::test_03_acknowledge"
+   ],
+   "tail": "test_iter266_r6_cc_r7.py:121: KeyError: 'inc_id'\nE   KeyError: 'inc_id'\n/app/backend/tests/test_iter266_r6_cc_r7.py:126: KeyError: 'inc_id'\nE   KeyError: 'red_epc'\n/app/backend/tests/test_iter266_r6_cc_r7.py:143: KeyError: 'red_epc'\nE   assert ([])\n/app/backend/tests/test_iter266_r6_cc_r7.py:158: assert ([])\nE   AssertionError: {'gate_exception_rolls': 0, 'incidents_open': 1, 'red_reads': 1}\n    assert 1 >= 3\n/app/backend/tests/test_iter266_r6_cc_r7.py:171: AssertionError: {'gate_exception_rolls': 0, 'incidents_open': 1, 'red_reads': 1}\nE   KeyError: 'gate_key'\n/app/backend/tests/test_iter266_r6_cc_r7.py:186: KeyError: 'gate_key'\n=========================== short test summary info ============================\nFAILED tests/test_iter266_r6_cc_r7.py::TestR6Incidents::test_01_ingest_red_creates_incident\nFAILED tests/test_iter266_r6_cc_r7.py::TestR6Incidents::test_02_dedupe_10_minutes\nFAILED tests/test_iter266_r6_cc_r7.py::TestR6Incidents::test_03_acknowledge\nFAILED tests/test_iter266_r6_cc_r7.py::TestR6Incidents::test_04_ack_twice_is_400\nFAILED tests/test_iter266_r6_cc_r7.py::TestR6Incidents::test_05_resolve - Key...\nFAILED tests/test_iter266_r6_cc_r7.py::TestR6Incidents::test_07_gate_simulate_still_creates_incident\nFAILED tests/test_iter266_r6_cc_r7.py::TestR6Incidents::test_08_filter_by_warehouse\nFAILED tests/test_iter266_r6_cc_r7.py::TestR6Reports::test_01_shrinkage_report\nFAILED tests/test_iter266_r6_cc_r7.py::TestR6Reports::test_03_device_health\n9 failed, 22 passed in 2.23s\n"
+  },
+  {
+   "file": "backend/tests/test_iter267_notif_health_multileg.py",
+   "mode": "pytest",
+   "rc": 1,
+   "timeout": false,
+   "dur": 3.4,
+   "passed": 8,
+   "total": 18,
+   "errors": [
+    "FAILED tests/test_iter267_notif_health_multileg.py::TestHealthDashboard::test_shape_and_totals",
+    "FAILED tests/test_iter267_notif_health_multileg.py::TestGateAlarmNotification::test_red_read_creates_critical_notification",
+    "FAILED tests/test_iter267_notif_health_multileg.py::TestGateAlarmNotification::test_repeat_read_dedupes_incident_and_notification"
+   ],
+   "tail": "r: test relocate belum jalan\nE   AssertionError: leg utama hilang\n    assert (None)\n/app/backend/tests/test_iter267_notif_health_multileg.py:296: AssertionError: leg utama hilang\nE   assert None\n/app/backend/tests/test_iter267_notif_health_multileg.py:304: assert None\n=========================== short test summary info ============================\nFAILED tests/test_iter267_notif_health_multileg.py::TestHealthDashboard::test_shape_and_totals\nFAILED tests/test_iter267_notif_health_multileg.py::TestGateAlarmNotification::test_red_read_creates_critical_notification\nFAILED tests/test_iter267_notif_health_multileg.py::TestGateAlarmNotification::test_repeat_read_dedupes_incident_and_notification\nFAILED tests/test_iter267_notif_health_multileg.py::TestReturnMultiLeg::test_relocate_moves_rolls_and_records_leg\nFAILED tests/test_iter267_notif_health_multileg.py::TestReturnMultiLeg::test_second_relocate_rejected\nFAILED tests/test_iter267_notif_health_multileg.py::TestReturnMultiLeg::test_relocate_unknown_warehouse\nFAILED tests/test_iter267_notif_health_multileg.py::TestReturnMultiLeg::test_relocate_blocked_in_all_entities_scope\nFAILED tests/test_iter267_notif_health_multileg.py::TestReturnMultiLeg::test_journey_timeline_shows_relocation\nFAILED tests/test_iter267_notif_health_multileg.py::TestReturnMultiLeg::test_existing_legs_persisted_sret_958\nFAILED tests/test_iter267_notif_health_multileg.py::TestReturnMultiLeg::test_balances_non_negative_after_relocation\n10 failed, 8 passed in 2.74s\n"
+  },
+  {
+   "file": "backend/tests/test_iter272_blanket_unit.py",
+   "mode": "pytest",
+   "rc": 1,
+   "timeout": false,
+   "dur": 1.1,
+   "passed": 0,
+   "total": 3,
+   "errors": [
+    "FAILED tests/test_iter272_blanket_unit.py::TestBlanketUnitValidation::test_bogus_unit_rejected",
+    "FAILED tests/test_iter272_blanket_unit.py::TestBlanketUnitValidation::test_master_unit_accepted_and_persisted",
+    "FAILED tests/test_iter272_blanket_unit.py::TestBlanketUnitValidation::test_call_off_unit_mismatch_rejected"
+   ],
+   "tail": "transaksi melahirkan dokumen KEMBAR di kedua badan usaha, harganya diambil dari kontrak internal, PPN & faktur pajaknya berpasangan, dan margin antar-PT ikut dieliminasi di laporan konsolidasi. Bila dicatat sebagai \n    assert 409 in (200, 201)\n     +  where 409 = <Response [409]>.status_code\n/app/backend/tests/test_iter272_blanket_unit.py:94: AssertionError: 409: {\"detail\":\"“PT Uji Provisioning F26684” adalah badan usaha di dalam grup Anda, bukan pemasok luar — jadi Kontrak Blanket PO biasa tidak bisa dipakai. Catat pembeliannya lewat Pembelian → Hutang Supplier → **Antar Entitas** → Transaksi Baru (pilih F26684 sebagai penjual). Di sana satu transaksi melahirkan dokumen KEMBAR di kedua badan usaha, harganya diambil dari kontrak internal, PPN & faktur pajaknya berpasangan, dan margin antar-PT ikut dieliminasi di laporan konsolidasi. Bila dicatat sebagai\nE   AssertionError: needs blanket from previous test\n    assert []\n     +  where [] = TestBlanketUnitValidation.created\n/app/backend/tests/test_iter272_blanket_unit.py:109: AssertionError: needs blanket from previous test\n=========================== short test summary info ============================\nFAILED tests/test_iter272_blanket_unit.py::TestBlanketUnitValidation::test_bogus_unit_rejected\nFAILED tests/test_iter272_blanket_unit.py::TestBlanketUnitValidation::test_master_unit_accepted_and_persisted\nFAILED tests/test_iter272_blanket_unit.py::TestBlanketUnitValidation::test_call_off_unit_mismatch_rejected\n3 failed in 0.80s\n"
+  },
+  {
+   "file": "backend/tests/test_iter273_approval_rules.py",
+   "mode": "pytest",
+   "rc": 1,
+   "timeout": false,
+   "dur": 2.5,
+   "passed": 11,
+   "total": 12,
+   "errors": [
+    "FAILED tests/test_iter273_approval_rules.py::TestListContract::test_list_has_engine_schema_and_sorted"
+   ],
+   "tail": "F...........                                                             [100%]\n=================================== FAILURES ===================================\nE   AssertionError: expected >=9 seed rules, got 7\n    assert 7 >= 9\n     +  where 7 = len([{'active': True, 'created_at': '2026-09-05T16:42:31.569981+00:00', 'doc_type': 'discount', 'entity_id': 'all', ...}, ...e, 'created_at': '2026-09-05T16:42:31.570013+00:00', 'doc_type': 'purchase_requisition', 'entity_id': 'all', ...}, ...])\n/app/backend/tests/test_iter273_approval_rules.py:50: AssertionError: expected >=9 seed rules, got 7\n=========================== short test summary info ============================\nFAILED tests/test_iter273_approval_rules.py::TestListContract::test_list_has_engine_schema_and_sorted\n1 failed, 11 passed in 2.18s\n"
+  },
+  {
+   "file": "backend/tests/test_iter275_g1_admin_sales_audit.py",
+   "mode": "pytest",
+   "rc": 1,
+   "timeout": false,
+   "dur": 48.7,
+   "passed": 44,
+   "total": 46,
+   "errors": [
+    "FAILED tests/test_iter275_g1_admin_sales_audit.py::TestOrientasi::test_desk_finance_5_antrean",
+    "FAILED tests/test_iter275_g1_admin_sales_audit.py::TestAlurA::test_a0_sales_portfolio_visibility"
+   ],
+   "tail": ".F....F...........s....................s....s...s.                       [100%]\n=================================== FAILURES ===================================\nE   AssertionError: ['siap_faktur_pajak', 'uang_masuk', 'selisih_bayar', 'denda_draft', 'jatuh_tempo', 'hutang_jatuh_tempo', ...]\n    assert 7 == 5\n     +  where 7 = len([{'action_label': 'Terbitkan', 'count': 2, 'hint': 'Pesanan ber-PPN yang belum punya faktur pajak keluaran aktif.', 'i...yang sudah lewat / ≤7 hari menuju jatuh tempo bayar (termin kontrak/supplier).', 'id': 'hutang_jatuh_tempo', ...}, ...])\n/app/backend/tests/test_iter275_g1_admin_sales_audit.py:97: AssertionError: ['siap_faktur_pajak', 'uang_masuk', 'selisih_bayar', 'denda_draft', 'jatuh_tempo', 'hutang_jatuh_tempo', ...]\nE   AssertionError: DEVIASI: sales@ tidak melihat Butik Bali Indah; hanya ['cust_toko_kain']\n    assert 'cust_butik_bali' in {'cust_toko_kain'}\n/app/backend/tests/test_iter275_g1_admin_sales_audit.py:146: AssertionError: DEVIASI: sales@ tidak melihat Butik Bali Indah; hanya ['cust_toko_kain']\n=========================== short test summary info ============================\nFAILED tests/test_iter275_g1_admin_sales_audit.py::TestOrientasi::test_desk_finance_5_antrean\nFAILED tests/test_iter275_g1_admin_sales_audit.py::TestAlurA::test_a0_sales_portfolio_visibility\n2 failed, 44 passed, 4 skipped in 48.39s\n"
+  },
+  {
+   "file": "backend/tests/test_iter276_g2_md_audit.py",
+   "mode": "pytest",
+   "rc": 1,
+   "timeout": false,
+   "dur": 37.1,
+   "passed": 47,
+   "total": 50,
+   "errors": [
+    "FAILED tests/test_iter276_g2_md_audit.py::TestAlurG::test_G3_setujui_pr_lalu_realisasikan_jadi_po",
+    "FAILED tests/test_iter276_g2_md_audit.py::TestAlurG::test_G4_po_baru_tampil_di_papan",
+    "FAILED tests/test_iter276_g2_md_audit.py::TestAlurD::test_D1_tiga_od_demo - A..."
+   ],
+   "tail": "pembeliannya lewat Pembelian → Hutang Supplier → **Antar Entitas** → Transaksi Baru (pilih F26684 sebagai penjual). Di sana satu transaksi melahirkan dokumen KEMBAR di kedua badan usaha, harganya diambil dari kontrak internal, PPN & faktur pajaknya berpasangan, dan margin antar-PT ikut dieliminasi di laporan konsolidasi. Bila dicatat sebagai Pesanan Pembelian (PO) hasil realisasi PR biasa, laba grup akan terlihat LEBIH BESAR dari kenyataan karena margin ke F26684 tidak pernah dihapus.\nE   KeyError: 'po_id'\n/app/backend/tests/test_iter276_g2_md_audit.py:159: KeyError: 'po_id'\nE   AssertionError: OD demo=1 (dokumen: 3)\n    assert 1 >= 3\n     +  where 1 = len([{'approval_threshold': 10000000, 'created_at': '2026-09-05T16:42:31.642067+00:00', 'created_by': 'sales@kainnusantara...missima 100% katun', 'lebar': '110 cm', 'motif': 'Parang Rusak Barong', 'panjang': '12 yard per rol', ...}, ...}, ...}])\n----------------------------- Captured stdout call -----------------------------\nD1 OD demo=1 status=['draft'] ambang=10000000\n/app/backend/tests/test_iter276_g2_md_audit.py:685: AssertionError: OD demo=1 (dokumen: 3)\n=========================== short test summary info ============================\nFAILED tests/test_iter276_g2_md_audit.py::TestAlurG::test_G3_setujui_pr_lalu_realisasikan_jadi_po\nFAILED tests/test_iter276_g2_md_audit.py::TestAlurG::test_G4_po_baru_tampil_di_papan\nFAILED tests/test_iter276_g2_md_audit.py::TestAlurD::test_D1_tiga_od_demo - A...\n3 failed, 47 passed in 36.75s\n"
+  },
+  {
+   "file": "backend/tests/test_iter277_gates_pin_isolation.py",
+   "mode": "pytest",
+   "rc": 1,
+   "timeout": false,
+   "dur": 7.8,
+   "passed": 14,
+   "total": 15,
+   "errors": [
+    "FAILED tests/test_iter277_gates_pin_isolation.py::TestT2_InternalRequests::test_T2c_convert_creates_interco_pair"
+   ],
+   "tail": "......F........                                                          [100%]\n=================================== FAILURES ===================================\nE   AssertionError: {\"detail\":\"Permintaan KSC/PIN-00001 sudah “Jadi transaksi antar-PT” sehingga tidak bisa diproses lagi.\"}\n    assert 400 == 200\n     +  where 400 = <Response [400]>.status_code\n----------------------------- Captured stdout call -----------------------------\nT2c convert: 400 {\"detail\":\"Permintaan KSC/PIN-00001 sudah “Jadi transaksi antar-PT” sehingga tidak bisa diproses lagi.\"}\n/app/backend/tests/test_iter277_gates_pin_isolation.py:217: AssertionError: {\"detail\":\"Permintaan KSC/PIN-00001 sudah “Jadi transaksi antar-PT” sehingga tidak bisa diproses lagi.\"}\n=========================== short test summary info ============================\nFAILED tests/test_iter277_gates_pin_isolation.py::TestT2_InternalRequests::test_T2c_convert_creates_interco_pair\n1 failed, 14 passed in 7.55s\n"
+  },
+  {
+   "file": "backend/tests/test_iter284_pb01_md02_md08.py",
+   "mode": "pytest",
+   "rc": 1,
+   "timeout": false,
+   "dur": 1.7,
+   "passed": 6,
+   "total": 13,
+   "errors": [
+    "FAILED tests/test_iter284_pb01_md02_md08.py::test_pb01_blanket_create_ok - As...",
+    "FAILED tests/test_iter284_pb01_md02_md08.py::test_pb01_blanket_inherits_supplier_term_when_missing",
+    "FAILED tests/test_iter284_pb01_md02_md08.py::test_pb01_blanket_invalid_term_code"
+   ],
+   "tail": "ject at 0xfdee818dd340> = {'detail': 'Supplier tidak ditemukan'}.get\n/app/backend/tests/test_iter284_pb01_md02_md08.py:117: AssertionError: assert None is True\nE   AssertionError: {'code': 'KN-WHT-01', 'created_at': '2026-02-17T16:42:30.896322+00:00', 'created_by': 'Seed', 'factory_name': '', ...}\n    assert ((0 or 0)) >= 1\n     +  where 0 = <built-in method get of dict object at 0xfdee817340c0>('labdip_overdue_count')\n     +    where <built-in method get of dict object at 0xfdee817340c0> = {'code': 'KN-WHT-01', 'created_at': '2026-02-17T16:42:30.896322+00:00', 'created_by': 'Seed', 'factory_name': '', ...}.get\n/app/backend/tests/test_iter284_pb01_md02_md08.py:223: AssertionError: {'code': 'KN-WHT-01', 'created_at': '2026-02-17T16:42:30.896322+00:00', 'created_by': 'Seed', 'factory_name': '', ...}\n=========================== short test summary info ============================\nFAILED tests/test_iter284_pb01_md02_md08.py::test_pb01_blanket_create_ok - As...\nFAILED tests/test_iter284_pb01_md02_md08.py::test_pb01_blanket_inherits_supplier_term_when_missing\nFAILED tests/test_iter284_pb01_md02_md08.py::test_pb01_blanket_invalid_term_code\nFAILED tests/test_iter284_pb01_md02_md08.py::test_pb01_blanket_invalid_tax_mode\nFAILED tests/test_iter284_pb01_md02_md08.py::test_pb01_call_off_excluded - Ke...\nFAILED tests/test_iter284_pb01_md02_md08.py::test_pb01_call_off_included - As...\nFAILED tests/test_iter284_pb01_md02_md08.py::test_color_library_labdip_overdue\n7 failed, 6 passed in 1.41s\n"
+  },
+  {
+   "file": "backend/tests/test_iter285_feedback_export_hutang.py",
+   "mode": "pytest",
+   "rc": 1,
+   "timeout": false,
+   "dur": 3.8,
+   "passed": 16,
+   "total": 17,
+   "errors": [
+    "FAILED tests/test_iter285_feedback_export_hutang.py::test_finance_desk_hutang_jatuh_tempo"
+   ],
+   "tail": "..............F..                                                        [100%]\n=================================== FAILURES ===================================\nE   AssertionError: expected >=2, got 0: {'id': 'hutang_jatuh_tempo', 'label': 'Hutang supplier jatuh tempo', 'hint': 'PO belum lunas yang sudah lewat / ≤7 hari menuju jatuh tempo bayar (termin kontrak/supplier).', 'owner': 'finance', 'count': 0, 'total_value': 0, 'value_kind': 'money', 'value_label': 'Nilai', 'oldest_age_days': 0, 'action_label': 'Bayar', 'rows': []}\n    assert 0 >= 2\n/app/backend/tests/test_iter285_feedback_export_hutang.py:254: AssertionError: expected >=2, got 0: {'id': 'hutang_jatuh_tempo', 'label': 'Hutang supplier jatuh tempo', 'hint': 'PO belum lunas yang sudah lewat / ≤7 hari menuju jatuh tempo bayar (termin kontrak/supplier).', 'owner': 'finance', 'count': 0, 'total_value': 0, 'value_kind': 'money', 'value_label': 'Nilai', 'oldest_age_days': 0, 'action_label': 'Bayar', 'rows': []}\n=========================== short test summary info ============================\nFAILED tests/test_iter285_feedback_export_hutang.py::test_finance_desk_hutang_jatuh_tempo\n1 failed, 16 passed in 3.48s\n"
+  },
+  {
+   "file": "backend/tests/test_iter288_logistics_gps.py",
+   "mode": "pytest",
+   "rc": 1,
+   "timeout": false,
+   "dur": 1.9,
+   "passed": 6,
+   "total": 10,
+   "errors": [
+    "FAILED tests/test_iter288_logistics_gps.py::TestPositionGps::test_delivery_precondition",
+    "FAILED tests/test_iter288_logistics_gps.py::TestPositionGps::test_post_position_with_latlng",
+    "FAILED tests/test_iter288_logistics_gps.py::TestPositionGps::test_post_position_without_latlng"
+   ],
+   "tail": "LURES ===================================\nE   AssertionError: {\"detail\":\"Pengiriman tidak ditemukan.\"}\n    assert 404 == 200\n     +  where 404 = <Response [404]>.status_code\n/app/backend/tests/test_iter288_logistics_gps.py:42: AssertionError: {\"detail\":\"Pengiriman tidak ditemukan.\"}\nE   AssertionError: 404 {\"detail\":\"Pengiriman tidak ditemukan.\"}\n    assert 404 == 200\n     +  where 404 = <Response [404]>.status_code\n/app/backend/tests/test_iter288_logistics_gps.py:52: AssertionError: 404 {\"detail\":\"Pengiriman tidak ditemukan.\"}\nE   AssertionError: 404 {\"detail\":\"Pengiriman tidak ditemukan.\"}\n    assert 404 == 200\n     +  where 404 = <Response [404]>.status_code\n/app/backend/tests/test_iter288_logistics_gps.py:69: AssertionError: 404 {\"detail\":\"Pengiriman tidak ditemukan.\"}\nE   AssertionError: {\"detail\":\"Pengiriman tidak ditemukan.\"}\n    assert 404 == 200\n     +  where 404 = <Response [404]>.status_code\n/app/backend/tests/test_iter288_logistics_gps.py:92: AssertionError: {\"detail\":\"Pengiriman tidak ditemukan.\"}\n=========================== short test summary info ============================\nFAILED tests/test_iter288_logistics_gps.py::TestPositionGps::test_delivery_precondition\nFAILED tests/test_iter288_logistics_gps.py::TestPositionGps::test_post_position_with_latlng\nFAILED tests/test_iter288_logistics_gps.py::TestPositionGps::test_post_position_without_latlng\nFAILED tests/test_iter288_logistics_gps.py::TestSalesReadOnly::test_sales_can_read_detail\n4 failed, 6 passed in 1.59s\n"
+  },
+  {
+   "file": "backend/tests/test_iter289_driver_today.py",
+   "mode": "pytest",
+   "rc": 1,
+   "timeout": false,
+   "dur": 3.4,
+   "passed": 11,
+   "total": 15,
+   "errors": [
+    "FAILED tests/test_iter289_driver_today.py::TestMine::test_driver_only_own - A...",
+    "FAILED tests/test_iter289_driver_today.py::TestMyRoute::test_reverse_and_persist_then_restore",
+    "FAILED tests/test_iter289_driver_today.py::TestMyRoute::test_foreign_ids_ignored"
+   ],
+   "tail": "....F...FF....Fs                                                         [100%]\n=================================== FAILURES ===================================\nE   AssertionError: driver should have deliveries\n    assert []\n/app/backend/tests/test_iter289_driver_today.py:71: AssertionError: driver should have deliveries\nE   AssertionError: need >=2 active deliveries, got 0\n    assert 0 >= 2\n     +  where 0 = len([])\n/app/backend/tests/test_iter289_driver_today.py:98: AssertionError: need >=2 active deliveries, got 0\nE   AssertionError: {\"detail\":\"Tidak ada pengiriman milik Anda dalam daftar.\"}\n    assert 400 == 200\n     +  where 400 = <Response [400]>.status_code\n/app/backend/tests/test_iter289_driver_today.py:117: AssertionError: {\"detail\":\"Tidak ada pengiriman milik Anda dalam daftar.\"}\nE   StopIteration\n/app/backend/tests/test_iter289_driver_today.py:173: StopIteration\n=========================== short test summary info ============================\nFAILED tests/test_iter289_driver_today.py::TestMine::test_driver_only_own - A...\nFAILED tests/test_iter289_driver_today.py::TestMyRoute::test_reverse_and_persist_then_restore\nFAILED tests/test_iter289_driver_today.py::TestMyRoute::test_foreign_ids_ignored\nFAILED tests/test_iter289_driver_today.py::TestPatchDriverOnExisting::test_patch_unassign_then_reassign\n4 failed, 11 passed, 1 skipped in 3.07s\n"
+  },
+  {
+   "file": "backend/tests/test_iter291_audit_probes.py",
+   "mode": "pytest",
+   "rc": 1,
+   "timeout": false,
+   "dur": 5.2,
+   "passed": 20,
+   "total": 21,
+   "errors": [
+    "FAILED tests/test_iter291_audit_probes.py::TestDriverRbac::test_driver_can_act_on_delivery_not_assigned_to_him"
+   ],
+   "tail": "Fss...ss............ss.s....                                             [100%]\n=================================== FAILURES ===================================\nE   AssertionError: {\"detail\":[{\"type\":\"missing\",\"loc\":[\"body\",\"file\"],\"msg\":\"Field required\",\"input\":null,\"url\":\"https://errors.pydantic.dev/2.13/v/missing\"}]}\n    assert 422 in (200, 201, 403)\n     +  where 422 = <Response [422]>.status_code\n/app/backend/tests/test_iter291_audit_probes.py:91: AssertionError: {\"detail\":[{\"type\":\"missing\",\"loc\":[\"body\",\"file\"],\"msg\":\"Field required\",\"input\":null,\"url\":\"https://errors.pydantic.dev/2.13/v/missing\"}]}\n=========================== short test summary info ============================\nFAILED tests/test_iter291_audit_probes.py::TestDriverRbac::test_driver_can_act_on_delivery_not_assigned_to_him\n1 failed, 20 passed, 7 skipped in 4.91s\n"
+  },
+  {
+   "file": "backend/tests/test_iter292_f01_dispatch_gl.py",
+   "mode": "pytest",
+   "rc": 1,
+   "timeout": false,
+   "dur": 2.8,
+   "passed": 1,
+   "total": 2,
+   "errors": [
+    "FAILED tests/test_iter292_f01_dispatch_gl.py::test_f01_dispatch_posts_revenue_and_cogs"
+   ],
+   "tail": ".F                                                                       [100%]\n=================================== FAILURES ===================================\nE   AssertionError: no journal entry with source_type=sales_order for so_006 right after dispatch\n    assert []\n----------------------------- Captured stdout call -----------------------------\ninitial status: reserved\n/sales-orders/so_006/verify ok\n/sales-orders/so_006/confirm ok\n/wms/tasks/outbound-from-order/so_006 ok\ntasks: [{'id': 'wms_a10296ade1c9', 'quantity': 40.0, 'status': 'created'}, {'id': 'wms_867bbda2762a', 'quantity': 10.0, 'status': 'created'}]\nall tasks dispatched\n/app/backend/tests/test_iter292_f01_dispatch_gl.py:68: AssertionError: no journal entry with source_type=sales_order for so_006 right after dispatch\n=========================== short test summary info ============================\nFAILED tests/test_iter292_f01_dispatch_gl.py::test_f01_dispatch_posts_revenue_and_cogs\n1 failed, 1 passed in 2.00s\n"
+  },
+  {
+   "file": "backend/tests/test_iter298_kebpdpt_e2e.py",
+   "mode": "pytest",
+   "rc": 1,
+   "timeout": false,
+   "dur": 3.5,
+   "passed": 1,
+   "total": 15,
+   "errors": [
+    "FAILED tests/test_iter298_kebpdpt_e2e.py::TestAdvanceBeforeShipment::test_01_create_order_and_advance_receipt",
+    "FAILED tests/test_iter298_kebpdpt_e2e.py::TestAdvanceBeforeShipment::test_02_no_sales_order_je_before_shipment",
+    "FAILED tests/test_iter298_kebpdpt_e2e.py::TestAdvanceBeforeShipment::test_03_cash_je_credits_advance_not_receivable"
+   ],
+   "tail": "ter298_kebpdpt_e2e.py::TestAdvanceBeforeShipment::test_01_create_order_and_advance_receipt\nFAILED tests/test_iter298_kebpdpt_e2e.py::TestAdvanceBeforeShipment::test_02_no_sales_order_je_before_shipment\nFAILED tests/test_iter298_kebpdpt_e2e.py::TestAdvanceBeforeShipment::test_03_cash_je_credits_advance_not_receivable\nFAILED tests/test_iter298_kebpdpt_e2e.py::TestAdvanceBeforeShipment::test_04_journey_reports_advance_unrecognized\nFAILED tests/test_iter298_kebpdpt_e2e.py::TestAdvanceBeforeShipment::test_05_payment_tagged_advance\nFAILED tests/test_iter298_kebpdpt_e2e.py::TestAdvanceBeforeShipment::test_06_finance_desk_advance_queue\nFAILED tests/test_iter298_kebpdpt_e2e.py::TestDispatchRecognition::test_07_pick_and_dispatch\nFAILED tests/test_iter298_kebpdpt_e2e.py::TestDispatchRecognition::test_08_revenue_cogs_and_reclass_je\nFAILED tests/test_iter298_kebpdpt_e2e.py::TestDispatchRecognition::test_09_journey_recognized\nFAILED tests/test_iter298_kebpdpt_e2e.py::TestDispatchRecognition::test_10_idempotent_no_duplicate_je\nFAILED tests/test_iter298_kebpdpt_e2e.py::TestDispatchRecognition::test_11_finance_desk_no_longer_lists_order\nFAILED tests/test_iter298_kebpdpt_e2e.py::TestReceiptAfterShipment::test_12_receipt_after_shipment_credits_receivable\nFAILED tests/test_iter298_kebpdpt_e2e.py::TestVoidAdvanceReceipt::test_13_void_advance_receipt_reverses_reclass\nFAILED tests/test_iter298_kebpdpt_e2e.py::TestVoidAdvanceReceipt::test_14_advance_account_nets_to_zero\n14 failed, 1 passed in 2.92s\n"
+  },
+  {
+   "file": "backend/tests/test_iter299_prorata_advance_report.py",
+   "mode": "pytest",
+   "rc": 1,
+   "timeout": false,
+   "dur": 5.0,
+   "passed": 2,
+   "total": 20,
+   "errors": [
+    "FAILED tests/test_iter299_prorata_advance_report.py::TestPartialDispatchProrata::test_01_order_and_advance",
+    "FAILED tests/test_iter299_prorata_advance_report.py::TestPartialDispatchProrata::test_02_partial_dispatch",
+    "FAILED tests/test_iter299_prorata_advance_report.py::TestPartialDispatchProrata::test_03_shipment_revenue_prorata"
+   ],
+   "tail": "tests/test_iter299_prorata_advance_report.py::TestPartialDispatchProrata::test_05_advance_reclass_partial\nFAILED tests/test_iter299_prorata_advance_report.py::TestPartialDispatchProrata::test_06_journey_pct\nFAILED tests/test_iter299_prorata_advance_report.py::TestClosingShipment::test_07_dispatch_remainder\nFAILED tests/test_iter299_prorata_advance_report.py::TestClosingShipment::test_08_totals_exact\nFAILED tests/test_iter299_prorata_advance_report.py::TestClosingShipment::test_09_cogs_proportional\nFAILED tests/test_iter299_prorata_advance_report.py::TestClosingShipment::test_10_advance_reclass_full\nFAILED tests/test_iter299_prorata_advance_report.py::TestClosingShipment::test_11_journey_full_and_idempotent\nFAILED tests/test_iter299_prorata_advance_report.py::TestVoidAdvance::test_13_void_receipt\nFAILED tests/test_iter299_prorata_advance_report.py::TestVoidAdvance::test_14_advance_account_net_zero\nFAILED tests/test_iter299_prorata_advance_report.py::TestAdvanceReport::test_15_second_order_with_advance\nFAILED tests/test_iter299_prorata_advance_report.py::TestAdvanceReport::test_16_report_contents[admin@kainnusantara.id]\nFAILED tests/test_iter299_prorata_advance_report.py::TestAdvanceReport::test_16_report_contents[finance@kainnusantara.id]\nFAILED tests/test_iter299_prorata_advance_report.py::TestAdvanceReport::test_17_search_filter\nFAILED tests/test_iter299_prorata_advance_report.py::TestTrialBalance::test_20_finance_desk_partial_advance\n18 failed, 2 passed, 1 skipped in 4.49s\n"
+  },
+  {
+   "file": "backend/tests/test_iter305_hpp_from_po.py",
+   "mode": "pytest",
+   "rc": 1,
+   "timeout": false,
+   "dur": 2.0,
+   "passed": 5,
+   "total": 7,
+   "errors": [
+    "FAILED tests/test_iter305_hpp_from_po.py::TestHppEnrich::test_btk_mega_hpp_from_roll",
+    "FAILED tests/test_iter305_hpp_from_po.py::TestDashboardProductsCarryHpp::test_dashboard_products_include_hpp"
+   ],
+   "tail": ".F...F.                                                                  [100%]\n=================================== FAILURES ===================================\nE   AssertionError: hpp=122317.58 (harap ≈122387)\n    assert 69.41999999999825 < 50\n     +  where 69.41999999999825 = abs((122317.58 - 122387))\n     +    where 122317.58 = float(122317.58)\n/app/backend/tests/test_iter305_hpp_from_po.py:76: AssertionError: hpp=122317.58 (harap ≈122387)\nE   AssertionError: hpp dashboard=122317.58\n    assert 69.41999999999825 < 50\n     +  where 69.41999999999825 = abs((122317.58 - 122387))\n     +    where 122317.58 = float(122317.58)\n/app/backend/tests/test_iter305_hpp_from_po.py:148: AssertionError: hpp dashboard=122317.58\n=========================== short test summary info ============================\nFAILED tests/test_iter305_hpp_from_po.py::TestHppEnrich::test_btk_mega_hpp_from_roll\nFAILED tests/test_iter305_hpp_from_po.py::TestDashboardProductsCarryHpp::test_dashboard_products_include_hpp\n2 failed, 5 passed in 1.73s\n"
+  },
+  {
+   "file": "backend/tests/test_iter306_hpp_redaction_bootstrap.py",
+   "mode": "pytest",
+   "rc": 1,
+   "timeout": false,
+   "dur": 1.9,
+   "passed": 5,
+   "total": 6,
+   "errors": [
+    "FAILED tests/test_iter306_hpp_redaction_bootstrap.py::TestDashboardHpp::test_admin_dashboard_products_have_hpp"
+   ],
+   "tail": "F.....                                                                   [100%]\n=================================== FAILURES ===================================\nE   AssertionError: hpp=122317.58 (harap ~122387)\n    assert 69.41999999999825 < 1.0\n     +  where 69.41999999999825 = abs((122317.58 - 122387.0))\n     +    where 122317.58 = float(122317.58)\n/app/backend/tests/test_iter306_hpp_redaction_bootstrap.py:67: AssertionError: hpp=122317.58 (harap ~122387)\n=========================== short test summary info ============================\nFAILED tests/test_iter306_hpp_redaction_bootstrap.py::TestDashboardHpp::test_admin_dashboard_products_have_hpp\n1 failed, 5 passed in 1.57s\n"
+  },
+  {
+   "file": "backend/tests/test_m3_auto_elim_consolidation.py",
+   "mode": "pytest",
+   "rc": 1,
+   "timeout": false,
+   "dur": 2.8,
+   "passed": 9,
+   "total": 10,
+   "errors": [
+    "FAILED tests/test_m3_auto_elim_consolidation.py::TestConsolidationSummary::test_consolidation_impact_matches_ic_total"
+   ],
+   "tail": "....F.....                                                               [100%]\n=================================== FAILURES ===================================\nE   AssertionError: IC-AR (-12346998.04) must equal IC-AP (-8753898.0) in magnitude\n    assert 3593100.039999999 < 1.0\n     +  where 3593100.039999999 = abs((12346998.04 - 8753898.0))\n     +    where 12346998.04 = abs(-12346998.04)\n     +    and   8753898.0 = abs(-8753898.0)\n/app/backend/tests/test_m3_auto_elim_consolidation.py:189: AssertionError: IC-AR (-12346998.04) must equal IC-AP (-8753898.0) in magnitude\n=========================== short test summary info ============================\nFAILED tests/test_m3_auto_elim_consolidation.py::TestConsolidationSummary::test_consolidation_impact_matches_ic_total\n1 failed, 9 passed in 2.54s\n"
+  },
+  {
+   "file": "backend/tests/test_notifications_addressing.py",
+   "mode": "pytest",
+   "rc": 1,
+   "timeout": false,
+   "dur": 1.1,
+   "passed": 4,
+   "total": 5,
+   "errors": [
+    "FAILED tests/test_notifications_addressing.py::test_entity_isolation_on_notifications"
+   ],
+   "tail": "....F                                                                    [100%]\n=================================== FAILURES ===================================\nE   AssertionError: ent_ksc notifs leaked into ent_kanda context: {'ent_ksc', 'ent_kanda'}\n    assert 'ent_ksc' not in {'ent_kanda', 'ent_ksc'}\n/app/backend/tests/test_notifications_addressing.py:117: AssertionError: ent_ksc notifs leaked into ent_kanda context: {'ent_ksc', 'ent_kanda'}\n=========================== short test summary info ============================\nFAILED tests/test_notifications_addressing.py::test_entity_isolation_on_notifications\n1 failed, 4 passed in 0.84s\n"
+  },
+  {
+   "file": "backend/tests/test_sesi_2026_06_papan_manajer.py",
+   "mode": "pytest",
+   "rc": 1,
+   "timeout": false,
+   "dur": 5.4,
+   "passed": 11,
+   "total": 13,
+   "errors": [
+    "FAILED tests/test_sesi_2026_06_papan_manajer.py::TestWaitingBoardsPayload::test_boards_shape[manager]",
+    "FAILED tests/test_sesi_2026_06_papan_manajer.py::TestWaitingBoardsPayload::test_demo_special_order_row"
+   ],
+   "tail": "na/handfeel) menunggu keputusan manajer', ...}])\n/app/backend/tests/test_sesi_2026_06_papan_manajer.py:74: AssertionError: manager: waiting_boards=[{'key': 'special_order', 'label': 'Pesanan khusus menunggu ACC', 'view': 'special-orders', 'count': 0, 'shown': 0, 'hidden': 0, 'truncated': False, 'rows': []}, {'key': 'contra_bon_dispute', 'label': 'Kontrabon bersengketa menunggu keputusan', 'view': 'contra-bons', 'count': 0, 'shown': 0, 'hidden': 0, 'truncated': False, 'rows': []}, {'key': 'interco_return', 'label': 'Retur antar-PT menunggu persetujuan', 'view': 'interco-transactions', 'count': 0, 'shown': 0, 'hidden': 0, 'truncated': False, 'rows': []}, {'key': 'inspection_hold', 'label': 'Barang ditahan (warna/handfeel) menunggu keputusan manajer', 'view': 'inspections', 'count': 1, 'shown': 1, 'hidden': 0, 'truncated': False, 'rows': [{'id': 'ins_6dcee898a6f3', 'number': 'KSC/INS-00002', 'title': 'Toko Kain Sejahtera', 'amount': 0.0, 'note': 'Bagian Inspect', 'role': '', 'action': None, 'entity_id': 'ent_ksc', 'since': '2026-09-05T16:42:38.958988+00:00', 'days_waiting': 0}]}]\nE   assert 0 >= 1\n/app/backend/tests/test_sesi_2026_06_papan_manajer.py:107: assert 0 >= 1\n=========================== short test summary info ============================\nFAILED tests/test_sesi_2026_06_papan_manajer.py::TestWaitingBoardsPayload::test_boards_shape[manager]\nFAILED tests/test_sesi_2026_06_papan_manajer.py::TestWaitingBoardsPayload::test_demo_special_order_row\n2 failed, 11 passed in 5.10s\n"
+  },
+  {
+   "file": "backend/tests/test_verifikasi_sesi_2026_08_25.py",
+   "mode": "pytest",
+   "rc": 1,
+   "timeout": false,
+   "dur": 6.9,
+   "passed": 8,
+   "total": 11,
+   "errors": [
+    "FAILED tests/test_verifikasi_sesi_2026_08_25.py::test_C1_C2_label_peran_dan_entitas",
+    "FAILED tests/test_verifikasi_sesi_2026_08_25.py::test_D1_pagar_home_kpi_tidak_bisa_dimatikan",
+    "FAILED tests/test_verifikasi_sesi_2026_08_25.py::test_B6_nomor_demo_bertanggal_dokumen"
+   ],
+   "tail": "n  Banknote, TrendingUp, ArrowUpRight, Receipt, A...atau SKU…\"\\n            testId=\"admin-home-lowstock-modal\" />\\n        </div>\\n      </div>\\n    </section>\\n  );\\n}\\n'\n/app/backend/tests/test_verifikasi_sesi_2026_08_25.py:214: AssertionError: AdminHome tidak memakai roleLabel()\nE   AssertionError: payload manager dituduh palsu: ['manager: payload beranda TIDAK memuat `special_orders_waiting` — papan PO Custom hilang dari beranda peran ini, dan tanpa tuduhan ini seluruh invarian H akan terlewat diam-diam (pagar yang bisa dimatikan dengan menghapus datanya bukan pagar).']\n    assert 1 == 0\n/app/backend/tests/test_verifikasi_sesi_2026_08_25.py:275: AssertionError: payload manager dituduh palsu: ['manager: payload beranda TIDAK memuat `special_orders_waiting` — papan PO Custom hilang dari beranda peran ini, dan tanpa tuduhan ini seluruh invarian H akan terlewat diam-diam (pagar yang bisa dimatikan dengan menghapus datanya bukan pagar).']\nE   AssertionError: tidak ada PO custom pending demo\n    assert []\n/app/backend/tests/test_verifikasi_sesi_2026_08_25.py:283: AssertionError: tidak ada PO custom pending demo\n=========================== short test summary info ============================\nFAILED tests/test_verifikasi_sesi_2026_08_25.py::test_C1_C2_label_peran_dan_entitas\nFAILED tests/test_verifikasi_sesi_2026_08_25.py::test_D1_pagar_home_kpi_tidak_bisa_dimatikan\nFAILED tests/test_verifikasi_sesi_2026_08_25.py::test_B6_nomor_demo_bertanggal_dokumen\n3 failed, 8 passed in 6.32s\n"
+  },
+  {
+   "file": "backend/backend_test_crm_enforcements.py",
+   "mode": "direct",
+   "rc": 1,
+   "timeout": false,
+   "dur": 3.4,
+   "passed": 15,
+   "total": 16,
+   "errors": [
+    "❌ FAILED - Create SO with credit blocked (409): Expected CREDIT_BLOCKED code, got MIXED_LOT_CONFIRMATION_REQUIRED"
+   ],
+   "tail": "❌ FAILED - Create SO with credit blocked (409): Expected CREDIT_BLOCKED code, got MIXED_LOT_CONFIRMATION_REQUIRED\n🔍 Testing Collection reminders...\n🔍 Found 19 collection reminders\n✅ PASSED - Collection reminders\n🔍 Testing Mark reminder...\n🔍 Reminder marked successfully\n✅ PASSED - Mark reminder\n🔍 Testing Add follow-up...\n🔍 Follow-up added successfully\n✅ PASSED - Add follow-up\n🔍 Testing Sales KPI...\n🔍 Sales KPI: sales=0, collected=0.0, orders=0\n✅ PASSED - Sales KPI\n🔍 Testing Sales commission...\n🔍 Commission: base=0.0, achievement=0%, incentive=0.0\n✅ PASSED - Sales commission\n🔍 Testing Commission history (6 periods)...\n🔍 Commission history: 6 periods\n✅ PASSED - Commission history (6 periods)\n🔍 Testing Leaderboard (manager)...\n🔍 Leaderboard: 4 entries\n✅ PASSED - Leaderboard (manager)\n🔍 Testing Create sales target (admin)...\n🔍 Sales target created successfully\n✅ PASSED - Create sales target (admin)\n🔍 Testing Sales target forbidden (sales role)...\n🔍 Sales targets correctly forbidden for sales role\n✅ PASSED - Sales target forbidden (sales role)\n🔍 Testing Create sales incentive (admin)...\n🔍 Sales incentive scheme created successfully\n✅ PASSED - Create sales incentive (admin)\n🔍 Testing Sales incentive forbidden (sales role)...\n🔍 Sales incentives correctly forbidden for sales role\n✅ PASSED - Sales incentive forbidden (sales role)\n🔍 ============================================================\n🔍 Tests completed: 15/16 passed\n🔍 ============================================================\n"
+  },
+  {
+   "file": "backend/backend_test_depth1.py",
+   "mode": "direct",
+   "rc": 1,
+   "timeout": false,
+   "dur": 3.2,
+   "passed": 29,
+   "total": 35,
+   "errors": [
+    "  ❌ [FAIL] Create PO failed: 403 {\"detail\":\"Permission ditolak: purchase_order.create\"}",
+    "  ❌ [FAIL] Approve PRET-00001 failed: 403 {\"detail\":\"Permission ditolak: purchase_return.approve\"}",
+    "  ❌ [FAIL] Submit PRET-00002 failed: 403 {\"detail\":\"Permission ditolak: purchase_return.update\"}"
+   ],
+   "tail": "=\n  ℹ️  Testing payment for KSC/PO-00015, outstanding=31468500.0\n  ❌ [FAIL] Pay PO failed: 403 {\"detail\":\"Permission ditolak: purchase_order.update\"}\n  ℹ️  \n=== TEST 1C.2: Payables Summary ===\n  ✅ [PASS] GET payables/summary successful\n  ✅ [PASS] total_outstanding=437807000.0\n  ✅ [PASS] Aging bucket '0-30' present: 344257000.0\n  ✅ [PASS] Aging bucket '31-60' present: 93550000.0\n  ✅ [PASS] Aging bucket '61-90' present: 0.0\n  ✅ [PASS] Aging bucket '>90' present: 0.0\n  ✅ [PASS] by_supplier has 4 entries\n  ✅ [PASS] purchase_orders has 10 entries\n  ❌ [FAIL] PO-00002 (fully paid) should not be in payables list\n  ℹ️  \n=== TEST 1C.3: Permissions ===\n  ✅ [PASS] Sales can view payables (GET)\n  ✅ [PASS] Sales cannot pay PO (403)\n  ✅ [PASS] Warehouse can view purchase returns\n  ✅ [PASS] Warehouse cannot approve return (403)\n\n======================================================================\n  HASIL: 29 PASS | 6 FAIL\n======================================================================\n\n❌ FAILED TESTS:\n   - Create PO failed: 403 {\"detail\":\"Permission ditolak: purchase_order.create\"}\n   - Approve PRET-00001 failed: 403 {\"detail\":\"Permission ditolak: purchase_return.approve\"}\n   - Submit PRET-00002 failed: 403 {\"detail\":\"Permission ditolak: purchase_return.update\"}\n   - Reject return failed: 403 {\"detail\":\"Permission ditolak: purchase_return.reject\"}\n   - Pay PO failed: 403 {\"detail\":\"Permission ditolak: purchase_order.update\"}\n   - PO-00002 (fully paid) should not be in payables list\n"
+  },
+  {
+   "file": "backend/backend_test_dyelot.py",
+   "mode": "direct",
+   "rc": 1,
+   "timeout": false,
+   "dur": 2.6,
+   "passed": 14,
+   "total": 15,
+   "errors": [
+    "  ❌ [FAIL] QC decision: roll with correct grade + defects not found",
+    "  SUMMARY: 14 PASS | 1 FAIL",
+    "❌ FAILED:"
+   ],
+   "tail": "===============================\n\n  ✅ [PASS] Login admin@kainnusantara.id\n  ✅ [PASS] Setup references: entity=ent_ksc, warehouse=wh_bandu\n  ℹ️  TEST 5: Regression sweep of key GET endpoints\n  ✅ [PASS] GET /dashboard → 200\n  ✅ [PASS] GET /products → 200\n  ✅ [PASS] GET /customers → 200\n  ✅ [PASS] GET /inventory/balances → 200\n  ✅ [PASS] GET /inventory/rolls → 200\n  ✅ [PASS] GET /sales-orders → 200\n  ✅ [PASS] GET /purchase-orders → 200\n  ✅ [PASS] GET /inbound/qc/queue → 200\n  ℹ️  TEST 1a: GR complete without body (backward compatible)\n  ℹ️    No inbound tasks in qc_check status - skipping test\n  ℹ️  TEST 1b: GR complete with dye_lot + grade\n  ℹ️    No inbound tasks in qc_check status - skipping test\n  ℹ️  TEST 1c: GR complete with rolls[] (multi-roll breakdown)\n  ℹ️    No inbound tasks in qc_check status - skipping test\n  ℹ️  TEST 2: QC decision with accept_grade + defects[]\n  ❌ [FAIL] QC decision: roll with correct grade + defects not found\n  ℹ️  TEST 3 & 4: Customer enforce_single_dye_lot + preview-lots\n  ✅ [PASS] Customer created with enforce_single_dye_lot=True\n  ✅ [PASS] Customer lot_policy=strict_single persisted\n  ✅ [PASS] Customer PATCH lot_policy works\n  ✅ [PASS] preview-lots: dye_lot_strict=True for enforce_single_dye_lot customer\n\n======================================================================\n  SUMMARY: 14 PASS | 1 FAIL\n======================================================================\n\n❌ FAILED:\n  - QC decision: roll with correct grade + defects not found\n"
+  },
+  {
+   "file": "backend/test_audit_temuan_poc.py",
+   "mode": "direct",
+   "rc": 0,
+   "timeout": false,
+   "dur": 2.7,
+   "passed": null,
+   "total": null,
+   "errors": [
+    "PASS 34 | FAIL 0"
+   ],
+   "tail": "\n  [PASS] L-1: summary.today ada (WIB) — 2026-09-05\n\n== P1-2: SJ menyimpan logistics_number/status (chip) ==\n  [PASS] shipments.logistics_status = delivered — {'logistics_number': 'KSC/LG-00004', 'logistics_status': 'delivered'}\n\n== G-3/G-8: status AI & uji koneksi ==\n  [PASS] status mengandung verified/daily_limit/cost — {\"enabled\":true,\"demo\":true,\"verified\":false,\"model\":\"gemini-3-pro-image-preview\",\"daily_limit\":10,\"cost_per_image_usd\":0.134}\n  [PASS] uji koneksi tanpa key → 400 — {\"detail\":\"API key Gemini belum diisi.\"}\n  [PASS] set batas harian 1 → 200 — {\"anthropic\":{\"has_key\":false,\"model\":\"claude-sonnet-4-6\",\"enabled\":false,\"models_available\":[\"claude-sonnet-4-6\",\"claud\n  [PASS] ilustrasi ke-1 200, ke-2 ditolak (batas 1/hari) — 200/400 {\"detail\":\"Batas 1 ilustrasi AI per desain per hari tercapai (1 hari ini). Coba lagi besok atau ubah\n\n== G-6: komentar → notifikasi desainer; hapus komentar sendiri ==\n  [PASS] komentar admin → 200 — {\"id\":\"cmt_648791e4d6b7\",\"text\":\"Perbesar motif\",\"by\":\"Budi Santoso\",\"user_id\":\"user_admin_01\",\"role\n  [PASS] notifikasi desainer dibuat\n  [PASS] desainer hapus komentar admin → 400 — 400 {\"detail\":\"Hanya penulis komentar (atau admin) yang boleh menghapusnya.\"}\n  [PASS] admin hapus komentarnya → 200 — {\"id\":\"cmt_648791e4d6b7\",\"deleted\":true}\n\n== X-5: divisi Logistik ==\n  [PASS] divisi 'logistics' ada — {\"divisions\":[{\"id\":\"sample\",\"name\":\"Sample\",\"desc\":\"Pembuatan & penilaian sample/labdip (round proofing).\",\"member_coun\n\nPASS 34 | FAIL 0\n"
+  },
+  {
+   "file": "backend/test_core_design_request_poc.py",
+   "mode": "direct",
+   "rc": 1,
+   "timeout": false,
+   "dur": 4.7,
+   "passed": null,
+   "total": null,
+   "errors": [
+    "  [PASS] gate `check_nav_map` PASS (dulu CRASH `KeyError: 'designer'`)  \u001b[2mexit 0 · m============================================================\u001b[0m",
+    "  \u001b[91m[FAIL]\u001b[0m gate `INV-APPR-01` HIJAU (pintu ACC/revisi punya antreannya)",
+    "  HASIL: \u001b[92m54 PASS\u001b[0m · \u001b[91m1 FAIL\u001b[0m dari 55 pemeriksaan"
+   ],
+   "tail": "m============================================================\u001b[0m\n\n\u001b[92m✓ Navigation map COMPLIANT dengan KN_13 (grouped IA)\u001b[0m\n\n\u001b[92m\u001b[1m✓ NAV MAP: PASS\u001b[0m\n\n\u001b[0m\n  [PASS] gate MEMBACA peran ke-7 dari registry (hijau karena memeriksa, bukan karena buta)  \u001b[2mROLES=['admin', 'manager', 'sales_admin', 'finance', 'sales', 'warehouse', 'designer', 'driver', 'md', 'warehouse_admin']\u001b[0m\n  \u001b[91m[FAIL]\u001b[0m gate `INV-APPR-01` HIJAU (pintu ACC/revisi punya antreannya)\n         → exit 1 · tung baris antrean mana pun dan tidak dibebaskan beralasan → antrean bayangan.\n\u001b[93m→ Perbaiki sesuai INVARIANT INV-APPR-01 (detail: memory/INVARIANTS.md).\u001b[0m\n\n  [PASS] gate `INV-HOME-01` HIJAU (KPI beranda punya opini kedua)  \u001b[2mexit 0 · an persetujuan yang NYATA ==\u001b[0m\n\u001b[92m[PASS]\u001b[0m 111 cek lolos, 0 pelanggaran.\n\u001b[92m  [snapshot] 21 koleksi dipulihkan ke keadaan sebelum uji — nol residu.\u001b[0m\n\u001b[0m\n\n\u001b[93mD10 · CLEANUP + NOL RESIDU (diukur, bukan diklaim)\u001b[0m\n  [PASS] nol residu: jumlah dokumen tiap koleksi SAMA sebelum & sesudah POC  \u001b[2m4 koleksi identik\u001b[0m\n  [PASS] nol relasi hantu: pesanan demo tidak menyimpan `refs` ke dokumen POC yang dihapus  \u001b[2m0 pesanan masih menyimpannya\u001b[0m\n\n\u001b[1m==============================================================================\n  HASIL: \u001b[92m54 PASS\u001b[0m · \u001b[91m1 FAIL\u001b[0m dari 55 pemeriksaan\n\u001b[91m  GAGAL:\u001b[0m\n   - gate `INV-APPR-01` HIJAU (pintu ACC/revisi punya antreannya)\n==============================================================================\u001b[0m\n"
+  },
+  {
+   "file": "backend/test_core_e0_isolation_poc.py",
+   "mode": "direct",
+   "rc": 1,
+   "timeout": false,
+   "dur": 2.3,
+   "passed": null,
+   "total": null,
+   "errors": [
+    "  [\u001b[92mPASS\u001b[0m] L1 BUKTI-MERAH: ada notifications milik ent_ksc di DB  (87 baris)",
+    "  [\u001b[92mPASS\u001b[0m] L2 BUKTI-MERAH: ada payment_plans milik ent_ksc di DB  (2 baris)",
+    "  [\u001b[92mPASS\u001b[0m] L3 BUKTI-MERAH: ada payment_variance_decisions milik ent_ksc di DB  (1 baris)"
+   ],
+   "tail": "ksaan  (HTTP 403)\n  [\u001b[92mPASS\u001b[0m] L21 preview-lots memakai entitas Kanda  (entity_id=ent_kanda)\n  [\u001b[92mPASS\u001b[0m] L21 preview-roll-reconcile all_entities ditolak untuk peran non-lintas  (HTTP 403)\n\n\u001b[96m── L17-lanjutan · endpoint router yang sebelumnya tanpa scoping\u001b[0m\n  [\u001b[92mPASS\u001b[0m] BUKTI-MERAH: incentive_rates terisi  (12 baris)\n  [\u001b[92mPASS\u001b[0m] /api/incentive-rates — sales3 ditolak/kosong (403)\n  [\u001b[92mPASS\u001b[0m] /api/landed-costs — sales3 ditolak/kosong (403)\n  [\u001b[92mPASS\u001b[0m] /api/pegging/rolls — tidak membocorkan entitas lain  (bocor=[])\n  [\u001b[92mPASS\u001b[0m] /api/cycle-count/sessions — sales3 ditolak/kosong (403)\n  [\u001b[92mPASS\u001b[0m] /api/purchase-returns — sales3 ditolak/kosong (403)\n  [\u001b[92mPASS\u001b[0m] /api/credit-notes — tidak membocorkan entitas lain  (bocor=[])\n  [\u001b[92mPASS\u001b[0m] /api/budgets — sales3 ditolak/kosong (404)\n  [\u001b[92mPASS\u001b[0m] /api/approval-rules — sales3 ditolak/kosong (403)\n  [\u001b[92mPASS\u001b[0m] /api/return-policies — sales3 ditolak/kosong (404)\n  [\u001b[92mPASS\u001b[0m] /api/rfid/tags — sales3 ditolak/kosong (403)\n\n\u001b[96m── CLEANUP · nol residu\u001b[0m\n  [\u001b[92mPASS\u001b[0m] sesi POC dihapus  (sisa=0)\n  [\u001b[92mPASS\u001b[0m] jejak audit dari POC dihapus  (dihapus=5 sisa=0)\n\n==============================================================================\n  HASIL: \u001b[92m82 PASS\u001b[0m · \u001b[91m1 FAIL\u001b[0m · \u001b[93m0 SKIP\u001b[0m\n\n  Yang masih gagal:\n    · L15 nol koleksi ber-entity_id yang belum terdaftar di registry\n==============================================================================\n\n"
+  },
+  {
+   "file": "backend/test_core_e1e2_poc.py",
+   "mode": "direct",
+   "rc": 1,
+   "timeout": false,
+   "dur": 8.1,
+   "passed": null,
+   "total": null,
+   "errors": [
+    "  [\u001b[92mPASS\u001b[0m] E1.1c — BUKTI-MERAH: non-PKP TANPA NPWP tetap boleh (bukan asal blokir)",
+    "  [\u001b[92mPASS\u001b[0m] E1.3c — BUKTI-MERAH: badan usaha BELUM terbit dokumen BOLEH ganti kode",
+    "  [\u001b[92mPASS\u001b[0m] E1.5d — BUKTI-MERAH: tanpa header, sales Kanda tetap dilayani 200"
+   ],
+   "tail": "if tetap boleh\n         \u001b[2mHTTP 200 · {\"id\":\"cust_b1ddb726bea7\",\"code\":\"CUST-0008\",\"name\":\"Poc Pelanggan Sah\",\"pic_name\":\"Poc\",\"phone\":\"0800\",\"email\u001b[0m\n  [\u001b[92mPASS\u001b[0m] E1.6i3 — pagar kunci-tulis terpasang di choke point auth (409) — melindungi endpoint yang tidak memakai entity_ctx\n         \u001b[2m“PT Uji Non PKP” sudah diarsipkan sehingga tidak bisa lagi menerima transaksi baru. Data lama tetap bisa dibaca. Aktifkan kembali badan usah\u001b[0m\n  [\u001b[92mPASS\u001b[0m] E1.6j — badan usaha terarsip HILANG dari daftar/pemilih default\n         \u001b[2mdaftar aktif=['ent_ksc', 'ent_kanda', 'ent_7bedfb885b41', 'ent_d9fa201c7036']\u001b[0m\n  [\u001b[92mPASS\u001b[0m] E1.6k — tetap terbaca admin lewat ?status=archived (data lama tidak hilang)\n         \u001b[2m1 terarsip\u001b[0m\n  [\u001b[92mPASS\u001b[0m] E1.6l — aktifkan kembali → status active lagi\n         \u001b[2mHTTP 200\u001b[0m\n  [\u001b[92mPASS\u001b[0m] E1.6m — setelah aktif kembali, penghuninya bisa masuk lagi\n         \u001b[2mlogin OK\u001b[0m\n\n── CLEANUP (self-healing: DB kembali seperti sebelum POC) ──\n  [\u001b[92mPASS\u001b[0m] CLEAN — nol residu fixture di DB\n         \u001b[2muser=3 karyawan=2 badan_usaha=2 residu=0\u001b[0m\n  [\u001b[91mFAIL\u001b[0m] CLEAN2 — badan usaha demo utuh & aktif (KSC + Kanda)\n         \u001b[2m3 badan usaha aktif\u001b[0m\n\n==========================================================================\n  HASIL: \u001b[92m73 PASS\u001b[0m · \u001b[91m1 FAIL\u001b[0m\n==========================================================================\n  \u001b[91m✗\u001b[0m CLEAN2 — badan usaha demo utuh & aktif (KSC + Kanda) :: 3 badan usaha aktif\n"
+  },
+  {
+   "file": "backend/test_core_e4_poc.py",
+   "mode": "direct",
+   "rc": 1,
+   "timeout": false,
+   "dur": 2.8,
+   "passed": 35,
+   "total": 41,
+   "errors": [
+    "  [FAIL] Kanda memakai harga sendiri: None (asal: entity)",
+    "  [FAIL] harga efektif kedua badan usaha BERBEDA untuk produk yang sama",
+    "  [FAIL] sales Kanda melihat harga badan usahanya di layar harga"
+   ],
+   "tail": "pakai pesanan & POS ───────────────\n  [FAIL] quote sales Kanda memakai harga badan usaha (185000.0)\n         → 200 {\"customer_id\":\"cust_moda_surabaya\",\"entity_id\":\"ent_kanda\",\"prices\":{\"prod_batik_mega\":{\"price\":185000.0,\"source\":\"global\",\"record_id\":null,\"global_price\":185000.0,\"entity_price\":null,\"customer_price\n  [PASS] quote sales KSC untuk produk tanpa override tetap harga global\n  [FAIL] quote membawa rincian lapisan harga (global & badan usaha) untuk lencana di layar\n\n── E4.7 · 14 · ekspor & impor CSV ────────────────────────────────────\n  [FAIL] ekspor CSV berisi kolom & angka harga badan usaha\n         → 200 ﻿sku;nama_produk;harga_global;harga_entitas;berlaku_dari;berlaku_sampai;catatan\nLRK-CLSC-001;Lurik Klasik Solo;95000.00;89000.00;2026-07-22;;Lurik volume besar\n  [PASS] impor menerapkan tepat 1 baris berharga\n  [PASS] angka gaya Indonesia '171.500' terbaca 171500 (bukan 171,5 atau 171500000)\n  [PASS] baris tanpa kolom harga TIDAK mengubah apa pun (impor tidak menghapus harga)\n  [PASS] SKU yang tidak ada dilaporkan per baris, bukan menggagalkan seluruh berkas\n\n── 15 · pembersihan (nol residu) ─────────────────────────────────────\n  dibersihkan: {'warehouses': 1, 'entity_prices': 4, 'cycle_count_sessions': 1, 'audit_logs': 13}\n  [PASS] database kembali ke keadaan semula (nol residu)\n\n==============================================================================\n  HASIL: 35 PASS · 6 FAIL\n==============================================================================\n"
+  },
+  {
+   "file": "backend/test_core_e7_interco_poc.py",
+   "mode": "direct",
+   "rc": 1,
+   "timeout": false,
+   "dur": 4.3,
+   "passed": null,
+   "total": null,
+   "errors": [
+    "  [\u001b[92mPASS\u001b[0m] BUKTI-MERAH: pemasok bertipe 'Entitas grup' memang ada di daftar",
+    "  [\u001b[92mPASS\u001b[0m] BUKTI-MERAH: ada dokumen retur antar-PT untuk diuji  (1 dokumen)",
+    "  [\u001b[92mPASS\u001b[0m] BUKTI-MERAH: ada transaksi yang HPP-nya belum diposting  (2 dari 2)"
+   ],
+   "tail": "ted) → dihapus di tahap residu · uang & aset uji DIPULIHKAN EKSAK lewat `poc_stock_guard`, bukan ditinggalkan)\n  \u001b[92m[poc-stock] stok dipulihkan EKSAK (152 dokumen, 8 koleksi) — nol residu roll & saldo.\u001b[0m\n  [\u001b[92mPASS\u001b[0m] CLEANUP (POC-RESIDU-03): buku uang & aset dipulihkan EKSAK (kas · jurnal · pinjaman · aset · eliminasi · PR)  (8 koleksi)\n  [\u001b[92mPASS\u001b[0m] CLEANUP (INV-GATE-01): nol residu transaksi antar-PT (draf E7d dihapus)  (dihapus 2 draf · sisa 0)\n  [\u001b[92mPASS\u001b[0m] CLEANUP (INV-GATE-01): nol residu Permintaan Internal (E7d dihapus, bukan 'dibatalkan' yang gagal diam-diam)  (dihapus 1 permintaan · sisa 0)\n  [\u001b[91mFAIL\u001b[0m] CLEANUP (INV-REF-04): nol tautan menggantung sesudah dokumen uji dihapus  (6 hantu: ['KSC/TRF-00004 → interco_transaction:ict_b5fcaba064c6', 'KANDA/TRF-00001 → interco_transaction:ict_1cb043051234', 'KSC/ICR-00001 → interco_transaction:ict_c4fd3bb80c6c'])\n  [\u001b[92mPASS\u001b[0m] CLEANUP (INV-GATE-01): nol residu jejak audit & notifikasi  (dihapus audit=16 notifikasi=2 · sisa 0/0)\n  [\u001b[92mPASS\u001b[0m] CLEANUP (POC-RESIDU-03): nol residu di SELURUH basis data (116 koleksi dihitung, bukan hanya yang dipantau)  (semua koleksi identik sebelum & sesudah)\n\n==============================================================================\n  HASIL: \u001b[92m61 PASS\u001b[0m · \u001b[91m1 FAIL\u001b[0m dari 62 pemeriksaan\n    \u001b[91m✗\u001b[0m CLEANUP (INV-REF-04): nol tautan menggantung sesudah dokumen uji dihapus\n==============================================================================\n"
+  },
+  {
+   "file": "backend/test_core_e8_desk_poc.py",
+   "mode": "direct",
+   "rc": 1,
+   "timeout": false,
+   "dur": 4.4,
+   "passed": 94,
+   "total": 97,
+   "errors": [
+    "  [\u001b[91mFAIL\u001b[0m] jumlah keduanya = jumlah Admin Sales (tidak ada pesanan hilang)  (8+1 vs 20)",
+    "  [\u001b[92mPASS\u001b[0m] BUKTI-MERAH: pesanan REKAN tidak pernah ikut ke dasbor sales  ([])",
+    "  [\u001b[92mPASS\u001b[0m] BUKTI-MERAH: sales membuka pesanan REKAN lewat id → 403  (HTTP 403)"
+   ],
+   "tail": "esanan ini (papan pending SO ti)\n\n\u001b[93mG · E8.3/E8.5 — layar mati sales & dropdown ikut badan usaha\u001b[0m\n  [\u001b[92mPASS\u001b[0m] E8.3 — sales melihat KUNJUNGANNYA SENDIRI (dulu menu 403)  (HTTP 200)\n  [\u001b[92mPASS\u001b[0m] kunjungan sendiri membawa KPI ringkas (total · selesai · berbuah order)  ({'total': 2, 'done': 2, 'with_order': 1, 'total_minutes': 80, 'conversion_percent': 50.0})\n  [\u001b[92mPASS\u001b[0m] hanya kunjungan milik akun yang login (pagar dari sesi, bukan parameter)\n  [\u001b[92mPASS\u001b[0m] BUKTI-MERAH: daftar kunjungan SELURUH karyawan tetap tertutup untuk sales  (HTTP 403)\n  [\u001b[92mPASS\u001b[0m] E8.5 — dropdown sales BERBEDA per badan usaha  (KSC=['Ayu Permatasari', 'Bima Saputra', 'Dewi Anggraini'] Kanda=['Citra Lestari'])\n  [\u001b[92mPASS\u001b[0m] E8.5 — tidak ada sales PT lain yang bocor ke dropdown  ([])\n\n\u001b[93m── CLEANUP (INV-GATE-01: nol residu)\u001b[0m\n  [\u001b[92mPASS\u001b[0m] CLEANUP: seluruh dokumen yang dibuat POC dihapus & dokumen lama dipulihkan  (interco_transactions=2 internal_requests=2 journal_entries=2 intercompany_eliminations=1 notifications=3 audit_logs=14 config_values=4 sisa=0)\n\n\u001b[96m==============================================================================\u001b[0m\n  \u001b[91m94/97 PASS\u001b[0m\n\u001b[91m  GAGAL:\u001b[0m\n   - jumlah keduanya = jumlah Admin Sales (tidak ada pesanan hilang)\n   - 5 antrean sesuai keputusan pemilik\n   - BUKTI-MERAH: 'ambil dari PT lain' tanpa memilih sumber ditolak dengan kalimat menuntun\n\u001b[96m==============================================================================\u001b[0m\n"
+  },
+  {
+   "file": "backend/test_core_f67_workflow_poc.py",
+   "mode": "direct",
+   "rc": 1,
+   "timeout": false,
+   "dur": 2.2,
+   "passed": null,
+   "total": null,
+   "errors": [
+    "Traceback (most recent call last):",
+    "    raise HTTPStatusError(message, request=request, response=self)",
+    "httpx.HTTPStatusError: Client error '403 Forbidden' for url 'http://localhost:8001/api/approvals/backlog'"
+   ],
+   "tail": "6 Ajukan menuntut minimal 1 BERKAS artwork \u001b[2m{\"detail\":\"Desain wajib punya minimal 1 berkas artwork sebelum diajukan (ilustrasi AI tida\u001b[0m\n  [\u001b[92mPASS\u001b[0m] W6 lengkap → diajukan (pending_approval) \u001b[2mHTTP 200\u001b[0m\n  [\u001b[92mPASS\u001b[0m] W6 antrean `design_gallery` naik tepat 1 \u001b[2m1 → 2\u001b[0m\n  [\u001b[92mPASS\u001b[0m] W6 tolak dengan alasan → kembali ke draf \u001b[2mHTTP 200\u001b[0m\n  [\u001b[92mPASS\u001b[0m] W6 alasan tersimpan di dokumen desainnya\n  [\u001b[92mPASS\u001b[0m] W6 desain yang diajukan bisa disahkan \u001b[2mHTTP 200\u001b[0m\n\n\u001b[1mW7 — SELISIH PEMBAYARAN: antrean beranda == layar antrean finance\u001b[0m\n\u001b[92m  [snapshot] 8 koleksi dipulihkan ke keadaan sebelum uji — nol residu.\u001b[0m\nTraceback (most recent call last):\n  File \"/app/backend/test_core_f67_workflow_poc.py\", line 434, in <module>\n    sys.exit(main())\n             ^^^^^^\n  File \"/app/backend/test_core_f67_workflow_poc.py\", line 406, in main\n    step_variance(db, fin)\n  File \"/app/backend/test_core_f67_workflow_poc.py\", line 296, in step_variance\n    before_bl = backlog(fin)\n                ^^^^^^^^^^^^\n  File \"/app/backend/test_core_f67_workflow_poc.py\", line 102, in backlog\n    r.raise_for_status()\n  File \"/root/.venv/lib/python3.11/site-packages/httpx/_models.py\", line 829, in raise_for_status\n    raise HTTPStatusError(message, request=request, response=self)\nhttpx.HTTPStatusError: Client error '403 Forbidden' for url 'http://localhost:8001/api/approvals/backlog'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/403\n"
+  },
+  {
+   "file": "backend/test_core_f6_approval_coverage_poc.py",
+   "mode": "direct",
+   "rc": 1,
+   "timeout": false,
+   "dur": 3.3,
+   "passed": null,
+   "total": null,
+   "errors": [
+    "\u001b[1m▶ G5 — BUKTI-MERAH: suntik 1 transfer menunggu → angka WAJIB bergerak\u001b[0m",
+    "\u001b[1m▶ G8 — penjaga INV-APPR-01 terbukti bisa MEMERAH\u001b[0m",
+    "  [\u001b[91mFAIL\u001b[0m] penjaga antrean HIJAU pada kode & data saat ini"
+   ],
+   "tail": "apus → total kembali seperti awal \u001b[2m39 == 39\u001b[0m\n\n\u001b[1m▶ G6 — ANTI DOBEL-HITUNG (harga langganan sudah terhitung lewat harga khusus)\u001b[0m\n  [\u001b[92mPASS\u001b[0m] tiap harga langganan yang menunggu punya `price_approval_id` \u001b[2m1/1\u001b[0m\n  [\u001b[92mPASS\u001b[0m] pasangannya memang sudah dihitung baris antrean `price` \u001b[2m1/1\u001b[0m\n  [\u001b[92mPASS\u001b[0m] total TIDAK ikut bertambah karena harga langganan (nol dobel-hitung)\n  [\u001b[92mPASS\u001b[0m] tak ada satu dokumen pun yang dihitung dua antrean \u001b[2m39 dokumen unik\u001b[0m\n\n\u001b[1m▶ G7 — angka tersaring badan usaha (bukan angka grup yang dipakai ulang)\u001b[0m\n  [\u001b[92mPASS\u001b[0m] angka satu PT ≤ angka gabungan \u001b[2mKSC=33 gabungan=39\u001b[0m\n  [\u001b[92mPASS\u001b[0m] PT utama memang punya antrean (uji tidak kosong palsu) \u001b[2mKSC=33\u001b[0m\n\n\u001b[1m▶ G8 — penjaga INV-APPR-01 terbukti bisa MEMERAH\u001b[0m\n  [\u001b[92mPASS\u001b[0m] self-test penjaga antrean LULUS (15 kasus bukti-merah) \u001b[2m\u001b[92m  HIJAU — penjaga terbukti menuduh pintu tanpa antrean.\u001b[0m\u001b[0m\n  [\u001b[91mFAIL\u001b[0m] penjaga antrean HIJAU pada kode & data saat ini\n\u001b[92m  [snapshot] 4 koleksi dipulihkan ke keadaan sebelum uji — nol residu.\u001b[0m\n\n\u001b[1m▶ G9 — nol residu setelah POC (DIUKUR, bukan diklaim)\u001b[0m\n  [\u001b[92mPASS\u001b[0m] seluruh koleksi tersentuh kembali ke jumlah awal (INV-GATE-01) \u001b[2m4 koleksi identik\u001b[0m\n\n\u001b[1m==============================================================================\u001b[0m\n  HASIL: \u001b[92m42 PASS\u001b[0m · \u001b[91m1 FAIL\u001b[0m dari 43 pemeriksaan\n\u001b[1m==============================================================================\u001b[0m\n"
+  },
+  {
+   "file": "backend/test_core_inspeksi_poc.py",
+   "mode": "direct",
+   "rc": 1,
+   "timeout": false,
+   "dur": 12.8,
+   "passed": null,
+   "total": null,
+   "errors": [
+    "\u001b[93mI8 · Gate INV-QC-01..03 dijalankan sungguhan — dan dibuktikan BISA MEMERAH\u001b[0m",
+    "  \u001b[92mPASS 4\u001b[0m  |  \u001b[91mFAIL 0\u001b[0m  |  \u001b[93mWARN 0\u001b[0m",
+    "  [PASS] poin dokumen digeser sepihak → INV-QC-01 MEMERAH (invarian bukan hiasan)  \u001b[2mexit 1 · uarantine_release, return_quarantine, roll_created)"
+   ],
+   "tail": "i INVARIANT INV-APPR-01 (detail: memory/INVARIANTS.md).\u001b[0m\n\n  [PASS] gate `INV-HOME-01` HIJAU (KPI beranda punya opini kedua untuk tahanan)  \u001b[2mexit 0 · an persetujuan yang NYATA ==\u001b[0m\n\u001b[92m[PASS]\u001b[0m 111 cek lolos, 0 pelanggaran.\n\u001b[92m  [snapshot] 21 koleksi dipulihkan ke keadaan sebelum uji — nol residu.\u001b[0m\n\u001b[0m\n  [PASS] gate `INV-QTY-01` HIJAU (dua satuan sampai ke dokumen inspeksi)  \u001b[2mexit 0 ·  PDF ber-kolom roll: 14\n\u001b[96m\u001b[1m== INV-QTY-01 — dua satuan (roll + ukuran) satu arti di layar · PDF · CSV ==\u001b[0m\n\u001b[92m[PASS]\u001b[0m 642 cek lolos, 0 pelanggaran.\n\u001b[0m\n\n\u001b[93mI11 · CLEANUP + NOL RESIDU (diukur, bukan diklaim)\u001b[0m\n  \u001b[92m[poc-stock] stok dipulihkan EKSAK (368 dokumen, 8 koleksi) — nol residu roll & saldo.\u001b[0m\n  [PASS] stok · buku besar · kas dipulihkan EKSAK (poc_stock_guard)\n  [PASS] nol residu: jumlah dokumen tiap koleksi SAMA sebelum & sesudah POC  \u001b[2m6 koleksi identik\u001b[0m\n  [PASS] invarian INV-QC tetap HIJAU sesudah pembersihan  \u001b[2mexit 0 · urn_quarantine, roll_created)\n\n\u001b[1m================================================================\u001b[0m\n  \u001b[92mPASS 4\u001b[0m  |  \u001b[91mFAIL 0\u001b[0m  |  \u001b[93mWARN 0\u001b[0m\n  \u001b[92m\u001b[1mSEMUA INVARIAN VALID.\u001b[0m\n\n\u001b[0m\n\n\u001b[1m==============================================================================\n  HASIL: \u001b[92m92 PASS\u001b[0m · \u001b[91m1 FAIL\u001b[0m dari 93 pemeriksaan\n\u001b[91m  GAGAL:\u001b[0m\n   - gate `INV-APPR-01` HIJAU (pintu keputusan inspeksi punya antreannya)\n==============================================================================\u001b[0m\n"
+  },
+  {
+   "file": "backend/test_core_p0_poc.py",
+   "mode": "direct",
+   "rc": 1,
+   "timeout": false,
+   "dur": 4.7,
+   "passed": null,
+   "total": null,
+   "errors": [
+    "  [PASS] `INV-ORIG-01 --self-test` membuktikan gate BISA memerah (bukti-merah)  \u001b[2mexit 0 · K]\u001b[0m R5 arah balik (PR→PO) hilang → MERAH",
+    "  \u001b[92m[OK]\u001b[0m R5 PO tidak menaut PR-nya → MERAH",
+    "  \u001b[92m[OK]\u001b[0m R1 `pr_id` menunjuk PR yang tidak ada → MERAH"
+   ],
+   "tail": "demo (papan PO punya isi untuk diklik)  \u001b[2m[('KSC/PO-00013', 'Ayu Permatasari'), ('KSC/PO-00014', 'Bima Saputra'), ('KSC/PO-00015', 'Ayu Permatasari')]\u001b[0m\n  [PASS] setiap rantai demo membawa Nama Sales yang dirunut (bukan kosong)  \u001b[2m['Ayu Permatasari', 'Bima Saputra', 'Ayu Permatasari']\u001b[0m\n  [PASS] data demo memuat ≥2 nama sales BERBEDA — membuktikan kolom mengikuti SO-nya  \u001b[2m['Ayu Permatasari', 'Bima Saputra']\u001b[0m\n\n\u001b[93mP0-9 · Keputusan pemilik: PO lama DIBIARKAN kosong (tanpa backfill)\u001b[0m\n  [PASS] PO lama tetap tanpa `pr_id` — dan gate di atas tetap HIJAU (bukan pelanggaran)  \u001b[2m15 PO berdiri sendiri\u001b[0m\n  [PASS] nol PO yang memuat Nama Sales tanpa jejak dokumen (nama tidak dikarang)  \u001b[2m0 pelanggaran\u001b[0m\n\n\u001b[93mP0-10 · CLEANUP + NOL RESIDU (diukur, bukan diklaim)\u001b[0m\n  [PASS] nol residu: jumlah dokumen tiap koleksi SAMA sebelum & sesudah POC  \u001b[2m7 koleksi identik\u001b[0m\n  [PASS] nol jejak hantu: pesanan demo tidak menyimpan permintaan ke PR yang dihapus  \u001b[2m0 pesanan masih menyimpannya\u001b[0m\n  [PASS] sesudah pembersihan, backfill relasi tetap bersih (nol tautan menggantung)  \u001b[2m{'dry_run': True, 'candidates': 84, 'would_add': 0, 'written': 0, 'skipped': 0}\u001b[0m\n\n\u001b[1m==============================================================================\n  HASIL: \u001b[92m35 PASS\u001b[0m · \u001b[91m1 FAIL\u001b[0m dari 36 pemeriksaan\n\u001b[91m  GAGAL:\u001b[0m\n   - `INV-REF` HIJAU — PO mandiri TIDAK dituduh dokumen yatim\n==============================================================================\u001b[0m\n"
+  },
+  {
+   "file": "backend/test_core_po_board_poc.py",
+   "mode": "direct",
+   "rc": 1,
+   "timeout": false,
+   "dur": 10.2,
+   "passed": null,
+   "total": null,
+   "errors": [
+    "  [PASS] gate `INV-STAGE-01 --self-test (bukti-merah)` HIJAU  \u001b[2mexit 0 · luar urutan lini → MERAH",
+    "  \u001b[92m[OK]\u001b[0m R5 tanda tahap tanpa `by` → MERAH",
+    "  \u001b[92m[OK]\u001b[0m R5 tanda tahap tanpa `at` → MERAH"
+   ],
+   "tail": " == jumlah baris hasil filter (bukan jumlah halaman)  \u001b[2msummary=13 total=13 baris=13\u001b[0m\n  [PASS] kartu 'lewat estimasi' & 'tanpa sales' == hitung-ulang mandiri  \u001b[2mapi=1/9 mandiri=1/9\u001b[0m\n  [PASS] tiga kartu progres menjumlah TEPAT ke total (tidak ada baris yang hilang/dobel)  \u001b[2m7+6+0 vs 13\u001b[0m\n\n\u001b[93mP9 · CLEANUP + NOL RESIDU (diukur, bukan diklaim)\u001b[0m\n  \u001b[92m[poc-stock] stok dipulihkan EKSAK (368 dokumen, 8 koleksi) — nol residu roll & saldo.\u001b[0m\n  \u001b[91m[FAIL]\u001b[0m invarian global HIJAU setelah pembersihan (lot & jurnal ikut pulih, nol WARN)\n         → PASS 244  |  FAIL 4  |  WARN 2\n  [PASS] nol residu: jumlah dokumen tiap koleksi SAMA sebelum & sesudah POC  \u001b[2m10 koleksi identik\u001b[0m\n  [PASS] master lini kembali PERSIS seperti sebelum POC (urutan tahap tidak tergeser)  \u001b[2m[('woven', 'benang→tenun→celup→inspect'), ('knit', 'benang→rajut→celup→inspect'), ('printing', 'proofing→pfp→screen→printing→inspect')]\u001b[0m\n  [PASS] nol tanda tahap uji yang tertinggal di PO data demo  \u001b[2m0 PO masih menyimpannya\u001b[0m\n  [PASS] nol stok hantu: saldo persediaan kembali seperti sebelum POC  \u001b[2m24 saldo identik\u001b[0m\n\n\u001b[1m==============================================================================\n  HASIL: \u001b[92m50 PASS\u001b[0m · \u001b[91m2 FAIL\u001b[0m dari 52 pemeriksaan\n\u001b[91m  GAGAL:\u001b[0m\n   - gate `INV-REF (dokumen tak buntu)` HIJAU\n   - invarian global HIJAU setelah pembersihan (lot & jurnal ikut pulih, nol WARN)\n==============================================================================\u001b[0m\n"
+  },
+  {
+   "file": "backend/test_core_rantai_retur_poc.py",
+   "mode": "direct",
+   "rc": 1,
+   "timeout": false,
+   "dur": 3.0,
+   "passed": null,
+   "total": null,
+   "errors": [
+    "  ❌ [FAIL] Pesanan tidak sampai status yang bisa diretur (status waiting_approval)",
+    "  HASIL: \u001b[92m13 PASS\u001b[0m · \u001b[91m1 FAIL\u001b[0m dari 14 pemeriksaan"
+   ],
+   "tail": "021 (A) · status confirmed\n  ✅ [PASS] E9.2 · US24 — layar pesanan menyebut asalnya: “diambil dari CV Kanda Suka lewat KSC/IC-00021”\n  ✅ [PASS] E9.2 — Papan Pending SO: covered · dijanjikan 37 yard dari CV Kanda Suka lewat KSC/IC-00021\n  ✅ [PASS] Tugas gudang KANDA/TRF-00002 disetujui — kepemilikan roll pindah B → A\n  ✅ [PASS] E9.1 · US23 — KSC/SO-00026 otomatis terpenuhi begitu barang antar-PT masuk (status reserved · backorder 0) — TANPA alokasi manual\n  ℹ  Utang Entitas A ke Entitas B sebelum retur: Rp 5,052,300\n  ✅ [PASS] E9.1 — Admin Sales diberi tahu & pesanannya disebut: “Barang dari CV Kanda Suka masuk — 1 pesanan terpenuhi otomatis…” (tautan pending-so)\n\n\u001b[96m\u001b[1mLANGKAH 4 — Customer A retur ke Entitas A (inspeksi → karantina → roll RTN)\u001b[0m\n  ❌ [FAIL] Pesanan tidak sampai status yang bisa diretur (status waiting_approval)\n\n\u001b[96m\u001b[1mCLEANUP — POC tidak boleh meninggalkan jejak\u001b[0m\n  \u001b[92m[poc-stock] stok dipulihkan EKSAK (1 dokumen, 1 koleksi) — nol residu roll & saldo.\u001b[0m\n  ✅ [PASS] Nol residu (dihapus: {'po': 1, 'so': 1, 'sret': 0, 'ict': 2, 'icr': 0, 'pret': 0})\n  ✅ [PASS] Nol residu jejak (dihapus 4 baris audit & sesi POC · notifikasi kembali seperti semula)\n\n==============================================================================\n  HASIL: \u001b[92m13 PASS\u001b[0m · \u001b[91m1 FAIL\u001b[0m dari 14 pemeriksaan\n    \u001b[91m✗\u001b[0m Pesanan tidak sampai status yang bisa diretur (status waiting_approval)\n==============================================================================\n"
+  },
+  {
+   "file": "backend/test_core_role_access_poc.py",
+   "mode": "direct",
+   "rc": 1,
+   "timeout": false,
+   "dur": 5.9,
+   "passed": null,
+   "total": null,
+   "errors": [
+    "  [\u001b[91mFAIL\u001b[0m] finance     GET /approvals/backlog 200 \u001b[91m→ 403\u001b[0m",
+    "\u001b[1m▶ G5 — BUKTI-MERAH (cabut izinnya → POC wajib memerah)\u001b[0m",
+    "  HASIL: \u001b[92m42 PASS\u001b[0m · \u001b[91m1 FAIL\u001b[0m dari 43 pemeriksaan"
+   ],
+   "tail": "/approvals/backlog 200 \u001b[2m→ 200\u001b[0m\n  [\u001b[92mPASS\u001b[0m] manager     GET /approvals/backlog 200 \u001b[2m→ 200\u001b[0m\n  [\u001b[92mPASS\u001b[0m] sales_admin GET /approvals/backlog 200 \u001b[2m→ 200\u001b[0m\n  [\u001b[91mFAIL\u001b[0m] finance     GET /approvals/backlog 200 \u001b[91m→ 403\u001b[0m\n  [\u001b[92mPASS\u001b[0m] sales       GET /approvals/backlog 403 (bukan wilayahnya) \u001b[2m→ 403\u001b[0m\n  [\u001b[92mPASS\u001b[0m] warehouse   GET /approvals/backlog 403 (bukan wilayahnya) \u001b[2m→ 403\u001b[0m\n  [\u001b[92mPASS\u001b[0m] total backlog == KPI beranda (tidak mungkin dua angka berbeda lagi) \u001b[2m(backlog 39 vs KPI 39)\u001b[0m\n  [\u001b[92mPASS\u001b[0m] angka per badan usaha ≤ angka gabungan (isolasi entitas terjaga) \u001b[2m(KSC 33 ≤ semua 39)\u001b[0m\n  [\u001b[92mPASS\u001b[0m] semua baris antrean menunjuk layar yang ADA di AppViewRouter \u001b[2mhantu=[]\u001b[0m\n  [\u001b[92mPASS\u001b[0m] setiap baris antrean menyebut koleksi yang benar (ada di DB atau di kode) \u001b[2msalah=[]\u001b[0m\n\n\u001b[1m▶ G5 — BUKTI-MERAH (cabut izinnya → POC wajib memerah)\u001b[0m\n  [\u001b[92mPASS\u001b[0m] izin dicabut → finance kembali 403 di /ar/aging (gate bisa memerah)\n  [\u001b[92mPASS\u001b[0m] izin dicabut → warehouse kembali 403 di /suppliers (gate bisa memerah)\n  [\u001b[92mPASS\u001b[0m] matriks dipulihkan → finance 200 kembali (nol residu izin)\n\n\u001b[1m==============================================================================\u001b[0m\n  HASIL: \u001b[92m42 PASS\u001b[0m · \u001b[91m1 FAIL\u001b[0m dari 43 pemeriksaan\n\u001b[1m==============================================================================\u001b[0m\n\u001b[92m  [snapshot] 21 koleksi dipulihkan ke keadaan sebelum uji — nol residu.\u001b[0m\n"
+  },
+  {
+   "file": "backend/test_core_sampling_poc.py",
+   "mode": "direct",
+   "rc": 0,
+   "timeout": false,
+   "dur": 7.7,
+   "passed": 66,
+   "total": 66,
+   "errors": [
+    "  [PASS] BUKTI-MERAH D7: satu nomor kembar disuntik → gate INV-SAMPLE-01 MEMERAH",
+    "POC FASE S — SAMPLING: 66 PASS / 0 FAIL"
+   ],
+   "tail": "i pola `<ENT>/SMP-#####`\n  [PASS] semua nomor UNIK (dulu 5 pasang kembar dari seeder f-string)\n  [PASS] seeder KPI memakai `next_doc_number()` — akar D7 ditutup (statik, komentar dibuang lebih dulu)\n  [PASS] gate INV-SAMPLE-01 HIJAU pada keadaan sekarang\n  [PASS] BUKTI-MERAH D7: satu nomor kembar disuntik → gate INV-SAMPLE-01 MEMERAH\n  [PASS] gate HIJAU lagi setelah nomor kembar dibuang\n\n=== S10 — CLEANUP: nol residu (dokumen · stok · jurnal · ref) ===\n  \u001b[93m[poc-refs] 1 tautan hantu disapu (INV-REF-04) — dokumen uji dihapus tanpa meninggalkan jejak menunjuk ketiadaan.\u001b[0m\n  \u001b[92m[poc-stock] stok dipulihkan EKSAK (368 dokumen, 8 koleksi) — nol residu roll & saldo.\u001b[0m\n  · 1 sample · 1 kontrak · 0 barang supplier dibuang · 1 ref hantu disapu · jejak dibuang={'audit_logs': 24, 'sessions': 3, 'approval_matrix_log': 1} · stok/jurnal dipulihkan=True\n  [PASS] koleksi jejak `audit_logs` kembali PERSIS seperti sebelum POC\n  [PASS] koleksi jejak `notifications` kembali PERSIS seperti sebelum POC\n  [PASS] koleksi jejak `sessions` kembali PERSIS seperti sebelum POC\n  [PASS] koleksi jejak `approval_matrix_log` kembali PERSIS seperti sebelum POC\n  [PASS] nol dokumen uji tertinggal\n  [PASS] jumlah permintaan sample kembali PERSIS seperti sebelum POC\n  [PASS] gate INV-SAMPLE-01 tetap HIJAU sesudah pembersihan\n\n======================================================================\nPOC FASE S — SAMPLING: 66 PASS / 0 FAIL\n======================================================================\n"
+  },
+  {
+   "file": "backend/test_core_sesi_2026_06_poc.py",
+   "mode": "direct",
+   "rc": 1,
+   "timeout": false,
+   "dur": 3.8,
+   "passed": null,
+   "total": null,
+   "errors": [
+    "  [\u001b[91mFAIL\u001b[0m] sesudah dibersihkan: buku kembali seperti sebelum POC (nol residu nilai) \u001b[91mΔ3,219,000\u001b[0m",
+    "  [\u001b[92mPASS\u001b[0m] BUKTI-MERAH: dokumen dihapus → hilang dari papan (papan tidak mengarang)",
+    "  [\u001b[92mPASS\u001b[0m] BUKTI-MERAH dua arah: roll dibuang → tuduhannya ikut hilang"
+   ],
+   "tail": " [\u001b[91mFAIL\u001b[0m] roll yang nilainya PERSIS sebesar selisih ditunjuk beserta dokumen sumbernya \u001b[91m[]\u001b[0m\n  [\u001b[92mPASS\u001b[0m] BUKTI-MERAH: roll dibuang → penunjukan itu ikut hilang (bukan tuduhan abadi)\n\n\u001b[1m▶ G4 — `status_history[]` hanya punya SATU bentuk (INV-HIST-01)\u001b[0m\n  [\u001b[92mPASS\u001b[0m] penyusun SSOT menghasilkan bentuk kanonik \u001b[2m['note', 'status', 'timestamp', 'user']\u001b[0m\n  [\u001b[92mPASS\u001b[0m] pembaca kanonik membaca satu kunci (bentuk lama TIDAK diam-diam diterima)\n  [\u001b[92mPASS\u001b[0m] nol lot masih memakai bentuk lama `at` (migrasi sudah jalan) \u001b[2m0 lot\u001b[0m\n  [\u001b[92mPASS\u001b[0m] nol PO custom memakai bentuk lama \u001b[2m0 dokumen\u001b[0m\n  [\u001b[92mPASS\u001b[0m] riwayat lot nyata sudah berbentuk kanonik \u001b[2m['reason', 'status', 'timestamp', 'user']\u001b[0m\n  [\u001b[92mPASS\u001b[0m] `waiting_since` membaca kunci kanonik (umur 2 hari, bukan 20) \u001b[2m2026-09-03\u001b[0m\n\u001b[92m  [snapshot] 3 koleksi dipulihkan ke keadaan sebelum uji — nol residu.\u001b[0m\n\n\u001b[1m▶ G5 — nol residu setelah POC (DIUKUR, bukan diklaim)\u001b[0m\n  [\u001b[91mFAIL\u001b[0m] seluruh koleksi tersentuh kembali ke jumlah awal (INV-GATE-01) \u001b[91m{'notifications': (132, 125)}\u001b[0m\n  [\u001b[92mPASS\u001b[0m] BUKTI-MERAH: pengukur residu MEMERAH saat 1 dokumen sengaja nyangkut\n  [\u001b[91mFAIL\u001b[0m] sentinel ikut dibersihkan (POC ini nol residu)\n\n\u001b[1m==============================================================================\u001b[0m\n  HASIL: \u001b[92m62 PASS\u001b[0m · \u001b[91m4 FAIL\u001b[0m dari 66 pemeriksaan\n\u001b[1m==============================================================================\u001b[0m\n"
+  },
+  {
+   "file": "backend/test_core_sesi_2026_06b_poc.py",
+   "mode": "direct",
+   "rc": 1,
+   "timeout": false,
+   "dur": 1.4,
+   "passed": null,
+   "total": null,
+   "errors": [
+    "  [\u001b[91mFAIL\u001b[0m] keadaan awal: roll bernilai Rp 900.000 ada di gudang penjual TANPA jurnal \u001b[91mΔ-860,000\u001b[0m",
+    "Traceback (most recent call last):",
+    "    raise IntercoError(\"Pasangan dokumen tidak lengkap.\")"
+   ],
+   "tail": "udang penjual TANPA jurnal \u001b[91mΔ-860,000\u001b[0m\n\u001b[92m  [snapshot] 9 koleksi dipulihkan ke keadaan sebelum uji — nol residu.\u001b[0m\nTraceback (most recent call last):\n  File \"/app/backend/test_core_sesi_2026_06b_poc.py\", line 352, in <module>\n    sys.exit(asyncio.run(main()))\n             ^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/asyncio/runners.py\", line 190, in run\n    return runner.run(main)\n           ^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/asyncio/runners.py\", line 118, in run\n    return self._loop.run_until_complete(task)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/asyncio/base_events.py\", line 654, in run_until_complete\n    return future.result()\n           ^^^^^^^^^^^^^^^\n  File \"/app/backend/test_core_sesi_2026_06b_poc.py\", line 188, in main\n    hasil = await icret.on_return_task_executed(dict(transfer), \"poc\")\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/backend/services/interco_return_service.py\", line 772, in on_return_task_executed\n    await _refresh_origin(refreshed or returner)\n  File \"/app/backend/services/interco_return_service.py\", line 454, in _refresh_origin\n    seller, buyer = await ics._pair_docs(origin_pair)\n                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/backend/services/interco_service.py\", line 460, in _pair_docs\n    raise IntercoError(\"Pasangan dokumen tidak lengkap.\")\nservices.interco_service.IntercoError: Pasangan dokumen tidak lengkap.\n"
+  },
+  {
+   "file": "backend/test_core_sesi_2026_06c_poc.py",
+   "mode": "direct",
+   "rc": 1,
+   "timeout": false,
+   "dur": 1.9,
+   "passed": null,
+   "total": null,
+   "errors": [
+    "Traceback (most recent call last):",
+    "    raise IntercoError(\"Pasangan dokumen tidak lengkap.\")",
+    "services.interco_service.IntercoError: Pasangan dokumen tidak lengkap."
+   ],
+   "tail": " (angka papan ikut turun) \u001b[2mcount=0\u001b[0m\n\n\u001b[1m▶ N2 — riwayat nilai (HPP) roll: siapa mengubah & atas dasar apa\u001b[0m\n\u001b[92m  [snapshot] 10 koleksi dipulihkan ke keadaan sebelum uji — nol residu.\u001b[0m\nTraceback (most recent call last):\n  File \"/app/backend/test_core_sesi_2026_06c_poc.py\", line 305, in <module>\n    sys.exit(asyncio.run(main()))\n             ^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/asyncio/runners.py\", line 190, in run\n    return runner.run(main)\n           ^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/asyncio/runners.py\", line 118, in run\n    return self._loop.run_until_complete(task)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/asyncio/base_events.py\", line 654, in run_until_complete\n    return future.result()\n           ^^^^^^^^^^^^^^^\n  File \"/app/backend/test_core_sesi_2026_06c_poc.py\", line 230, in main\n    await icret.on_return_task_executed(dict(transfer), \"Penguji POC\")\n  File \"/app/backend/services/interco_return_service.py\", line 772, in on_return_task_executed\n    await _refresh_origin(refreshed or returner)\n  File \"/app/backend/services/interco_return_service.py\", line 454, in _refresh_origin\n    seller, buyer = await ics._pair_docs(origin_pair)\n                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/backend/services/interco_service.py\", line 460, in _pair_docs\n    raise IntercoError(\"Pasangan dokumen tidak lengkap.\")\nservices.interco_service.IntercoError: Pasangan dokumen tidak lengkap.\n"
+  },
+  {
+   "file": "backend/test_f3_aftersales_smoke.py",
+   "mode": "direct",
+   "rc": 1,
+   "timeout": false,
+   "dur": 1.0,
+   "passed": null,
+   "total": null,
+   "errors": [
+    "Traceback (most recent call last):",
+    "AssertionError: NO credit note generated after approve"
+   ],
+   "tail": "[OK] returnable SO KSC/SO-00018 status=done entity=ent_ksc items=1\n[OK] trial balance before: balanced=True debit=1198520899.56\n[OK] return created SRET-00004 type=komplain status=pending_approval\n[OK] return approved status=approved cn=None cn_amount=None\nTraceback (most recent call last):\n  File \"/app/backend/test_f3_aftersales_smoke.py\", line 96, in <module>\n    main()\n  File \"/app/backend/test_f3_aftersales_smoke.py\", line 69, in main\n    assert ret2.get(\"credit_note_number\"), \"NO credit note generated after approve\"\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: NO credit note generated after approve\n"
+  },
+  {
+   "file": "backend/test_f3_smoke.py",
+   "mode": "direct",
+   "rc": 1,
+   "timeout": false,
+   "dur": 0.9,
+   "passed": null,
+   "total": null,
+   "errors": [
+    "Traceback (most recent call last):",
+    "AssertionError: approve failed 403: {\"detail\":\"Pemisahan tugas: Anda yang mengajukan dokumen SORD-260905-0002 sehingga tidak boleh menyetujuinya sendiri. Minta approver lain — aturan ini bisa diubah di Pusat Pengaturan →"
+   ],
+   "tail": "[OK] login manager · entity=ent_ksc\n[OK] customer=cust_a1d9a19c5366 (Test Customer Dye Lot 1788626923.997155) entity=ent_ksc\n[OK] special_order created SORD-260905-0002 status=pending_approval total=20000000.0\nTraceback (most recent call last):\n  File \"/app/backend/test_f3_smoke.py\", line 97, in <module>\n    main()\n  File \"/app/backend/test_f3_smoke.py\", line 58, in main\n    assert r.status_code == 200, f\"approve failed {r.status_code}: {r.text}\"\n           ^^^^^^^^^^^^^^^^^^^^\nAssertionError: approve failed 403: {\"detail\":\"Pemisahan tugas: Anda yang mengajukan dokumen SORD-260905-0002 sehingga tidak boleh menyetujuinya sendiri. Minta approver lain — aturan ini bisa diubah di Pusat Pengaturan → Persetujuan & Ambang.\"}\n"
+  },
+  {
+   "file": "backend/test_fase_c_lot_poc.py",
+   "mode": "direct",
+   "rc": 1,
+   "timeout": false,
+   "dur": 1.5,
+   "passed": null,
+   "total": null,
+   "errors": [
+    "  ❌ [FAIL] GR lengkap ditolak di mode block: 409 {\"detail\":{\"code\":\"SAGA_IN_PROGRESS\",\"message\":\"Aksi 'inbound_complete' atas dokumen ini sedang/pernah berjalan (mulai 2026-09-05T16:50:13.395032+00:00) dan belum selesai.",
+    "Traceback (most recent call last):",
+    "TypeError: 'NoneType' object is not subscriptable"
+   ],
+   "tail": "\n\u001b[96m\u001b[1mTEST 4 — Idempoten: batch dengan nomor lot sama tidak membuat lot dobel\u001b[0m\n  ✅ [PASS] Penerimaan lanjutan menempel ke lot yang sama (KSC/LOT-2609-0039) — tanpa lot dobel\n\n\u001b[96m\u001b[1mTEST 5 — Split lot: sebagian roll → lot anak (genealogi dua arah)\u001b[0m\n  ✅ [PASS] Split SELURUH roll ditolak dengan pesan jelas (arahkan ke rework/merge)\n  ✅ [PASS] Genealogi dua arah terbentuk: KSC/LOT-2609-0039 → KSC/LOT-2609-0042\n  ✅ [PASS] Roll pindah ke lot anak + dye_lot anak ikut diperbarui\n  ✅ [PASS] Agregat lot induk & anak di-recompute (bukan $inc)\n\n\u001b[96m\u001b[1mTEST 6 — Merge lot: 2 lot → 1 lot baru dengan 2 induk\u001b[0m\nTraceback (most recent call last):\n  File \"/app/backend/test_fase_c_lot_poc.py\", line 613, in <module>\n    sys.exit(asyncio.run(main()))\n             ^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/asyncio/runners.py\", line 190, in run\n    return runner.run(main)\n           ^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/asyncio/runners.py\", line 118, in run\n    return self._loop.run_until_complete(task)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/asyncio/base_events.py\", line 654, in run_until_complete\n    return future.result()\n           ^^^^^^^^^^^^^^^\n  File \"/app/backend/test_fase_c_lot_poc.py\", line 333, in main\n    r = s.post(f\"{API}/lots/merge\", json={\"lot_ids\": [blue[\"id\"], green[\"id\"]],\n                                                                  ~~~~~^^^^^^\nTypeError: 'NoneType' object is not subscriptable\n"
+  },
+  {
+   "file": "backend/test_fase_f_rnd_poc.py",
+   "mode": "direct",
+   "rc": 1,
+   "timeout": false,
+   "dur": 14.2,
+   "passed": null,
+   "total": null,
+   "errors": [
+    "TEST 13 — BUKTI-MERAH: invarian INV-RND benar-benar MEMERAH saat dilanggar",
+    "  \u001b[92m✓\u001b[0m INV-RND-01 MEMERAH saat keputusan sample kehilangan alasan",
+    "  \u001b[92m✓\u001b[0m INV-RND-02 MEMERAH saat round tertutup kehilangan lampiran bukti"
+   ],
+   "tail": "PASS\u001b[0m\n  \u001b[92m✓\u001b[0m INV-RND-01 MEMERAH saat keputusan sample kehilangan alasan\n  \u001b[92m✓\u001b[0m INV-RND-02 MEMERAH saat round tertutup kehilangan lampiran bukti\n  \u001b[92m✓\u001b[0m INV-RND-04 MEMERAH saat produk yang sudah dipakai PR dikembalikan ke tahap labdip\n  \u001b[92m✓\u001b[0m INV-RND-05 MEMERAH saat mutasi stok pengambilan bahan sample dihapus (stok sample ≠ stok gudang)\n  \u001b[92m✓\u001b[0m INV-RND-07 MEMERAH saat jurnal beban bahan sample dihapus (nilai persediaan turun tanpa beban di GL)\n  \u001b[91m✗ setelah semua dipulihkan: invarian global HIJAU kembali — \u001b[92mPASS 244\u001b[0m  |  \u001b[91mFAIL 4\u001b[0m  |  \u001b[93mWARN 2\u001b[0m\u001b[0m\n\n\u001b[96m\u001b[1m==============================================================================\nTEST 14 — Laporan kinerja R&D & pembersihan artefak POC (nol residu)\n==============================================================================\u001b[0m\n  \u001b[92m✓\u001b[0m laporan kinerja pelaksana R&D terbentuk dari data nyata — 5 pelaksana · 5 round terlambat\n  \u001b[92m[poc-stock] stok dipulihkan EKSAK (4 dokumen, 1 koleksi) — nol residu roll & saldo.\u001b[0m\n  \u001b[92m✓\u001b[0m 12 artefak POC dihapus dari database\n  \u001b[91m✗ invarian global tetap HIJAU setelah pembersihan (nol residu) — \u001b[92mPASS 244\u001b[0m  |  \u001b[91mFAIL 4\u001b[0m  |  \u001b[93mWARN 2\u001b[0m\u001b[0m\n\n\u001b[96m\u001b[1m==============================================================================\nRINGKASAN\n==============================================================================\u001b[0m\n  PASS 97 / FAIL 3  (total 100)\n\n\u001b[91m\u001b[1m✗ POC FASE F GAGAL — 3 pemeriksaan merah.\u001b[0m\n"
+  },
+  {
+   "file": "backend/test_fase_f_us3_us11_us12_poc.py",
+   "mode": "direct",
+   "rc": 1,
+   "timeout": false,
+   "dur": 1.8,
+   "passed": null,
+   "total": null,
+   "errors": [
+    "  [FAIL] SEMUA tipe mutasi pada data punya label Indonesia di peta UI — tanpa label: ['qc_accept']",
+    "HASIL: PASS 41 / FAIL 1",
+    "RINCIAN GAGAL:"
+   ],
+   "tail": " kontrak ditemukan lewat pencarian jejak dokumen\n  [PASS] GET /documents/trace/supplier_contract/{id} 200\n    · node dalam graf: 3 · jenis: ['md_sample', 'md_spec', 'supplier_contract']\n  [PASS] graf memuat node md_sample\n    · sample: KSC/SMP-00029 (smp_257d60e3247d)\n  [PASS] node md_sample punya NOMOR yang layak dibaca (KSC/SMP-…)\n  [PASS] graf memuat node md_spec (spesifikasi asal) ATAU sample menautkannya\n    · spesifikasi: KSC/SPEC-00003 (spec_2f786094e3d6)\n  [PASS] node md_spec punya NOMOR yang layak dibaca (KSC/SPEC-…)\n  [PASS] GET /documents/trace/md_sample/{id} 200\n  [PASS] dari sample bisa sampai ke md_spec\n    · dari sample: ['md_sample', 'md_spec', 'supplier_contract']\n  [PASS] GET /documents/ref-types 200\n  [PASS] jenis md_spec punya label Indonesia\n  [PASS] jenis md_sample punya label Indonesia\n    · label: md_spec='Spesifikasi Produk (R&D)' md_sample='Permintaan Sample (Labdip/Proofing)'\n\n=== INV-GATE-01 — POC tidak boleh meninggalkan residu ===\n  \u001b[92m[poc-stock] stok dipulihkan EKSAK (268 dokumen, 6 koleksi) — nol residu roll & saldo.\u001b[0m\n  [PASS] stok (roll/saldo/mutasi/lot) dipulihkan eksak\n  [PASS] nol residu pada `sales_orders`\n  [PASS] nol residu pada `inventory_movements`\n\n==========================================================================\nHASIL: PASS 41 / FAIL 1\n\nRINCIAN GAGAL:\n  · SEMUA tipe mutasi pada data punya label Indonesia di peta UI :: tanpa label: ['qc_accept']\n==========================================================================\n"
+  },
+  {
+   "file": "backend/test_g0_config_poc.py",
+   "mode": "direct",
+   "rc": 1,
+   "timeout": false,
+   "dur": 11.7,
+   "passed": null,
+   "total": null,
+   "errors": [
+    "  PASS 114 / FAIL 1  (total 115)",
+    "\u001b[91m\u001b[1m✗ 1 pemeriksaan GAGAL — perbaiki sebelum lanjut.\u001b[0m"
+   ],
+   "tail": "okumen terbuka terdampak\n  \u001b[92m✓\u001b[0m DEFAULT: HANYA dokumen yang sedang dibuka yang tercentang (['so_02145c64ebd4'])\n  \u001b[92m✓\u001b[0m dampak dirinci per baris (qty, harga lama→baru, Δ)\n  \u001b[92m✓\u001b[0m selisih per dokumen terhitung benar: Rp 200000.0\n  \u001b[92m✓\u001b[0m ringkasan + penjelasan kebijakan ditampilkan ke user\n  \u001b[92m✓\u001b[0m menolak koreksi harga tanpa alasan\n  \u001b[92m✓\u001b[0m POST /config/impact-apply 200\n  \u001b[92m✓\u001b[0m tepat 1 dokumen diubah (1)\n  \u001b[92m✓\u001b[0m INV-CFG-07: dokumen tak tercentang terbukti BYTE-IDENTIK (sidik jari sama)\n  \u001b[92m✓\u001b[0m harga master ikut diperbaiki\n  \u001b[92m✓\u001b[0m pesanan lain TIDAK berubah — harga tetap Rp 100000.0\n  \u001b[92m✓\u001b[0m pesanan lain TIDAK berubah — harga tetap Rp 100000.0\n  \u001b[92m✓\u001b[0m dokumen yang dicentang di-derive ulang → Rp 120000.0\n  \u001b[92m✓\u001b[0m invoice uji tidak bisa dibuat pada data ini — sub-uji dilewati\n\n\u001b[96m\u001b[1m==============================================================================\nCLEANUP — kembalikan lingkungan ke keadaan semula\n==============================================================================\u001b[0m\n  dibersihkan: 10 objek uji · 25 baris config_values POC\n  \u001b[92m[poc-stock] stok dipulihkan EKSAK (271 dokumen, 7 koleksi) — nol residu roll & saldo.\u001b[0m\n\n\u001b[96m\u001b[1m==============================================================================\nRINGKASAN\n==============================================================================\u001b[0m\n  PASS 114 / FAIL 1  (total 115)\n\n\u001b[91m\u001b[1m✗ 1 pemeriksaan GAGAL — perbaiki sebelum lanjut.\u001b[0m\n\n"
+  },
+  {
+   "file": "backend/test_g2_payment_poc.py",
+   "mode": "direct",
+   "rc": 1,
+   "timeout": false,
+   "dur": 14.4,
+   "passed": null,
+   "total": null,
+   "errors": [
+    "TEST 12 — BUKTI-MERAH: invarian G-2 benar-benar bisa MEMERAH",
+    "  \u001b[92m✓\u001b[0m jumlah baris rencana diubah sepihak → INV-PAY-01 MERAH",
+    "  \u001b[92m✓\u001b[0m denda DRAFT diberi jurnal → INV-PEN-01 MERAH (draft wajib bersih dari GL)"
+   ],
+   "tail": " bisa MEMERAH\n==============================================================================\u001b[0m\n  \u001b[91m✗ keadaan awal: seluruh invarian G-2 HIJAU\u001b[0m\n  \u001b[92m✓\u001b[0m jumlah baris rencana diubah sepihak → INV-PAY-01 MERAH\n  \u001b[92m✓\u001b[0m dipulihkan → INV-PAY-01 kembali HIJAU\n  \u001b[92m✓\u001b[0m denda DRAFT diberi jurnal → INV-PEN-01 MERAH (draft wajib bersih dari GL)\n  \u001b[92m✓\u001b[0m denda dibebaskan tanpa alasan → INV-PEN-02 MERAH\n  \u001b[92m✓\u001b[0m nota denda dibuat tidak sinkron dengan GL → INV-PEN-03 MERAH\n  \u001b[92m✓\u001b[0m dipulihkan → seluruh invarian G-2 HIJAU lagi (invarian bukan hiasan)\n\n\u001b[96m\u001b[1m==============================================================================\nCLEANUP — kembalikan lingkungan ke keadaan semula (nol residu)\n==============================================================================\u001b[0m\n  \u001b[92m✓\u001b[0m seluruh konfigurasi pembayaran & denda dipulihkan ke nilai semula\n  \u001b[92m✓\u001b[0m 11 artefak POC dihapus dari database\n  \u001b[92m[poc-stock] stok dipulihkan EKSAK (387 dokumen, 8 koleksi) — nol residu roll & saldo.\u001b[0m\n  \u001b[92m✓\u001b[0m stok (roll/saldo/mutasi/lot) dipulihkan eksak\n  \u001b[91m✗ invarian global tetap HIJAU setelah pembersihan (nol residu) — \u001b[92mPASS 244\u001b[0m  |  \u001b[91mFAIL 4\u001b[0m  |  \u001b[93mWARN 2\u001b[0m\u001b[0m\n\n\u001b[96m\u001b[1m==============================================================================\nRINGKASAN\n==============================================================================\u001b[0m\n  PASS 52 / FAIL 2  (total 54)\n\n\u001b[91m\u001b[1m✗ POC FASE G-2 GAGAL — 2 pemeriksaan merah.\u001b[0m\n"
+  },
+  {
+   "file": "backend/test_g3_variance_poc.py",
+   "mode": "direct",
+   "rc": 1,
+   "timeout": false,
+   "dur": 14.8,
+   "passed": null,
+   "total": null,
+   "errors": [
+    "TEST 13 — BUKTI-MERAH: invarian INV-VAR memerah saat dilanggar",
+    "  \u001b[92m✓\u001b[0m INV-VAR-01 MEMERAH saat ada keputusan tanpa label alasan — exit=1",
+    "  \u001b[92m✓\u001b[0m INV-VAR-02 MEMERAH saat dana kwitansi tidak lagi sama dengan rinciannya — exit=1"
+   ],
+   "tail": "====================================================================\u001b[0m\n  \u001b[92m✓\u001b[0m kondisi awal: invarian selisih pembayaran hijau — exit=1\n  \u001b[92m✓\u001b[0m INV-VAR-01 MEMERAH saat ada keputusan tanpa label alasan — exit=1\n  \u001b[92m✓\u001b[0m INV-VAR-02 MEMERAH saat dana kwitansi tidak lagi sama dengan rinciannya — exit=1\n  \u001b[92m✓\u001b[0m INV-VAR-02 MEMERAH saat keputusan memindahkan uang tanpa jurnal — exit=1\n  \u001b[92m✓\u001b[0m tidak ada selisih menggantung untuk diuji-tuakan (semua sudah diputus)\n  \u001b[91m✗ dipulihkan → invarian selisih pembayaran HIJAU lagi (invarian bukan hiasan)\u001b[0m\n\n\u001b[96m\u001b[1m==============================================================================\nCLEANUP — kembalikan lingkungan ke keadaan semula (nol residu)\n==============================================================================\u001b[0m\n  \u001b[92m✓\u001b[0m seluruh konfigurasi selisih pembayaran dipulihkan ke nilai semula\n  \u001b[92m✓\u001b[0m 44 artefak POC dihapus dari database\n  \u001b[92m[poc-stock] stok dipulihkan EKSAK (387 dokumen, 8 koleksi) — nol residu roll & saldo.\u001b[0m\n  \u001b[92m✓\u001b[0m stok (roll/saldo/mutasi/lot) dipulihkan eksak\n  \u001b[91m✗ invarian global tetap HIJAU setelah pembersihan (nol residu) — \u001b[92mPASS 244\u001b[0m  |  \u001b[91mFAIL 4\u001b[0m  |  \u001b[93mWARN 2\u001b[0m\u001b[0m\n\n\u001b[96m\u001b[1m==============================================================================\nRINGKASAN\n==============================================================================\u001b[0m\n  PASS 69 / FAIL 3  (total 72)\n\n\u001b[91m\u001b[1m✗ POC FASE G-3 GAGAL — 3 pemeriksaan merah.\u001b[0m\n"
+  },
+  {
+   "file": "backend/test_g4_refs_poc.py",
+   "mode": "direct",
+   "rc": 1,
+   "timeout": false,
+   "dur": 11.9,
+   "passed": null,
+   "total": null,
+   "errors": [
+    "TEST 8 — BUKTI-MERAH: invarian INV-REF benar-benar bisa MEMERAH",
+    "  \u001b[92m✓\u001b[0m tagihan supplier dijadikan YATIM → INV-REF-01 MERAH (gate memblokir)",
+    "  \u001b[92m✓\u001b[0m relasi dibuat SATU ARAH → INV-REF-02 MERAH (jejak tidak bisa dibaca balik)"
+   ],
+   "tail": "m blok tanda tangan menyebut JABATAN + WAKTU (bukan sekadar nama)\n  \u001b[92m✓\u001b[0m dokumen cetak menampilkan blok tanda tangan bernama + jabatan\n\n\u001b[96m\u001b[1m==============================================================================\nTEST 8 — BUKTI-MERAH: invarian INV-REF benar-benar bisa MEMERAH\n==============================================================================\u001b[0m\n  \u001b[91m✗ keadaan awal: INV-REF-01 & INV-REF-02 HIJAU\u001b[0m\n  \u001b[92m✓\u001b[0m tagihan supplier dijadikan YATIM → INV-REF-01 MERAH (gate memblokir)\n  \u001b[92m✓\u001b[0m setelah dipulihkan → INV-REF-01 kembali HIJAU\n  \u001b[92m✓\u001b[0m relasi dibuat SATU ARAH → INV-REF-02 MERAH (jejak tidak bisa dibaca balik)\n  \u001b[92m✓\u001b[0m dipulihkan → INV-REF-02 & INV-REF-03 HIJAU (invarian bukan hiasan)\n\n\u001b[96m\u001b[1m==============================================================================\nCLEANUP — kembalikan lingkungan ke keadaan semula (nol residu)\n==============================================================================\u001b[0m\n  \u001b[92m✓\u001b[0m seluruh konfigurasi dokumen dipulihkan ke nilai semula\n  \u001b[92m✓\u001b[0m 7 artefak POC dihapus dari database\n  \u001b[91m✗ invarian global tetap HIJAU setelah pembersihan (nol residu) — \u001b[92mPASS 245\u001b[0m  |  \u001b[91mFAIL 3\u001b[0m  |  \u001b[93mWARN 2\u001b[0m\u001b[0m\n\n\u001b[96m\u001b[1m==============================================================================\nRINGKASAN\n==============================================================================\u001b[0m\n  PASS 47 / FAIL 2  (total 49)\n\n\u001b[91m\u001b[1m✗ POC FASE G-4 GAGAL — 2 pemeriksaan merah.\u001b[0m\n"
+  },
+  {
+   "file": "backend/test_g7_contrabon_poc.py",
+   "mode": "direct",
+   "rc": 1,
+   "timeout": false,
+   "dur": 12.5,
+   "passed": null,
+   "total": null,
+   "errors": [
+    "\u001b[96m\u001b[1m── 14 · INVARIAN INV-CB-01..04 + BUKTI-MERAH (US11) ──\u001b[0m",
+    "  [\u001b[92mPASS\u001b[0m] seluruh invarian kontrabon HIJAU pada data nyata  (\u001b[92mPASS 4\u001b[0m  |  \u001b[91mFAIL 0\u001b[0m  |  \u001b[93mWARN 0\u001b[0m)",
+    "  [\u001b[92mPASS\u001b[0m] BUKTI-MERAH INV-CB-01: faktur di dua kontrabon → gate MEMERAH  (exit 1)"
+   ],
+   "tail": "BUKTI-MERAH INV-CB-02: nilai bersih tidak sama dengan faktur − potongan → MEMERAH  (exit 1)\n  [\u001b[92mPASS\u001b[0m] BUKTI-MERAH INV-CB-03: selisih tanpa keputusan pada kontrabon terverifikasi → MEMERAH  (exit 1)\n  [\u001b[92mPASS\u001b[0m] BUKTI-MERAH INV-CB-04: potongan klaim makloon (dobel) → MEMERAH  (exit 1)\n  [\u001b[92mPASS\u001b[0m] sesudah dipulihkan, invarian kontrabon HIJAU lagi  (exit 0)\n\n\u001b[96m\u001b[1m── 15 · PEMBERSIHAN — nol residu (POC tidak boleh merusak data demo) ──\u001b[0m\n  [\u001b[92mPASS\u001b[0m] artefak POC dihapus dari basis data  ({'cbs': 5, 'bills': 7, 'cash': 4, 'returns': 1, 'lines': 1, 'je': 16, 'notif': 4, 'variance': 1, 'refs_pulled': 5, 'seq': 1, 'cfg': 6})\n  [\u001b[92mPASS\u001b[0m] ringkasan penagihan PO dihitung ulang dari faktur yang tersisa\n  \u001b[92m[poc-stock] stok dipulihkan EKSAK (271 dokumen, 6 koleksi) — nol residu roll & saldo.\u001b[0m\n  [\u001b[92mPASS\u001b[0m] stok (roll/saldo/mutasi/lot) dipulihkan EKSAK dari snapshot\n  [\u001b[92mPASS\u001b[0m] kontrabon di basis data kembali ke jumlah sebelum POC (data demo utuh)  (3 dokumen · garis dasar 3)\n  [\u001b[92mPASS\u001b[0m] tidak ada faktur POC sisa  (0 dokumen)\n  [\u001b[91mFAIL\u001b[0m] verify_data_integrity LENGKAP hijau setelah pembersihan  (\u001b[92mPASS 245\u001b[0m  |  \u001b[91mFAIL 3\u001b[0m  |  \u001b[93mWARN 2\u001b[0m)\n\n\u001b[1m==============================================================================\n  \u001b[92mPASS 119\u001b[0m  |  \u001b[91mFAIL 1\u001b[0m  |  total 120\n==============================================================================\u001b[0m\n\u001b[91m\u001b[1mPOC G-7 GAGAL — perbaiki dulu sebelum lanjut.\u001b[0m\n"
+  },
+  {
+   "file": "backend/test_g8_bank_poc.py",
+   "mode": "direct",
+   "rc": 1,
+   "timeout": false,
+   "dur": 16.4,
+   "passed": null,
+   "total": null,
+   "errors": [
+    "  [\u001b[92mPASS\u001b[0m] BUKTI-MERAH (KN-G8-FORMAT-DUP): admin 2 PT melihat tiap template bawaan SEKALI — dulu preset dipasang per-entitas sehingga muncul dobel tanpa pembeda  (7 bawaan · nama ganda: tidak ada)",
+    "  [\u001b[92mPASS\u001b[0m] BUKTI-MERAH: menonaktifkan template BAWAAN ditolak (preset bersama tidak boleh hilang)  (HTTP 400)",
+    "  [\u001b[92mPASS\u001b[0m] BUKTI-MERAH (KN-G8-DIR-SILENT): baris yang arahnya TIDAK bisa dipastikan DITOLAK berikut arahan perbaikan — dulu diam-diam masuk sebagai uang MASUK  (2 ditolak · Arah dana (masuk/keluar) tidak bisa dipa"
+   ],
+   "tail": "EMERAH saat jurnal titipan hilang (uang tak dikenal lenyap dari laporan)\n  [\u001b[92mPASS\u001b[0m] setelah dipulihkan: seluruh INV-BNK HIJAU kembali (invarian bukan hiasan)\n\n\u001b[96m\u001b[1m── 8 · PEMBERSIHAN — nol residu (gate tidak boleh merusak data demo) ──\u001b[0m\n  [\u001b[92mPASS\u001b[0m] pembayaran dari titipan dicabut dari pesanan (nilai pesanan pulih)  (Rp 1,500,000)\n  [\u001b[92mPASS\u001b[0m] rencana pembayaran pesanan dihitung ulang (INV-PAY-02 tetap sah)\n  [\u001b[92mPASS\u001b[0m] data mutasi DEMO kembali ke keadaan semula (INV-GATE-01 · POC tidak menggeser demo)  (6 baris · {'lepas': 1, 'batal_titipan': 0, 'batal_abaikan': 0, 'bidang': 6})\n  [\u001b[92mPASS\u001b[0m] artefak POC dihapus dari database  ({'lines': 19, 'extra_lines': 0, 'cash': 17, 'cash_tag': 0, 'rules': 1, 'formats': 2, 'je': 1, 'je_cash': 4, 'je_rev': 2})\n  [\u001b[92mPASS\u001b[0m] nol residu artefak POC  ({'lines': 6, 'rules': 0, 'cash_poc': 0, 'je_hold': 0})\n  [\u001b[92mPASS\u001b[0m] saldo akun titipan kembali ke keadaan SEBELUM POC (bukan menumpuk residu)  (Rp 12,459,800 (awal Rp 12,459,800))\n  [\u001b[92mPASS\u001b[0m] saldo Beban Administrasi Bank kembali ke keadaan awal (jurnal biaya bank POC bersih)  (Rp 6,500 (awal Rp 6,500))\n  [\u001b[91mFAIL\u001b[0m] invarian GLOBAL tetap HIJAU setelah pembersihan (nol residu)  (\u001b[92mPASS 245\u001b[0m  |  \u001b[91mFAIL 3\u001b[0m  |  \u001b[93mWARN 2\u001b[0m)\n\n\u001b[1m==========================================================================\n  HASIL: \u001b[92m121 PASS\u001b[0m\u001b[1m · \u001b[91m1 FAIL\u001b[0m\n==========================================================================\u001b[0m\n\n"
+  },
+  {
+   "file": "backend/test_g9_case_poc.py",
+   "mode": "direct",
+   "rc": 1,
+   "timeout": false,
+   "dur": 16.8,
+   "passed": null,
+   "total": null,
+   "errors": [
+    "  [\u001b[92mPASS\u001b[0m] BUKTI-MERAH (idempoten): pemindai dijalankan 2x TIDAK menggandakan kasus  (3 → 4 → 4 · dilewati 2)",
+    "  [\u001b[92mPASS\u001b[0m] BUKTI-MERAH: kasus KEMBAR untuk sumber yang sama DITOLAK berikut arahan  (HTTP 400)",
+    "  [\u001b[92mPASS\u001b[0m] BUKTI-MERAH: menutup kasus TANPA label alasan DITOLAK  (HTTP 400)"
+   ],
+   "tail": "n hantu disapu (INV-REF-04) — dokumen uji dihapus tanpa meninggalkan jejak menunjuk ketiadaan.\u001b[0m\n  [\u001b[92mPASS\u001b[0m] nol tautan hantu sesudah kasus & kwitansi POC dihapus (INV-REF-04 · 8 disapu)\n  [\u001b[92mPASS\u001b[0m] nol residu artefak POC (kasus DEMO sengaja dibiarkan utuh)  (artefak POC 0 · kas POC 0 · kasus demo tersisa 3)\n  [\u001b[92mPASS\u001b[0m] jumlah kasus DEMO kembali seperti sebelum POC (INV-GATE-01 · data demo tak digeser)  (3 → 3)\n  [\u001b[92mPASS\u001b[0m] saldo Kas & Bank Transit (1-1150) kembali ke keadaan SEBELUM POC  (Rp 0 (awal Rp 0))\n  [\u001b[92mPASS\u001b[0m] saldo Piutang Titipan Karyawan (1-1280) kembali ke keadaan SEBELUM POC  (Rp 750,000 (awal Rp 750,000))\n  [\u001b[92mPASS\u001b[0m] saldo Titipan Dana Belum Teridentifikasi (2-1950) kembali ke keadaan SEBELUM POC  (Rp -12,459,800 (awal Rp -12,459,800))\n  [\u001b[92mPASS\u001b[0m] saldo Uang Muka Pelanggan (2-1400) kembali ke keadaan SEBELUM POC  (Rp -46,654,300 (awal Rp -46,654,300))\n  [\u001b[92mPASS\u001b[0m] saldo Uang Muka & Biaya Dibayar Dimuka (1-1400) kembali ke keadaan SEBELUM POC  (Rp 500,000 (awal Rp 500,000))\n  [\u001b[91mFAIL\u001b[0m] invarian GLOBAL tetap HIJAU setelah pembersihan (nol residu)  (\u001b[92mPASS 245\u001b[0m  |  \u001b[91mFAIL 3\u001b[0m  |  \u001b[93mWARN 2\u001b[0m)\n  \u001b[92m[poc-stock] stok dipulihkan EKSAK (125 dokumen, 3 koleksi) — nol residu roll & saldo.\u001b[0m\n\n\u001b[1m==========================================================================\n  HASIL: \u001b[92m114 PASS\u001b[0m\u001b[1m · \u001b[91m1 FAIL\u001b[0m\u001b[1m\n==========================================================================\u001b[0m\n"
+  },
+  {
+   "file": "backend/test_ps21_poc.py",
+   "mode": "direct",
+   "rc": 1,
+   "timeout": false,
+   "dur": 3.9,
+   "passed": 42,
+   "total": 43,
+   "errors": [
+    "❌ US-10a total job bertambah menjadi 12  ·  jobs_total=21 enabled=21",
+    "  HASIL: 42 PASS · 1 FAIL",
+    "   ❌ US-10a total job bertambah menjadi 12 — jobs_total=21 enabled=21"
+   ],
+   "tail": "mal koma '12,5' diterima (PS-15)  ·  [12.5]\n✅ US-6c MD (manager) menerima notifikasi permintaan restock  ·  0 → 1 kartu · notified_md=1\n✅ US-6d notifikasi MD menautkan layar PR (deep-link)  ·  link=purchase-requisitions\n✅ US-7a PR menyimpan asal order (source=so_repeat + source_ref_id)  ·  source=so_repeat ref=so_fba17860784\n✅ US-7b SO mencatat riwayat permintaan restock (nomor PR & pemohon)  ·  1 riwayat · terakhir=PR-00014\n✅ US-7c kandidat produk menampilkan PR terbuka agar sales tidak minta dobel  ·  open_pr=['PR-00014']\n✅ US-8a permintaan ganda produk sama ditolak 400 (anti PR dobel)  ·  HTTP 400: {\"detail\":\"Produk ini sudah punya permintaan repeat/restock terbuka (PR-00014). Selesaikan/batalkan PR itu dul\n\n── US-10 · Integrasi mesin notifikasi R6.5/R6.6 ──────────────────\n❌ US-10a total job bertambah menjadi 12  ·  jobs_total=21 enabled=21\n✅ US-10b riwayat eksekusi job baru tercatat (sys_scheduler_runs)  ·  2 run tercatat\n✅ US-10c jenis notifikasi baru dapat difilter di bell  ·  jenis: ['ar_due_soon', 'po_arrival', 'restock_request']\n✅ US-10d severity mengikuti urgensi (info/warning/critical)  ·  severity=['critical', 'info', 'warning']\n✅ US-10e kanal WhatsApp memproses notifikasi baru (outbox/digest aktif)  ·  HTTP 200\n\n==============================================================================\n  HASIL: 42 PASS · 1 FAIL\n==============================================================================\n   ❌ US-10a total job bertambah menjadi 12 — jobs_total=21 enabled=21\n"
+  },
+  {
+   "file": "tests/test_shipment_18.py",
+   "mode": "direct",
+   "rc": 1,
+   "timeout": false,
+   "dur": 0.5,
+   "passed": null,
+   "total": null,
+   "errors": [
+    "FAIL - confirm → 200 :: {\"detail\":\"Verifikasi kelengkapan dulu (alamat · syarat bayar · isi pesanan) sebelum pesanan ini dikonfirmasi — buka Meja Admin Sales → antrean “Perlu diverifikasi”.\"}",
+    "FAIL - SO confirmed :: None",
+    "FAIL - outbound task auto-dibuat saat confirm :: 0"
+   ],
+   "tail": "PASS - ada customer+alamat dgn produk available>=10 di entitasnya \nPASS - create SO → 200 \nPASS - SO status awal reserved \nPASS - item punya base_quantity (UOM-safe) \nPASS - SO approved \nFAIL - confirm → 200 :: {\"detail\":\"Verifikasi kelengkapan dulu (alamat · syarat bayar · isi pesanan) sebelum pesanan ini dikonfirmasi — buka Meja Admin Sales → antrean “Perlu diverifikasi”.\"}\nFAIL - SO confirmed :: None\nFAIL - outbound task auto-dibuat saat confirm :: 0\nPASS - task punya shipped_qty=0 \nFAIL - SO → picked (semua ter-pick) :: approved\nTraceback (most recent call last):\n  File \"/app/tests/test_shipment_18.py\", line 126, in <module>\n    main()\n  File \"/app/tests/test_shipment_18.py\", line 87, in main\n    t0 = next(t for t in t0 if t[\"id\"] == tasks[0][\"id\"])\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/tests/test_shipment_18.py\", line 87, in <genexpr>\n    t0 = next(t for t in t0 if t[\"id\"] == tasks[0][\"id\"])\n                                          ~~~~~^^^\nIndexError: list index out of range\n"
+  },
+  {
+   "file": "tests/test_tax_invoice_19.py",
+   "mode": "direct",
+   "rc": 1,
+   "timeout": false,
+   "dur": 0.5,
+   "passed": 0,
+   "total": 1,
+   "errors": [
+    "FAIL - buat SO PKP (ent_ksc) terkonfirmasi :: approved"
+   ],
+   "tail": "FAIL - buat SO PKP (ent_ksc) terkonfirmasi :: approved\n\n=== FAKTUR PAJAK 1.9 — 0/1 PASS ===\n"
+  },
+  {
+   "file": "scripts/poc_hrd.py",
+   "mode": "direct",
+   "rc": 1,
+   "timeout": false,
+   "dur": 1.0,
+   "passed": 20,
+   "total": 21,
+   "errors": [
+    "  [FAIL] WS handshake lewat ingress  -> GAGAL: ConnectionClosedOK: received 1000 (OK); then sent 1000 (OK) -> FALLBACK POLLING",
+    "  RESULT: 20 PASS / 1 FAIL"
+   ],
+   "tail": "payroll (komisi nyata) SEIMBANG  -> Dr=8,414,400 Cr=8,414,400\n  [PASS] Jurnal payroll (komisi 5jt) SEIMBANG  -> Dr=15,819,200 Cr=15,819,200\n  [PASS] Anti double-count: komisi tidak masuk Beban Gaji 6-6000  -> Beban Gaji=Rp 10,000,000 (=earnings tanpa komisi)\n  [PASS] Komisi diselesaikan via Dr 2-1500 Hutang Insentif  -> settle liabilitas insentif\n\n=== 3. BPJS + PPh21 (TER) -> PAYSLIP + JURNAL ===\n  [PASS] BPJS Kesehatan emp 1% (8jt=80k)  -> Rp 80,000\n  [PASS] BPJS JHT emp 2% (8jt=160k)  -> Rp 160,000\n  [PASS] BPJS JP emp 1% (8jt=80k)  -> Rp 80,000\n  [PASS] PPh21 TER terhitung (gross 15jt)  -> rate=8.00% -> Rp 1,200,000\n  [PASS] Net pay = gross - BPJS emp - PPh21  -> Net=Rp 13,480,000\n  [PASS] Gross 0 -> PPh21 0 (di bawah threshold)  -> gaji 5jt < 5.4jt TER threshold\n\n=== 4. WEBSOCKET /api/ws/track LEWAT INGRESS (wss publik) ===\n    connect: wss://pending-saga.preview.emergentagent.com/api/ws/track\n  [FAIL] WS handshake lewat ingress  -> GAGAL: ConnectionClosedOK: received 1000 (OK); then sent 1000 (OK) -> FALLBACK POLLING\n\n=== 5. PARSE CSV ZKTeco -> hr_attendance (IDEMPOTENT) ===\n  [PASS] Parse CSV -> 3 baris kehadiran (2 emp x hari)  -> 3 rec\n  [PASS] Agregasi multi-punch benar (in=07:58, out=17:30, 4 punch)  -> in=07:58:00 out=17:30:00 punch=4\n  [PASS] Idempotent: jalankan 2x -> jumlah doc stabil (3)  -> run1=3 run2=3\n\n================================================================\n  RESULT: 20 PASS / 1 FAIL\n================================================================\n"
+  },
+  {
+   "file": "scripts/poc_hrd_h1.py",
+   "mode": "direct",
+   "rc": 1,
+   "timeout": false,
+   "dur": 0.8,
+   "passed": 17,
+   "total": 18,
+   "errors": [
+    "  [FAIL] Clock-out → work_min>0  -> work_min=0",
+    "  RESULT: 17 PASS / 1 FAIL"
+   ],
+   "tail": "1. SEEDED MASTERS ===\n  [PASS] Shift ter-seed >=1  -> 1 shift\n  [PASS] Geofence ter-seed >=1  -> 1 geofence\n  [PASS] Device ter-seed >=1  -> 1 device\n\n=== 2. CRUD SHIFT ===\n  [PASS] Create shift 200  -> http 200\n  [PASS] Patch shift grace=15\n  [PASS] Delete (soft) shift\n\n=== 3. CRUD GEOFENCE ===\n  [PASS] Create geofence 200  -> http 200\n  [PASS] Delete geofence\n\n=== 4. IMPORT CSV ZKTeco (idempotent) ===\n  [PASS] Karyawan punya device_user_id (seed)  -> 15 ber-ID mesin\n  [PASS] Import #1 → 2 kehadiran  -> {'imported': 2, 'skipped_rows': 0, 'records': [{'employee_name': 'Agus Setiawan', 'date': '2026-05-04', 'status': 'hadir', 'punches': 2}, {'employee_name': 'Slamet Riyadi', 'date': '2026-05-04', 'status': 'hadir', 'punches': 4}]}\n  [PASS] Idempotent: re-import → tetap 2 record  -> 2 record\n  [PASS] Multi-punch tergabung (work_min>0, method fingerprint)  -> work_min=576\n\n=== 5. MANUAL ENTRY ===\n  [PASS] Manual entry status izin  -> http 200\n\n=== 6. REKAP PERIODE ===\n  [PASS] Rekap Mei 2026 ada rows+totals  -> present_days=2\n\n=== 7. ESS CLOCK-IN/OUT (sales) ===\n  [PASS] GET /hr/attendance/me (sales) 200  -> http 200\n  [PASS] Clock-in (dalam fence) → hadir/telat  -> status=telat\n  [FAIL] Clock-out → work_min>0  -> work_min=0\n\n=== 8. RBAC (sales tak boleh kelola absensi) ===\n  [PASS] Sales POST /hr/shifts → 403  -> http 403\n\n================================================================\n  RESULT: 17 PASS / 1 FAIL\n================================================================\n"
+  },
+  {
+   "file": "scripts/poc_sales_revamp.py",
+   "mode": "direct",
+   "rc": 1,
+   "timeout": false,
+   "dur": 0.8,
+   "passed": 33,
+   "total": 35,
+   "errors": [
+    "RESULT: 33 PASS / 2 FAIL"
+   ],
+   "tail": "ned_sales_id\n  ✓ Σ split == 100\n  ✓ split != 100 -> 400\n  ✓ POST /sales-orders 200 (inherit)\n  ✓ SO.sales_team DIWARISI dari customer (2 anggota)\n  ✓ SO split co == 40\n\n== FASE C — Beli per Roll (picker FEFO + reservasi eksplisit + lintas-entitas) ==\n  ✓ GET /inventory/rolls/available (own) 200 -> {items,total}\n  ✓ picker mengembalikan roll\n  ✓ picker terurut FEFO (created_at asc per lot)\n  ✓ own picker: is_cross_entity semua False\n  ✓ POST /sales-orders mode=roll (own) 200\n  ✓ SO mereservasi TEPAT roll yang dipilih\n  ✗ qty baris = Σ panjang roll terpilih (line=41.59, exp=38.03)\n  ✓ tidak ada pending intercompany (own)\n  ✓ roll terpilih hilang dari picker (ter-reserve)\n  ✓ picker all_entities menandai roll KSC sbg cross saat jual KANDA\n  ✓ POST /sales-orders mode=roll (cross) 200\n  ✓ SO lintas-entitas → linked_transfer_ids dibuat\n  ✓ intercompany_pending_qty > 0\n  ✓ transfer auto: inter_entity, waiting_approval, KSC->KANDA\n  ✓ transfer linked_order_id == SO\n\n== FASE C2 — Rekonsiliasi Roll (genapkan atas/bawah + cut) ==\n  ✓ ada produk dgn >=3 roll utk uji rekonsiliasi\n  ✓ POST preview-roll-reconcile 200 (array)\n  ✓ opsi round_up ada & total >= target\n  ✓ opsi round_down ada & total <= target\n  ✓ round_up == Σ3 roll\n  ✓ round_down == Σ2 roll\n  ✓ opsi exact_cut ada & total == target\n  ✓ exact_cut roll_lines = 3 (2 utuh + 1 potong)\n  ✓ baris cut take_qty < panjang roll penuh\n  ✓ POST SO dgn opsi cut 200\n  ✗ SO qty (cut) == target (got 900.24 exp 823.18)\n\nRESULT: 33 PASS / 2 FAIL\n"
+  }
+ ]
+}

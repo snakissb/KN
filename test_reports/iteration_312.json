@@ -1,0 +1,30 @@
+{
+  "summary": "Frontend-only test of 7 new date/time pickers (KNDateTimePicker ×3, KNTimePicker ×4) replacing legacy datetime-local/time inputs. All 7 pickers verified end-to-end: unified Indonesian labels ('Sab, 05 Sep 2026 · 14:30 WIB' / '08:30 WIB'), popover with kalender + Jam/Menit (step 5) columns + Selesai, correct testids, and successful save flow with backend integration. 0 console errors, 0 pageerrors, regression grep clean.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "KNDateTimePicker/KNTimePicker components are clean, minimal, and reuse TimeColumns properly. No issues."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (skipped)", "frontend": "100%"},
+  "test_credentials": "admin@kainnusantara.id / demo12345 → scope ent_ksc",
+  "seed_data_creation": "Created 1 CRM interaction (subject TEST_KNDT_1430) and patched shift shift_c91bc5f9ac08 jam_in=07:30 via UI.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "iteration_312 validated the new KNDateTimePicker (occurred_at/follow_up_date at CRM Interaksi, cfg-efffrom-{key} at Pusat Pengaturan) and KNTimePicker (setup-jam-in/out at HR Attendance Setup, manual-in/out at HR Attendance manual entry). Testable details: (a) cfg-efffrom-{key} only appears after: expand card → change value → click cfg-sched-toggle-{key}. (b) HR setup-jam-* only appears after clicking [data-testid^=setup-edit-shift_] or setup-create-button. (c) HR manual-in/out only appear after clicking 'Entry Manual' button. (d) Correct settings nav testid is 'nav-settings-hub' (not 'nav-settings'). (e) Regression grep of frontend/src for type=\"time\"|type=\"datetime-local\"|type=\"date\"|type=\"month\" returns only the allowed exceptions (KNDatePicker.jsx comment + DeliveryDetailModal.jsx <Field type=\"date\"> which already uses KNDatePicker).",
+  "verifications": {
+    "crm_intx_form_occurred": "Prefilled 'Sab, 05 Sep 2026 · 09:19 WIB', no -clear button (clearable=false). Selecting hour-14 + minute-30 updates preview to '… · 14:30 WIB'; Selesai closes popover; button label reflects selection. POST /api/crm/interactions returned 200; subject persisted in timeline.",
+    "crm_intx_form_followup": "Clearable — after picking date+time '-clear' testid appears (count=1). Label '· 09:15 WIB'.",
+    "hr_setup_jam_in_out": "KNTimePicker prefill '08:00 WIB'; no -clear. Selecting 07-30 updates label to '07:30 WIB'. Simpan → PATCH /api/hr/shifts/shift_c91bc5f9ac08 returned 200 and body contains '07:30'. ESC on jam-out popover closes popover but keeps setup form.",
+    "hr_manual_in_out_date": "manual-in placeholder 'Jam masuk' shown; no -clear before fill (0). After picking 08:15 label='08:15 WIB', -clear count=1. manual-out picks 17:00 → '17:00 WIB'. manual-date KNDatePicker visible.",
+    "settings_cfg_efffrom": "cfg-efffrom-finance.default_payment_term_code shows placeholder 'Sekarang (langsung berlaku)'. Pick date+10:00 → preview 'Sen, 31 Agt 2026 · 10:00 WIB' → label updates. ESC closes popover only, keeps card open.",
+    "regression_native_inputs": "grep frontend/src returns only allowed exceptions (KNDatePicker.jsx line 2 comment; DeliveryDetailModal.jsx <Field ... type=\"date\">).",
+    "console_errors": "0 console errors, 0 pageerrors across all flows."
+  }
+}

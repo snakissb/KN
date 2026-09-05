@@ -1,0 +1,33 @@
+{
+  "summary": "Frontend UI regression for KNDatePicker migration (46 replacements this session). Logged in as admin@kainnusantara.id, entity KSC. Verified: no <input type=\"date\"> remaining in frontend/src (grep clean, only comment in KNDatePicker.jsx). All KNDatePicker instances render with data-testid `{id}`, popover opens with data-testid `{id}-popover` and closes after selection. ESC closes popover WITHOUT closing parent modal (verified on Journal Entry modal and Employee drawer). clearable=false correctly hides the `{id}-clear` button (verified on fs-pl-start and attendance-date). min= constraint disables prior dates in calendar (verified on leave-form-to using leave-form-from as min → 5 disabled buttons). Data-testid presence + popover interaction verified on: visits-date-from/to (Penjualan → CRM → Kunjungan), fs-pl-start/end, fs-bs-asof, cf-start/end, eq-start/end (Keuangan → Laporan tabs fs-tab-pl/bs/cf/eq), je-date (Buku Besar → Jurnal Baru), attendance-date, leave-form-from/to (hub-tab-hr-leave → leave-create-button), overtime-form-date (hub-tab-hr-overtime → overtime-create-button), employee-dob-input, employee-joindate-input (SDM → Karyawan → create-employee-button). Zero console errors / pageerrors across all navigated screens. Total KNDatePicker usages in codebase: 79 across 63 files.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "not_tested": [
+    "audit-date-from-input / audit-date-to-input (settings-hub → Master Data & Audit navigation not reached in this run; testids confirmed present in AdminView.jsx source)",
+    "prof-start/prof-end (Profitabilitas hub tab), cons-asof (Konsolidasi Grup), fs-pl-period-hint change on picker update, JournalEntryModal end-to-end save",
+    "ar-receipt-date (ARReceiptModal), followup-next (Customer360Panel)",
+    "delivery-date-input & po-amend-eta (PO forms), audit filters ISO param submission",
+    "CheckoutStep3 pickup-date-input/delivery-date-input (delivery min=today), rsp-validuntil, price-approvals-validuntil, sord-expected-delivery (required validation), pin-needed-date, feedback-due-date",
+    "sample-target-date, sample-send-due, sample-finish-date, sample-deliver-date (R&D)",
+    "Source-level presence confirmed via grep for all above; interactive coverage limited by demo data / deep flows"
+  ],
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "KNDatePicker: onChange fires with format(d, 'yyyy-MM-dd') on select — good; but clear button uses e.preventDefault() then setOpen(false) which is correct since it's absolute-positioned INSIDE PopoverTrigger's wrapper — if PopoverTrigger propagates its click, popover may still toggle on some browsers. Not observed in tests; keep as note.",
+    "KNDatePicker exposes only data-testid on the trigger button and popover content; the clear icon uses `${testId}-clear` but has no visible focus ring/aria state beyond aria-label — accessible enough. No missing testids.",
+    "min/max props parse ISO strings but do not validate ordering (min > max) — if a caller passes contradictory values all days become disabled. Consider guarding. Not a blocker."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (skipped)", "frontend": "100% of exercised pickers pass (13/13 interactive checks; remaining pickers verified via static grep only)"},
+  "test_credentials": "admin@kainnusantara.id / demo12345 (entity KSC via scope-pick-ent_ksc)",
+  "seed_data_creation": "None (opened modals were cancelled without saving to avoid touching demo data).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "The 46 KNDatePicker replacements from this session are wired correctly at the component boundary. Remaining verification gaps are deep-flow (PO create, POS checkout, RnD sample lifecycle, admin audit tab). If a future iteration needs to reach admin audit: expand `settings-hub` (nav-settings-hub) then click hub-tab-admin (label 'Master Data & Audit'), then admin-tab-audit-button. Employee form opens via nav-hr-people → create-employee-button (drawer). Journal opens via nav-ledger → gl-new-journal. ESC key does NOT close parent modals (confirmed) — safe to use for popover dismissal in tests.",
+  "rca of the issue": "N/A — no bugs found."
+}
