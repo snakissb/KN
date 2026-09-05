@@ -5,11 +5,13 @@ import CrmView from "../../crm/CrmView";
 import SalesReturns from "../SalesReturns";
 import SpecialOrders from "../SpecialOrders";
 import PricelistView from "../PricelistView";
-import { BadgePercent, MapPin, Boxes } from "lucide-react";
+import { BadgePercent, MapPin, Boxes, Scissors } from "lucide-react";
 import { MobileSpecialPrice, MobileVisits, MobileStock } from "./MobileFieldViews";
+import SampleRequestForm from "../../samples/SampleRequestForm";
 
 const MENU = [
   { id: "special-price", label: "Minta Harga Khusus", desc: "Ajukan harga nego pelanggan + bukti chat", icon: BadgePercent },
+  { id: "sample", label: "Jual Sampel", desc: "Minta gudang memotong sampel untuk pelanggan", icon: Scissors },
   { id: "visits", label: "Kunjungan Sales", desc: "Check-in / check-out di lokasi pelanggan", icon: MapPin },
   { id: "stock", label: "Status Stok", desc: "Tersedia vs dipesan per gudang (hanya-lihat)", icon: Boxes },
   { id: "crm", label: "Pelanggan (CRM)", desc: "Kelola pelanggan & insentif", icon: Users },
@@ -32,6 +34,7 @@ export default function MobileMore({ user, token, selectedEntity, entities, onLo
         </div>
         <div className="m-subpage-body">
           {sub === "special-price" && <MobileSpecialPrice selectedEntity={selectedEntity} />}
+          {sub === "sample" && <div className="p-3"><SampleRequestForm compact /></div>}
           {sub === "visits" && <MobileVisits />}
           {sub === "stock" && <MobileStock />}
           {sub === "crm" && <CrmView currentUser={user} selectedEntity={selectedEntity} />}

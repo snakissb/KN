@@ -62,6 +62,7 @@ const EscalationManagement = lazy(() => import("./features/manager/EscalationMan
 const TaxInvoices = lazy(() => import("./features/finance/TaxInvoices"));
 const SalesReturns = lazy(() => import("./features/sales/SalesReturns"));
 const ReturnPoliciesView = lazy(() => import("./features/sales/ReturnPoliciesView"));const SpecialOrders = lazy(() => import("./features/sales/SpecialOrders"));
+const SampleSalesView = lazy(() => import("./features/samples/SampleSalesView"));
 const PricelistView = lazy(() => import("./features/sales/PricelistView"));
 // F1b (D-14) — Daftar Harga per Pelanggan (harga langganan + penjagaan batas bawah).
 const CustomerPricelistView = lazy(() => import("./features/sales/CustomerPricelistView"));
@@ -83,6 +84,7 @@ const APPROVAL_HUB_OF = {
   "rnd-samples": "rnd-hub",
   "purchase-requisitions": "sourcing",
   "special-orders": "sales-orders",
+  "sample-sales": "sales-orders",
 };
 // FASE G-1 — Pusat Amandemen (koreksi ber-alasan, ber-dampak, ber-penyetuju).
 const AmendmentCenterView = lazy(() => import("./features/finance/amendments/AmendmentCenterView"));
@@ -322,6 +324,7 @@ export default function AppViewRouter(props) {
       {activeView === "return-policies" && <ReturnPoliciesView currentUser={user} />}
       {activeView === "amendments" && <AmendmentCenterView currentUser={user} selectedEntity={selectedEntity} />}
       {activeView === "special-orders" && <SpecialOrders currentUser={user} />}
+      {activeView === "sample-sales" && <SampleSalesView currentUser={user} />}
       {activeView === "pricelist" && <PricelistView entities={entities} selectedEntity={selectedEntity} currentUser={user} />}
       {/* F1b — Daftar Harga per Pelanggan: harga langganan (pelanggan → PT → umum) */}
       {activeView === "cs-price-list" && (

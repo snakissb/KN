@@ -37,6 +37,7 @@ export const PAGE_META = {
   "returns":              { kicker: "Penjualan",      title: "Retur & Barang Sisa" },
   "return-policies":      { kicker: "Penjualan",      title: "Kebijakan Retur Jual" },
   "special-orders":       { kicker: "Penjualan",      title: "Pesanan Khusus (OD)" },
+  "sample-sales":         { kicker: "Penjualan",      title: "Jual Sampel" },
   // FASE E-7 (E7d) — permintaan barang antar badan usaha. Tanpa baris ini judul layar
   // jatuh ke cadangan "Kain Nusantara" / kicker "Workspace" (pengguna kehilangan konteks).
   "internal-requests":    { kicker: "Antar Entitas",  title: "Permintaan Internal (PIN)" },

@@ -1,0 +1,22 @@
+{
+  "summary": "Sesi 7 — Jual Sampel + potong sampel WMS + master harga + warna sumber tunggal. Backend probe 23/23 PASS, guardrail atomic-claim PASS (33 cek). Desktop Admin: hub 'Jual Sampel' lengkap (view, form, price-master, edit/save Rp 15.000, quote FIFO, submit, cancel → 'Dibatalkan'). Mobile Gudang (kn_force_mobile+reload viewport 390x800): tab Sampel → task sample_cut → tombol saran RL-00002 → potong sukses, task hilang; tab Masuk/Keluar aktif dengan mw-inbound-actions/mw-outbound-actions. Mobile Sales: Lainnya → Jual Sampel → form + quote + submit KSC/SMP-00037 sukses.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/scripts/probe_sesi7_sampel.py",
+    "/app/scripts/guardrails/verify_atomic_claim.py"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "KNSelect merender opsi placeholder ('Pilih …') sebagai role='option' — kalau test otomatis pakai role selector, harus skip placeholder. Bukan bug produksi, tapi bisa disaring dengan aria-disabled untuk memudahkan a11y/testing.",
+    "Tombol Batal sampel tampaknya tidak butuh dialog konfirmasi — sekali klik langsung 'Dibatalkan'. Pertimbangkan confirm modal jika permintaan sudah punya wms_task berjalan."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "admin@kainnusantara.id / demo12345, sales@kainnusantara.id / demo12345, wh.admin@kainnusantara.id / demo12345 (Header X-Entity-Id: ent_ksc)",
+  "seed_data_creation": "Melalui UI dibuat KSC/SMP-00035 (dibatalkan) & KSC/SMP-00037 (requested via mobile sales). Melalui probe: satu permintaan dipotong (mengurangi RL-00002). Master harga uji sudah direset ke 0 dan probe self-clean.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Untuk memilih opsi di KNSelect via Playwright: iterasi [role='option'] dan skip yang textContent mengandung 'Pilih' (placeholder). Force mobile: page.evaluate(\"localStorage.setItem('kn_force_mobile','1')\") lalu page.reload() SEBELUM login; login page pakai data-testid login-email-input/login-password-input. Setelah login admin, klik tombol entity 'KSC' untuk keluar dari mode gabungan; lalu goto ?view=orders dan klik data-testid hub-tab-sample-sales. Task sample_cut testid: mw-task-{wms_task_id}; kartu langsung buka aksi mw-sample-actions-{id} + mw-sample-cut-suggested-{id}. Tab receive buttons hanya muncul untuk status pending/receiving — task 'waiting_goods' tidak menampilkan mw-receive-btn (bukan bug).",
+  "rca of the issue": "N/A — semua alur lulus."
+}

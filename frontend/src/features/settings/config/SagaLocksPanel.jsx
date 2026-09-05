@@ -15,7 +15,7 @@ const COLL_LABEL = {
   wms_tasks: "Tugas gudang", sales_orders: "Pesanan penjualan", warehouse_transfers: "Transfer gudang",
   cycle_count_sessions: "Stock opname", purchase_returns: "Retur beli", sales_returns: "Retur jual",
   putaway_orders: "Perintah putaway", vendor_bills: "Tagihan supplier",
-  payment_variance_decisions: "Keputusan selisih bayar", ar_receipts: "Kwitansi pembayaran",
+  payment_variance_decisions: "Keputusan selisih bayar", ar_receipts: "Kwitansi pembayaran", sample_requests: "Permintaan sampel",
 };
 
 export default function SagaLocksPanel() {

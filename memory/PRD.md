@@ -37,6 +37,11 @@ Admin · Manajer · Admin Sales · Finance · Sales · Gudang · Desainer · Sop
 - Lingkungan: `backend/.env` wajib `CORS_ORIGINS` eksplisit (template `*` membuat backend menolak start).
 - Testing agent iteration_314: semua PASS. `gate.sh --quick`: 5 merah pra-eksisting saja.
 
+## Yang dikerjakan 2026-09-05 sesi 7 — sisa plan gelombang (laporan: `memory/LAPORAN_SESI_2026-09-05_SESI7.md`)
+- Modul Jual Sampel §3-C lengkap (master harga per induk, quote FIFO, potong dengan klaim atomik + P-1, SO `sample` + kwitansi, mobile gudang & sales, tab hub Penjualan).
+- Warna sumber tunggal + SKU varian = prefix induk + kode warna; aksi tugas gudang di mobile (Terima/Selesai, Ambil/Berangkatkan, Potong).
+- Probe `scripts/probe_sesi7_sampel.py` 23/23.
+
 ## Yang dikerjakan 2026-09-05 sesi 6 — GELOMBANG 2026-09 (laporan: `memory/LAPORAN_SESI_2026-09-05_GELOMBANG.md`)
 - Semua vonis auditor diverifikasi SAH. Gelombang 0: P-1 (potongan tidak mewarisi tag RFID) + penjaga INV-RFID-01 + skrip diagnosa; P-2 siap.
 - Mobile SEMUA peran (cangkang bersama): gudang (tugas/pindai/belum tag), peran lain (persetujuan/KPI/desktop), sales +Minta Harga/Kunjungan/Stok.
@@ -53,9 +58,7 @@ Admin · Manajer · Admin Sales · Finance · Sales · Gudang · Desainer · Sop
 - Verifikasi: probe 27/27 · `verify_data_integrity` 247/0/2 WARN (pra-eksisting) · `gate.sh --quick` 52 PASS, 5 merah = persis pra-eksisting · panel Kunci Saga menampilkan kunci `ar_receipts`.
 
 ## Backlog (prioritas)
-- P0 §3-C modul jual sampel (6 keputusan pemilik sudah ada di laporan gelombang §7): master harga sampel terpisah, potong roll dengan klaim atomik (P-2), FIFO, RFID pindai-dengan-alasan.
-- P0 §D lanjutan: bersihkan 5 field warna ganda di `products`; SKU varian = SKU induk + kode warna; UI "buat varian dari induk" jadi jalur utama.
-- P1 Mobile Tahap 2: aksi tugas gudang di mobile (terima/selesai) + mobile sales PIN/persetujuan; paginasi `/hr/field-tracks` di layar peta.
+- P1 Peta lacak lapangan memakai `/hr/field-tracks?page=`; COGS eksplisit per potongan sampel bila kebijakan menuntut.
 - P0 54 endpoint multi-koleksi BELUM DITINJAU (INV-ATOMIC-01 ratchet).
 - P1 T-05: 2 REGISTRY GAP (P2); T-04 perbaiki 2 lokasi `PERBAIKI`.
 - P1 `warehouse_id` saran reorder (keputusan pemilik masih terbuka).

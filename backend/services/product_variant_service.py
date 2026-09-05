@@ -27,13 +27,38 @@ def family_name(product: Dict[str, Any]) -> str:
 
 def variant_attrs(product: Dict[str, Any]) -> Dict[str, Any]:
     attrs = dict(product.get("variant_attrs") or {})
-    attrs.setdefault("color", (product.get("color") or "").strip() or "-")
+    attrs.setdefault("color", canonical_color(product))
     attrs.setdefault("grade", (product.get("grade") or "A").strip())
     if product.get("lebar"):
         attrs.setdefault("lebar", product.get("lebar"))
     if product.get("variant") and product.get("variant") not in ("Regular", "Standard"):
         attrs.setdefault("quality", product.get("variant"))
     return attrs
+
+
+def canonical_color(product: Dict[str, Any]) -> str:
+    """SATU sumber warna: variant_attrs.color ← color ← color_name ← variant (urutan prioritas)."""
+    va = product.get("variant_attrs") or {}
+    for cand in (va.get("color"), product.get("color"), product.get("color_name")):
+        if cand and str(cand).strip() not in ("", "-"):
+            return str(cand).strip()
+    v = str(product.get("variant") or "").strip()
+    return v if v and v not in ("Regular", "Standard") else "-"
+
+
+def color_code_for(color: str) -> str:
+    """Kode warna untuk SKU varian: 3 huruf awal tanpa spasi (mis. 'Biru Tua' → 'BIT')."""
+    words = [w for w in "".join(ch if ch.isalnum() or ch == " " else " " for ch in color).split() if w]
+    if not words:
+        return "STD"
+    code = (words[0][:2] + words[1][:1]) if len(words) > 1 else words[0][:3]
+    return code.upper()
+
+
+def color_fields(product: Dict[str, Any], color: str) -> Dict[str, Any]:
+    """Field turunan yang dipakai PDF/label — ditulis dari sumber tunggal, tak pernah diedit terpisah."""
+    return {"color": color, "color_name": color,
+            "color_code": (product.get("color_code") or "").strip() or color_code_for(color)}
 
 
 def variant_label(attrs: Dict[str, Any]) -> str:
@@ -65,8 +90,17 @@ async def ensure_parent(product: Dict[str, Any], actor: str = "System") -> Dict[
     attrs = variant_attrs(product)
     await db.products.update_one({"id": product["id"]}, {"$set": {
         "template_id": parent["id"], "variant_attrs": attrs, "variant_label": variant_label(attrs),
-        "updated_at": now_iso()}})
+        **color_fields(product, attrs["color"]), "updated_at": now_iso()}})
     return safe_doc(parent)
+
+
+def variant_sku(parent: Dict[str, Any], color: str, grade: str = "A") -> str:
+    """SKU varian = SKU/prefix induk + kode warna (+ grade bila bukan A)."""
+    prefix = (parent.get("sku_prefix") or parent.get("prefix") or "").strip() or "".join(w[:1] for w in (parent.get("name") or "PRD").split()[:3]).upper()
+    sku = f"{prefix}-{color_code_for(color)}"
+    if (grade or "A").upper() != "A":
+        sku += f"-{grade.upper()}"
+    return sku.upper()
 
 
 async def resolve_orphans(actor: str = "System") -> Dict[str, Any]:
@@ -74,7 +108,7 @@ async def resolve_orphans(actor: str = "System") -> Dict[str, Any]:
     live = {t["id"] for t in await db.product_templates.find({}, {"_id": 0, "id": 1}).to_list(5000)}
     fixed, created_before = 0, len(live)
     async for p in db.products.find({}, {"_id": 0}):
-        if (p.get("template_id") or "") in live and p.get("variant_label"):
+        if (p.get("template_id") or "") in live and p.get("variant_label") and p.get("color") == p.get("color_name") == ((p.get("variant_attrs") or {}).get("color")):
             continue
         await ensure_parent(p, actor)
         fixed += 1

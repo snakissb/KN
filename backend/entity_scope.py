@@ -103,7 +103,7 @@ DEFAULT_FIELD = "entity_id"
 
 # Koleksi yang WAJIB ter-scope (untuk gate kepatuhan F0-C). Sisanya SHARED.
 SCOPED_COLLECTIONS = {
-    "sales_orders", "sales_returns", "special_orders", "price_approvals",
+    "sales_orders", "sales_returns", "special_orders", "price_approvals", "sample_requests",
     "ar_receipts", "cash_transactions", "bank_accounts", "journal_entries",
     # FASE G-8 — mutasi bank & perkakasnya WAJIB ter-scope. Sebelum fase ini
     # `bank_statement_lines` tidak terdaftar sehingga user PT-A cukup mengirim

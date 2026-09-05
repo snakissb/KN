@@ -23,6 +23,7 @@ export const HUB_TABS = {
     { view: "returns",           label: "Retur & Barang Sisa",   roles: ["admin", "sales", "manager"] },
     { view: "return-policies",   label: "Kebijakan Retur",       roles: ["admin", "manager"] },
     { view: "special-orders",    label: "Pesanan Khusus (OD)",    roles: ["admin", "sales", "manager"] },
+    { view: "sample-sales",      label: "Jual Sampel",             roles: ["admin", "sales", "manager", "warehouse", "warehouse_admin"] },
     // FASE E-7 (E7d) — jalur yang dulu buntu: papan stok bilang "tersedia di badan
     // usaha lain", tetapi seluruh menu Antar Entitas 403 untuk sales. Di sini sales
     // MENGAJUKAN, admin/manajer MENINDAK (jadi transaksi antar-PT G-6).
