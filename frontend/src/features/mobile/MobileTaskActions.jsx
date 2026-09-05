@@ -3,6 +3,23 @@ import { Loader2 } from "lucide-react";
 import axios, { API } from "../../services/apiClient";
 
 const errText = (e, fb) => { const d = e.response?.data?.detail; return (d && (d.message || (typeof d === "string" ? d : JSON.stringify(d)))) || fb; };
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+/** Label kecil 58mm untuk potongan sampel: nomor roll anak, pelanggan, panjang, produk, SO. */
+export function printSampleLabel(r) {
+  const html = `<!doctype html><html lang="id"><head><meta charset="utf-8"><title>Label ${esc(r.child_roll_no)}</title>
+<style>@page{size:58mm 40mm;margin:2mm}body{font-family:Arial,sans-serif;margin:0;width:54mm}
+.no{font-size:20px;font-weight:800;letter-spacing:.5px}.row{font-size:11px;margin-top:2px}.b{font-weight:700}.small{font-size:9px;color:#444;margin-top:4px}</style></head>
+<body><div class="no">${esc(r.child_roll_no)}</div>
+<div class="row b">${esc(r.customer_name)}</div>
+<div class="row">${esc(r.product_name)} · ${esc(r.sku)}</div>
+<div class="row"><span class="b">${esc(r.length)} ${esc(r.unit)}</span> · dari ${esc(r.cut_roll_no)}</div>
+<div class="small">${esc(r.number)} · ${esc(r.sales_order_number || "")} · ${new Date().toLocaleDateString("id-ID")}</div>
+<script>window.onload=function(){window.print();}</script></body></html>`;
+  const w = window.open("", "_blank", "width=420,height=360");
+  if (!w) return;
+  w.document.open(); w.document.write(html); w.document.close();
+}
 
 /** Aksi tugas gudang di mobile (Tahap 2): satu tombol besar per langkah, hasil = ikon + teks. */
 export function InboundActions({ task, onDone }) {
@@ -56,7 +73,7 @@ export function OutboundActions({ task, onDone }) {
   );
 }
 
-export function SampleCutActions({ task, onDone }) {
+export function SampleCutActions({ task, onCut }) {
   const [epc, setEpc] = useState(""); const [rollId, setRollId] = useState(""); const [reason, setReason] = useState("");
   const [msg, setMsg] = useState(null); const [busy, setBusy] = useState(false);
   const cut = async (useSuggested) => {
@@ -64,8 +81,8 @@ export function SampleCutActions({ task, onDone }) {
     try {
       const body = useSuggested ? { roll_id: task.suggested_roll_id } : { epc, roll_id: rollId, reason };
       const { data } = await axios.post(`${API}/sample-requests/${task.sample_request_id}/cut`, body);
-      setMsg({ ok: true, text: `DIPOTONG · ${data.cut_roll_no} → ${data.child_roll_no} · ${data.sales_order_number}${data.receipt_number ? ` · ${data.receipt_number}` : ""}` });
-      onDone?.();
+      // Hasil + tombol cetak diangkat ke induk (TaskList) supaya tetap tampil setelah kartu tugas hilang dari daftar.
+      onCut?.(data);
     } catch (e) { setMsg({ ok: false, text: errText(e, "Potong gagal.") }); } finally { setBusy(false); }
   };
   return (

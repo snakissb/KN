@@ -23,6 +23,7 @@ export default function LiveTrackingView({ currentUser, selectedEntity }) {
   const [selectedEmp, setSelectedEmp] = useState("");
   const [wsLive, setWsLive] = useState(false);
   const [trailEmp, setTrailEmp] = useState("");
+  const [trailInfo, setTrailInfo] = useState({ loaded: 0, total: 0, loading: false });
 
   const mapRef = useRef(null);
   const containerRef = useRef(null);
@@ -130,20 +131,31 @@ export default function LiveTrackingView({ currentUser, selectedEntity }) {
   }, [positions]);
 
   // ─── Breadcrumb (jejak) seorang karyawan hari ini ───
+  // T-03 Lapis 4 — dimuat PER HALAMAN (500 titik) dan digambar bertahap: ribuan titik
+  // tidak lagi ditarik dalam satu respons; garis diperpanjang tiap halaman tiba.
   async function loadTrail(empId) {
     setTrailEmp(empId);
+    setTrailInfo({ loaded: 0, total: 0, loading: true });
     try {
-      const r = await axios.get(`${API}/hr/field-tracks`, { params: { ...params, employee_id: empId, date: todayStr() } });
-      const rows = Array.isArray(r.data) ? r.data : [];
       const map = mapRef.current;
       if (!map) return;
       if (trailRef.current) { try { map.removeLayer(trailRef.current); } catch (_) { /* noop */ } trailRef.current = null; }
-      const pts = rows.filter((x) => x.lat != null).map((x) => [x.lat, x.lon]);
-      if (pts.length >= 2) {
-        trailRef.current = L.polyline(pts, { color: "#0058CC", weight: 3, opacity: 0.7, dashArray: "4 4" }).addTo(map);
-        try { map.fitBounds(pts, { padding: [50, 50], maxZoom: 16 }); } catch (_) { /* noop */ }
+      let page = 1; let pts = []; let total = 0; let hasMore = true;
+      while (hasMore && page <= 40) {
+        const r = await axios.get(`${API}/hr/field-tracks`, { params: { ...params, employee_id: empId, date: todayStr(), page, page_size: 500 } });
+        const rows = Array.isArray(r.data?.items) ? r.data.items : [];
+        total = Number(r.data?.total || 0); hasMore = Boolean(r.data?.has_more);
+        pts = pts.concat(rows.filter((x) => x.lat != null).map((x) => [x.lat, x.lon]));
+        if (pts.length >= 2) {
+          if (!trailRef.current) trailRef.current = L.polyline(pts, { color: "#0058CC", weight: 3, opacity: 0.7, dashArray: "4 4" }).addTo(map);
+          else trailRef.current.setLatLngs(pts);
+          if (page === 1) { try { map.fitBounds(pts, { padding: [50, 50], maxZoom: 16 }); } catch (_) { /* noop */ } }
+        }
+        setTrailInfo({ loaded: pts.length, total, loading: hasMore });
+        page += 1;
       }
-    } catch (_) { /* noop */ }
+      setTrailInfo({ loaded: pts.length, total, loading: false });
+    } catch (_) { setTrailInfo({ loaded: 0, total: 0, loading: false }); }
   }
   function focusEmp(p) {
     setSelectedEmp(p.employee_id);
@@ -207,7 +219,7 @@ export default function LiveTrackingView({ currentUser, selectedEntity }) {
           )}
           {trailEmp && (
             <div className="px-3 py-2 border-t border-[#EFF0F2] text-[11px] text-[#0058CC] flex items-center justify-between">
-              <span>Jejak hari ini ditampilkan</span>
+              <span data-testid="live-trail-info">{trailInfo.loading ? `Memuat jejak… ${trailInfo.loaded}/${trailInfo.total} titik` : `Jejak hari ini: ${trailInfo.loaded} titik${trailInfo.total > trailInfo.loaded ? ` dari ${trailInfo.total}` : ""}`}</span>
               <button data-testid="live-clear-trail" className="underline" onClick={() => {
                 setTrailEmp("");
                 if (trailRef.current && mapRef.current) { try { mapRef.current.removeLayer(trailRef.current); } catch (_) { /* noop */ } trailRef.current = null; }

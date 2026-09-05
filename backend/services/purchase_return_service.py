@@ -423,6 +423,11 @@ async def goods_back(return_id: str, actor: str, regrade: List[Dict[str, Any]] =
     if not ret.get("supplier_flow"):
         raise ValueError("Aksi RMA hanya untuk retur beli ber-alur supplier.")
     prs.assert_transition(ret.get("supplier_status"), prs.GOODS_BACK)
+    # INV-ATOMIC-01 — klaim retur beli (supplier_status belum GOODS_BACK) sebelum roll/mutasi ditulis:
+    # dua "barang kembali" bersamaan tidak boleh menulis mutasi masuk ganda.
+    from services import atomic_claim as _saga
+    await _saga.claim("purchase_returns", return_id, "purchase_return_goods_back",
+                      precondition={"supplier_status": {"$ne": prs.GOODS_BACK}}, actor=actor)
 
     now = now_iso()
     grade_by_roll = {g.get("roll_id"): (g.get("grade") or "").upper()
@@ -460,9 +465,9 @@ async def goods_back(return_id: str, actor: str, regrade: List[Dict[str, Any]] =
         if pid and wid and eid:
             await rebuild_balance(pid, wid, eid)
 
-    await db.purchase_returns.update_one({"id": return_id}, {"$set": {
+    await db.purchase_returns.update_one({"id": return_id}, _saga.finish_set({
         "supplier_status": prs.GOODS_BACK, "goods_back_at": now, "goods_back_by": actor,
-        "goods_back_notes": notes, "goods_back_regraded": regraded, "updated_at": now}})
+        "goods_back_notes": notes, "goods_back_regraded": regraded, "updated_at": now}))
     return safe_doc(await db.purchase_returns.find_one({"id": return_id}, {"_id": 0}))
 
 

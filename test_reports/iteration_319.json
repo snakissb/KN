@@ -1,0 +1,32 @@
+{
+  "summary": "Sesi 8 — Ratchet klaim saga (crm_leads/purchase_returns/putaway_orders) + tombol Cetak label sampel + paginasi jejak Lacak Lapangan + panel Kunci Saga. Backend probe 10/10 PASS, guardrail atomic-claim PASS (36 cek) & self-test HIJAU. Frontend: panel Kunci Saga menampilkan baris 'Prospek (lead)' untuk crm_leads dan release (dengan modal konfirmasi saga-lock-release-confirm-confirm) berhasil menghilangkan baris. HR → Kehadiran → tab 'Lacak Lapangan' memuat peta + daftar 3 karyawan, klik karyawan → live-trail-info menampilkan 'Jejak hari ini: 6 titik', tanpa error konsol. MOBILE GUDANG (kn_force_mobile + reload, viewport 390x800): tombol 'Cetak label potongan' (mw-sample-print-{taskId}) TIDAK MUNCUL setelah potong — RCA di bawah.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "MobileWarehouseApp / TaskList (sample_cut)", "issue": "Tombol 'Cetak label potongan' tidak pernah tampak. Setelah SampleCutActions.cut() sukses, panggilan onDone → load() merefilter tasks (baris 13: mengecualikan status 'completed'/'done'), sehingga kartu mw-task-{id} — beserta SampleCutActions yang menyimpan state `result` dan tombol print — segera unmount. Terkonfirmasi: task_c536666fa914 & task_4c9d1a7d81c9 sukses dipotong (sample_requests → 'done', child_roll_no diisi), tapi setelah cut DOM hanya menyisakan task lain (00037). Tidak ada mw-sample-print-*/mw-action-msg-* untuk task yang baru dipotong.", "selector": "mw-sample-print-{taskId}", "priority": "HIGH"}
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/scripts/probe_sesi8_ratchet.py",
+    "/app/scripts/guardrails/verify_atomic_claim.py",
+    "/app/scripts/seed_sesi8_fe.py"
+  ],
+  "action_items": [
+    "Perbaiki MobileWarehouseApp.jsx TaskList: setelah potong sampel sukses, JANGAN langsung memfilter task 'completed' keluar dari daftar. Pertahankan kartu (mis. mempertahankan tugas yang baru selesai dalam state lokal `justDone` sampai user menutup, atau memindahkan tombol 'Cetak label potongan' + info hasil ke banner/toast yang tidak bergantung pada keberadaan baris task). Uji ulang alur: cut → mw-action-msg berisi 'DIPOTONG' → mw-sample-print-{taskId} tampil → klik → popup 58x40mm memuat child_roll_no + nama pelanggan + '1 <unit>'."
+  ],
+  "critical_code_review_comments": [
+    "MobileWarehouseApp.jsx: state `result` di SampleCutActions kehilangan siklus hidup karena onDone=load menghapus kartu sebelum user bisa mencetak. Pola serupa perlu dihindari untuk aksi yang menghasilkan artefak (label, surat) — pisahkan artefak dari daftar tugas.",
+    "SagaLocksPanel: konfirmasi 'Lepas kunci' menggunakan testid saga-lock-release-confirm-confirm — testid saga-lock-release-{id} muncul dua kali (baris + konfirmasi berbagi teks 'Lepas kunci') sehingga role-selector eksklusif jadi ambigu. Bukan bug produksi.",
+    "printSampleLabel memakai window.open dengan document.write + onload window.print(); di lingkungan otomasi ini bekerja, tetapi ketiadaan kartu penampung (bug di atas) membuat entri tak pernah terpicu."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100%", "frontend": "67% (2/3 fitur — cetak label sampel gagal)"},
+  "test_credentials": "admin@kainnusantara.id / demo12345, sales@kainnusantara.id / demo12345, wh.admin@kainnusantara.id / demo12345 (Header X-Entity-Id: ent_ksc)",
+  "seed_data_creation": "Melalui /app/scripts/seed_sesi8_fe.py: dua sample_requests (KSC/SMP-00038 & KSC/SMP-00039, keduanya berujung status 'done' via alur potong) + dua synthetic crm_leads (lead_fe8_7020896e, lead_fe8_27ce3361) dengan saga_lock. Setelah tes SMUA lead sintetis dihapus (crm_leads + customers[source_lead_id] + crm_interactions[lead_id]). Sample requests 'done' + child rolls dibiarkan (mirip sesi 7).",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Untuk tes ulang tombol cetak label: (1) seed via /app/scripts/seed_sesi8_fe.py; catat wms_task_id. (2) kn_force_mobile + reload SEBELUM login; login wh.admin@kainnusantara.id di viewport 390x800. (3) tab Sampel (mobile-tab-btn-sample). (4) klik mw-task-{wms_task_id}, lalu mw-sample-cut-suggested-{taskId}. (5) SEGERA setelah klik cut, verifikasi mw-action-msg-{taskId} berisi 'DIPOTONG' DAN mw-sample-print-{taskId} tampak SAAT INI — jangan sleep terlalu lama karena bug saat ini menyebabkan re-render segera menghapus kartu. (6) klik print → popup: page.expect_popup. Konfirmasi modal saga: testid tombolnya 'saga-lock-release-confirm-confirm' bukan role selector. Nav HR: expand 'nav-group-toggle-hrd' lalu klik menu 'Kehadiran' (bukan hub tersendiri); tab 'Lacak Lapangan' testid 'hub-tab-hr-live-tracking'; klik employee via [data-testid^='live-emp-'] untuk memicu jejak.",
+  "rca of the issue": "MobileWarehouseApp.jsx (TaskList) memanggil `load()` sebagai `onDone` dari SampleCutActions. Fungsi load memfilter task dengan status ∈ {completed, shipped, cancelled, done} keluar. Karena backend POST /api/sample-requests/{id}/cut mengubah wms_tasks.status → 'completed', reload menghapus kartu, unmount SampleCutActions, dan menghilangkan state `result` yang berisi payload response — sehingga cabang render tombol 'Cetak label potongan' (mw-sample-print-{task.id}) TIDAK PERNAH tereksekusi. Reproduksi (probe): db.wms_tasks.find({sample_request_id: SR}).status == 'completed'; db.sample_requests.find({id: SR}).status == 'done'; child_roll_no terisi — tetapi DOM tidak lagi memuat mw-sample-print-*. Mitigasi (main agent): pertahankan kartu 'baru selesai' di state lokal (mis. Set justDone) sampai user mengetuk tombol dismiss ATAU render tombol cetak sebagai banner sticky terpisah dari daftar, sehingga tidak tergantung pada rekonsiliasi list."
+}

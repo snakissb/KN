@@ -236,6 +236,10 @@ async def resolve_exception(order_id: str, roll_ids: List[str], action: str,
     target = [i for i in order["items"] if i["status"] == "exception" and i["roll_id"] in set(roll_ids)]
     if not target:
         raise HTTPException(status_code=404, detail="Tidak ada item exception yang cocok")
+    # INV-ATOMIC-01 — klaim perintah putaway sebelum roll/tag/jejak/balance ditulis:
+    # dua penyelesaian exception bersamaan tidak boleh menulis BTG/item ganda.
+    from services import atomic_claim as _saga
+    await _saga.claim("putaway_orders", order_id, "putaway_resolve_exception", actor=actor_name)
     now = now_iso()
     segs = set()
     for item in target:
@@ -260,5 +264,5 @@ async def resolve_exception(order_id: str, roll_ids: List[str], action: str,
                            "exception_count": len(still_exc), "updated_at": now}
     if arrived_any and not order.get("btg_number"):
         upd["btg_number"] = await next_doc_number("putaway_orders", "btg_number", "BTG")
-    await db.putaway_orders.update_one({"id": order_id}, {"$set": upd})
+    await db.putaway_orders.update_one({"id": order_id}, _saga.finish_set(upd))
     return await _get(order_id, scope_ids)

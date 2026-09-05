@@ -150,6 +150,13 @@ async def convert_lead(lead_id: str, actor: Dict[str, Any],
             return None, "Pelanggan tujuan tidak ditemukan."
         customer_id = existing_customer_id
     else:
+        customer_id = None
+    # INV-ATOMIC-01 — klaim lead (belum punya customer_id) sebelum customer/interaksi ditulis:
+    # dua konversi bersamaan tidak boleh melahirkan dua pelanggan dari satu lead.
+    from services import atomic_claim as _saga
+    await _saga.claim("crm_leads", lead_id, "lead_convert",
+                      precondition={"customer_id": {"$in": [None, ""]}}, actor=actor.get("name", ""))
+    if not customer_id:
         from core_utils import next_doc_number as _ndn
         cust_code = await _ndn("customers", "code", "CUST-", width=4)   # D-01
         customer = {
@@ -177,8 +184,8 @@ async def convert_lead(lead_id: str, actor: Dict[str, Any],
         customer_id = customer["id"]
     await db.crm_leads.update_one(
         {"id": lead_id},
-        {"$set": {"customer_id": customer_id, "stage": "won",
-                  "updated_at": now_iso(), "stage_changed_at": now_iso()}},
+        _saga.finish_set({"customer_id": customer_id, "stage": "won",
+                          "updated_at": now_iso(), "stage_changed_at": now_iso()}),
     )
     # tautkan interaksi lead ini ke customer
     await db.crm_interactions.update_many({"lead_id": lead_id}, {"$set": {"customer_id": customer_id}})

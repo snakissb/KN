@@ -26,7 +26,7 @@ import inventaris_multi_koleksi as inv  # noqa: E402
 
 # Baseline "BELUM DITINJAU" saat penjaga lahir (2026-09-05). Turunkan angka ini setiap
 # kali satu endpoint selesai ditinjau — jangan pernah dinaikkan.
-BASELINE_UNREVIEWED = 54
+BASELINE_UNREVIEWED = 51
 
 # (berkas router, potongan path) → (mekanisme, alasan). mekanisme ∈ {claim, cas, service, log}
 REVIEWED: dict[tuple[str, str], tuple[str, str]] = {
@@ -56,6 +56,9 @@ REVIEWED: dict[tuple[str, str], tuple[str, str]] = {
     ("sales_returns.py", "/sales-returns/{return_id}/quarantine/release"): ("service", "klaim sales_returns (quarantine_released != True) sesudah roll karantina & keputusan ditentukan, sebelum roll/JE write-off/mutasi; finish_set quarantine_released", "return_service.release_quarantine"),
     ("sample_sales.py", "/sample-requests/{request_id}/cut"): ("service", "klaim sample_requests (status requested) sesudah roll & alasan divalidasi, sebelum roll dipotong/SO/kwitansi; release bila CAS roll kalah; finish_set status done", "sample_sale_service.cut_sample"),
     ("sample_sales.py", "/sample-requests/{request_id}/cancel"): ("cas", "find_one_and_update sample_requests berprasyarat status requested → 409 bila kalah; wms_tasks hanya ikut ditandai cancelled sesudah CAS menang"),
+    ("crm_omnichannel.py", "/crm/leads/{lead_id}/convert"): ("service", "klaim crm_leads (customer_id kosong) sesudah validasi lead/pelanggan tujuan, sebelum customers/interaksi ditulis; finish_set customer_id+stage won", "crm_omnichannel_service.convert_lead"),
+    ("purchase_returns.py", "/purchase-returns/{return_id}/goods-back"): ("service", "klaim purchase_returns (supplier_status != goods_back) sesudah assert_transition, sebelum roll/mutasi/balance; finish_set supplier_status", "purchase_return_service.goods_back"),
+    ("putaway_orders.py", "/putaway-orders/{order_id}/resolve-exception"): ("service", "klaim putaway_orders sesudah target item exception ditentukan, sebelum roll/tag/jejak/balance/BTG; finish_set status", "putaway_order_service.resolve_exception"),
     ("ar_receipts.py", "/ar-receipts/{receipt_id}/void"): ("service", "klaim ar_receipts (status != void) sebelum keputusan selisih/payments SO/kas/deposit dibalik; release bila reverse_decision gagal; finish_set status void", "ar_receipt_service.void_receipt"),
     ("inventory.py", "/inventory/initial-stock"): ("compensate", "roll baru per permintaan (tak ada dokumen bersama); mutasi+rebuild di try, except → rollback_initial_stock menghapus roll & mutasi yang lahir"),
     ("inbound_receiving.py", "/inbound/tasks/{task_id}/resolve-escalation"): ("cas", "find_one_and_update wms_tasks berprasyarat escalation.status != resolved → 409 bila kalah (pola outbound)"),
@@ -216,7 +219,7 @@ def self_test() -> int:
     case("service merujuk fungsi yang tak ada → MERAH", {("r.py", "/x/{id}/go"): no_claim}, R4, True)
     R5 = {("r.py", "/x/{id}/go"): ("service", "alasan yang cukup panjang untuk lolos uji", "putaway_order_service.confirm_arrival")}
     case("service nyata berklaim (putaway confirm_arrival) → hijau", {("r.py", "/x/{id}/go"): no_claim}, R5, False)
-    R6 = {("r.py", "/x/{id}/go"): ("service", "alasan yang cukup panjang untuk lolos uji", "putaway_order_service.resolve_exception")}
+    R6 = {("r.py", "/x/{id}/go"): ("service", "alasan yang cukup panjang untuk lolos uji", "putaway_order_service.dispatch")}
     case("service nyata TANPA klaim → MERAH", {("r.py", "/x/{id}/go"): no_claim}, R6, True)
     case("entri REVIEWED basi (endpoint hilang) → MERAH", {}, R1, True)
     case("alasan pendek → MERAH", {("r.py", "/x/{id}/go"): good_claim}, {("r.py", "/x/{id}/go"): ("claim", "pendek")}, True)

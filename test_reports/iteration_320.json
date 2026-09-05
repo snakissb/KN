@@ -1,0 +1,15 @@
+{
+  "summary": "Sesi 8 retest: single bug fix verified. Mobile HP gudang 'Cetak label potongan' flow — after cutting via mw-sample-cut-suggested-{taskId}, banner mw-sample-done-{taskId} appears in TaskList (persists after list refresh), mw-action-msg-{taskId} contains 'DIPOTONG', print button opens popup with child_roll_no (RL-00002-8), customer name (Toko Kain Sejahtera), and '1 yard'. Close button dismisses banner. Backend probe_sesi8_ratchet 10/10 PASS.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": ["/app/scripts/probe_sesi8_ratchet.py", "/app/scripts/seed_sesi8_fe.py"],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "sales@kainnusantara.id/demo12345, wh.admin@kainnusantara.id/demo12345",
+  "seed_data_creation": "Sample request KSC/SMP-00041 (smp_cfab4f799fec), wms_task_id=task_ffc1569881bf, child_roll_no=RL-00002-8. Also seeded lead_fe8_69ee658d (already existed in seed_sesi8_fe.py).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Sesi 8 all items PASS. Backend ratchet 10/10 and mobile sample-cut print label banner (mw-sample-done-{taskId}, mw-action-msg-{taskId} 'DIPOTONG', mw-sample-print-{taskId}, mw-sample-done-close-{taskId}) all working. Popup content verified: child_roll_no, customer, '1 yard' all present. Prior sesi 8 items (Kunci Saga crm_leads, peta paginasi) from iteration_319 not re-tested per instruction."
+}
