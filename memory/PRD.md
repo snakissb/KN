@@ -101,8 +101,9 @@ Admin · Manajer · Admin Sales · Finance · Sales · Gudang · Desainer · Sop
 
 ## Backlog (prioritas)
 - P1 COGS eksplisit per potongan sampel bila kebijakan menuntut; `simulate-payment` (invoices.py) tinjau sebagai compensate/log-only.
-- P0 34 endpoint multi-koleksi BELUM DITINJAU (INV-ATOMIC-01 ratchet): berikutnya bank-reconciliation lines (book-charge/holding), access role-reality apply, categories PATCH, wms outbound-from-order.
-- P1 Offline HP: perluas ke sales mobile (kunjungan/pesanan), service worker untuk buka app tanpa sinyal (saat ini antrean aksi saja; app tetap perlu dimuat online).
+- P0 30 endpoint multi-koleksi BELUM DITINJAU (INV-ATOMIC-01 ratchet): berikutnya entities POST/DELETE/archive, config impact-apply, categories PATCH.
+- P1 Mobile sales: audit paritas fitur ERP vs HP (user melaporkan banyak fitur terpotong) — layar "Lainnya" masih menyematkan komponen desktop (CRM, Retur, Pesanan Khusus, Daftar Harga); buat versi mobile-native + tambah Piutang/tagih, Inbox persetujuan harga, Customer 360.
+- P1 Offline: katalog/pelanggan tersimpan cache (SW sudah menyimpan GET /products, /customers, /dashboard); antrean pesanan offline butuh UI daftar pesanan tertunda.
 - P1 T-05: 2 REGISTRY GAP (P2); T-04 perbaiki 2 lokasi `PERBAIKI`.
 - P1 `warehouse_id` saran reorder (keputusan pemilik masih terbuka).
 - P2 5 gate `--quick` merah pra-eksisting (INV-UI-01/UI-10/UX-01/i18n); T-10 daftar saudara 459 endpoint; jalankan CI di GitHub.
