@@ -604,9 +604,9 @@ export function useAppActions(state) {
     }
   };
 
-  const advanceTask = async (taskId) => {
+  const advanceTask = async (taskId, expectedStatus) => {
     try {
-      const response = await axios.post(`${API}/wms/tasks/${taskId}/advance`);
+      const response = await axios.post(`${API}/wms/tasks/${taskId}/advance`, null, expectedStatus ? { params: { expected_status: expectedStatus } } : undefined);
       setNotice(`Task maju ke stage ${response.data.stage}.`);
       await loadAll();
     } catch (error) {

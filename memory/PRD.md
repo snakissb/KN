@@ -37,6 +37,13 @@ Admin · Manajer · Admin Sales · Finance · Sales · Gudang · Desainer · Sop
 - Lingkungan: `backend/.env` wajib `CORS_ORIGINS` eksplisit (template `*` membuat backend menolak start).
 - Testing agent iteration_314: semua PASS. `gate.sh --quick`: 5 merah pra-eksisting saja.
 
+## Yang dikerjakan 2026-09-06 sesi 13 (laporan: `memory/LAPORAN_SESI_2026-09-06_SESI13.md`)
+- Ratchet INV-ATOMIC-01 38 → 36: encode tag CAS+kompensasi, retire tag CAS, advance CAS + `expected_status`; guard mekanisme `service_cas`.
+- Label saat penerimaan desktop (banner inbound: popup / antrean); antrean printer bersama `kind=qr_label` (ZPL QR) di Lot/PO/inbound; panel Print & Verify menandai job QR.
+- Riwayat pindai roll: `roll_scans` + `last_scan` dari `/rfid/lookup`, `GET /rfid/roll-scans/{id}`, timeline Jejak Barang + HP.
+- Offline HP gudang: DITUNDA (disepakati) — perlu antrean IndexedDB + idempotency key backend.
+- Probe `scripts/probe_sesi13.py` 15/15 PASS · gate hijau · testing agent iteration_327 (+ retest advance).
+
 ## Yang dikerjakan 2026-09-06 sesi 12 (laporan: `memory/LAPORAN_SESI_2026-09-06_SESI12.md`)
 - Ratchet INV-ATOMIC-01 41 → 38: scan-pick CAS (picked_qty prasyarat → 409 STATE_CHANGED), klaim `dispatch_task` & `process_qc_decision` (finish_set/mark_failed).
 - Pindai roll saran FIFO → tugas potong sampel (+customer_name) langsung terbuka di HP.
@@ -80,7 +87,8 @@ Admin · Manajer · Admin Sales · Finance · Sales · Gudang · Desainer · Sop
 
 ## Backlog (prioritas)
 - P1 COGS eksplisit per potongan sampel bila kebijakan menuntut; `simulate-payment` (invoices.py) tinjau sebagai compensate/log-only.
-- P0 38 endpoint multi-koleksi BELUM DITINJAU (INV-ATOMIC-01 ratchet): berikutnya rfid tags encode/DELETE, verify-sessions & cycle-count complete, transfers inter-company, wms outbound-from-order/advance.
+- P0 36 endpoint multi-koleksi BELUM DITINJAU (INV-ATOMIC-01 ratchet): berikutnya verify-sessions & cycle-count complete, transfers inter-company, wms outbound-from-order, bank-reconciliation lines.
+- P1 Offline HP gudang: antrean pindai/aksi di IndexedDB + `Idempotency-Key` di endpoint aksi gudang (scan-receive, complete, scan-pick, cut) — disepakati untuk sesi berikutnya.
 - P1 T-05: 2 REGISTRY GAP (P2); T-04 perbaiki 2 lokasi `PERBAIKI`.
 - P1 `warehouse_id` saran reorder (keputusan pemilik masih terbuka).
 - P2 5 gate `--quick` merah pra-eksisting (INV-UI-01/UI-10/UX-01/i18n); T-10 daftar saudara 459 endpoint; jalankan CI di GitHub.

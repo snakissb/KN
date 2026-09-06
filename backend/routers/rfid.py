@@ -10,7 +10,7 @@ from typing import Any, Dict, Optional
 from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel
 
-from core_utils import safe_doc
+from core_utils import safe_doc, new_id, now_iso
 from db import db
 from dependencies import require_permission, require_role, audit
 from entity_scope import entity_ctx, resolve_scope_ids, assert_entity_access
@@ -58,6 +58,8 @@ class ReaderScanPayload(BaseModel):
 
 class PrintJobPayload(BaseModel):
     roll_ids: list[str]
+    kind: str = "rfid_tag"      # rfid_tag (encode EPC) | qr_label (QR nomor roll, tanpa encode)
+    source: str = ""
 
 
 class VerifyScanPayload(BaseModel):
@@ -91,9 +93,11 @@ async def get_tags(request: Request, warehouse_id: Optional[str] = None,
 
 
 @router.get("/rfid/lookup")
-async def lookup_code(request: Request, code: str = Query(..., min_length=1)) -> Dict[str, Any]:
-    """Pindai label (QR = nomor roll) ATAU tag EPC → satu roll. Hanya-baca; untuk HP gudang tanpa RFID."""
-    await require_permission(request, "wms", "view")
+async def lookup_code(request: Request, code: str = Query(..., min_length=1),
+                      record: bool = Query(True), warehouse_id: Optional[str] = Query(None)) -> Dict[str, Any]:
+    """Pindai label (QR = nomor roll) ATAU tag EPC → satu roll. Untuk HP gudang tanpa RFID.
+    `record=true` (bawaan) mencatat jejak pindai ke `roll_scans` (append-only) + `last_scan` di roll."""
+    actor = await require_permission(request, "wms", "view")
     code = code.strip()
     tag = await db.rfid_tags.find_one({"epc": code}, {"_id": 0})
     roll = await db.inventory_rolls.find_one({"id": tag["roll_id"]}, {"_id": 0}) if tag else None
@@ -116,8 +120,29 @@ async def lookup_code(request: Request, code: str = Query(..., min_length=1)) ->
         {"status": {"$nin": ["completed", "shipped", "dispatched", "cancelled", "done"]}, "$or": ors},
         {"_id": 0, "id": 1, "flow_type": 1, "status": 1, "product_name": 1, "product_id": 1, "customer_name": 1,
          "order_number": 1, "po_number": 1, "sample_number": 1, "quantity": 1, "unit": 1}).sort("created_at", -1).to_list(5)
+    last_scan = roll.get("last_scan")
+    if record:
+        scan = {"id": new_id("rscan"), "roll_id": roll["id"], "roll_no": roll.get("roll_no"), "code": code, "via": via,
+                "owner_entity_id": roll.get("owner_entity_id"),
+                "by": actor.get("name", ""), "by_user_id": actor.get("id"), "warehouse_id": warehouse_id or roll.get("warehouse_id"),
+                "roll_warehouse_id": roll.get("warehouse_id"), "roll_status": roll.get("status"), "at": now_iso()}
+        await db.roll_scans.insert_one(dict(scan))
+        last_scan = {k: scan[k] for k in ("at", "by", "via", "warehouse_id")}
+        await db.inventory_rolls.update_one({"id": roll["id"]}, {"$set": {"last_scan": last_scan}})
     return {"via": via, "roll": safe_doc(roll), "product_name": (product or {}).get("name"), "sku": (product or {}).get("sku"),
-            "tagged": bool(roll.get("rfid_tag_id")), "open_tasks": open_tasks}
+            "tagged": bool(roll.get("rfid_tag_id")), "open_tasks": open_tasks, "last_scan": last_scan}
+
+
+@router.get("/rfid/roll-scans/{roll_id}")
+async def get_roll_scans(roll_id: str, request: Request, limit: int = Query(15, ge=1, le=100)) -> Dict[str, Any]:
+    """Riwayat pindai QR/RFID satu roll dari HP gudang (terbaru dulu)."""
+    await require_permission(request, "wms", "view")
+    roll = await db.inventory_rolls.find_one({"id": roll_id}, {"_id": 0, "owner_entity_id": 1, "last_scan": 1})
+    if not roll:
+        raise HTTPException(status_code=404, detail="Roll tidak ditemukan")
+    assert_entity_access({"entity_id": roll.get("owner_entity_id")}, "inventory_rolls", await entity_ctx(request))
+    rows = await db.roll_scans.find({"roll_id": roll_id}, {"_id": 0}).sort("at", -1).to_list(limit)
+    return {"count": len(rows), "scans": rows, "last_scan": roll.get("last_scan")}
 
 
 @router.get("/rfid/labels")
@@ -286,9 +311,12 @@ async def post_print_job(payload: PrintJobPayload, request: Request) -> Dict[str
     actor = await require_permission(request, "wms", "scan")
     ctx = await entity_ctx(request)
     from services import rfid_print_service as rps
-    job = await rps.create_print_job(payload.roll_ids, resolve_scope_ids(ctx, None), actor["name"])
+    if payload.kind == "qr_label":
+        job = await rps.create_qr_label_job(payload.roll_ids, resolve_scope_ids(ctx, None), actor["name"], source=payload.source)
+    else:
+        job = await rps.create_print_job(payload.roll_ids, resolve_scope_ids(ctx, None), actor["name"])
     await audit(actor["name"], "rfid_print_job_created", "rfid_print_job", job["id"],
-                {"job_number": job["job_number"], "items": job["item_count"]})
+                {"job_number": job["job_number"], "items": job["item_count"], "kind": job.get("kind")})
     return job
 
 

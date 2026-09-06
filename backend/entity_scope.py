@@ -36,6 +36,7 @@ SCOPE_FIELD: Dict[str, Optional[str]] = {
     # (bukan `entity_id`). Tanpa ini registry salah field dan gate ikut salah menilai.
     "rfid_tags": "owner_entity_id",
     "rfid_reads": "owner_entity_id",
+    "roll_scans": "owner_entity_id",     # Sesi 13 — jejak pindai HP gudang mengikuti pemilik roll
     # FASE R1/R2 — print job, verifikasi & putaway order mengikuti pemilik roll
     "rfid_print_jobs": "owner_entity_id",
     "rfid_verify_sessions": "owner_entity_id",
@@ -175,7 +176,7 @@ SCOPED_COLLECTIONS = {
     "approval_rules",                 # aturan persetujuan (warisan global→entitas di E-4)
     "cycle_count_sessions",           # stock opname per entitas
     "supplier_price_lists",           # daftar harga supplier = data komersial entitas
-    "rfid_tags", "rfid_reads",        # tag & pembacaan RFID mengikuti roll/entitas
+    "rfid_tags", "rfid_reads", "roll_scans",   # tag, pembacaan RFID & pindai HP mengikuti roll/entitas
     "rnd_person_divisions",           # penugasan orang R&D per entitas
     "customer_feedbacks",             # 2026-09 — feedback/komplain pelanggan per SO (warisan entitas SO)
     # ── FASE E-4 (E4.2/E4.3) — master berlapis (global → badan usaha). Terdaftar

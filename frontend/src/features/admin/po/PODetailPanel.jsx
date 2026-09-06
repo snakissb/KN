@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FileText, CheckCircle, XCircle, AlertCircle, Receipt, Ban, FileEdit, PackageCheck, Printer } from "lucide-react";
+import { FileText, CheckCircle, XCircle, AlertCircle, Receipt, Ban, FileEdit, PackageCheck, Printer, ListOrdered } from "lucide-react";
 import { formatCurrency } from "../../../utils/formatters";
 import { can } from "../../../config/roles";
 import { getStatusBadge, lateState } from "./poUtils";
@@ -14,23 +14,41 @@ import QtyDual from "../../../components/QtyDual";      // FASE U — dua satuan
 import axios, { API } from "../../../services/apiClient";
 import { printRollLabelsBulk } from "../../../utils/rollLabels";
 
-/** Cetak massal label QR semua roll yang lahir dari PO ini (58×40 mm per roll). */
+/** Cetak massal label QR semua roll yang lahir dari PO ini (popup) atau kirim ke antrean printer gudang. */
 function PrintPoLabelsButton({ po, tp }) {
   const [busy, setBusy] = useState(false);
   const [info, setInfo] = useState("");
+  const [rolls, setRolls] = useState(null);
+  const fetchRolls = async () => {
+    const { data } = await axios.get(`${API}/rfid/labels`, { params: { po_id: po.id } });
+    return data;
+  };
   const go = async () => {
     setBusy(true); setInfo("");
     try {
-      const { data } = await axios.get(`${API}/rfid/labels`, { params: { po_id: po.id } });
+      const data = await fetchRolls();
       if (!data.count) { setInfo("Belum ada roll yang diterima dari PO ini."); return; }
       await printRollLabelsBulk(data.rolls, { po_number: data.po_number || po.po_number });
       setInfo(`${data.count} label dikirim ke printer.`);
     } catch (e) { setInfo(e.response?.data?.detail?.message || "Gagal memuat roll PO."); } finally { setBusy(false); }
   };
+  const queue = async () => {
+    setBusy(true); setInfo("");
+    try {
+      const data = rolls || await fetchRolls();
+      setRolls(data);
+      if (!data.count) { setInfo("Belum ada roll yang diterima dari PO ini."); return; }
+      const r = await axios.post(`${API}/rfid/print-jobs`, { roll_ids: data.rolls.map((x) => x.id), kind: "qr_label", source: `po:${po.id}` });
+      setInfo(`Antrean ${r.data.job_number} · ${r.data.item_count} label menunggu printer gudang.`);
+    } catch (e) { const d = e.response?.data?.detail; setInfo((d && (d.message || d)) || "Gagal mengantrekan label."); } finally { setBusy(false); }
+  };
   return (
     <>
       <button data-testid={`${tp}print-roll-labels`} disabled={busy} onClick={go} className="secondary-button justify-center">
         <Printer size={13} /> {busy ? "Menyiapkan…" : "Cetak Label Semua Roll"}
+      </button>
+      <button data-testid={`${tp}queue-roll-labels`} disabled={busy} onClick={queue} className="secondary-button justify-center">
+        <ListOrdered size={13} /> Kirim ke Antrean Printer
       </button>
       {info && <p className="text-[11px] text-[#6B6B73]" data-testid={`${tp}print-roll-labels-info`}>{info}</p>}
     </>

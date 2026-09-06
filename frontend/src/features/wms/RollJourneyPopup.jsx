@@ -9,7 +9,7 @@ import axios, { API } from "../../services/apiClient";
 
 const KIND_COLOR = {
   acquired: "#0058CC", tag: "#6B219A", print: "#6B219A", verify: "#6B219A",
-  putaway: "#1B7F4B", movement: "#8E8E93", gate: "#B23B14", so: "#FF9500", loading: "#4B3B9E",
+  putaway: "#1B7F4B", movement: "#8E8E93", gate: "#B23B14", so: "#FF9500", loading: "#4B3B9E", scan: "#0A84FF",
 };
 
 export const RollJourneyPopup = ({ rollId, onClose }) => {
@@ -43,6 +43,7 @@ export const RollJourneyPopup = ({ rollId, onClose }) => {
                 {data.roll.routing === "cross_dock" && <span className="ml-1 rounded bg-[#F3E9FA] px-1 text-[10px] font-bold text-[#6B219A]">CROSS-DOCK</span>}
               </p>
               {data.roll.epc && <p className="font-mono text-[10px] text-[#8E8E93]">EPC {data.roll.epc}</p>}
+              <p className="text-[#6B6B73]" data-testid="roll-journey-last-scan">Terakhir dipindai HP: <b>{data.roll.last_scan ? `${fmt(data.roll.last_scan.at)} · ${data.roll.last_scan.by || "—"} · ${data.roll.last_scan.warehouse_id || ""}` : "belum pernah"}</b></p>
             </div>
             <ol className="relative ml-2 space-y-0 border-l border-[#E5E5EA]" data-testid="roll-journey-events">
               {data.events.length === 0 && <p className="pl-3 text-[11.5px] text-[#8E8E93]">Belum ada jejak.</p>}

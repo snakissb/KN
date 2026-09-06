@@ -141,8 +141,14 @@ async def encode_tag(roll_id: str, scope_ids: List[str], epc: Optional[str] = No
         "encoded_at": now_iso(), "encoded_by": actor_name,
     }
     await db.rfid_tags.insert_one(tag)
-    await db.inventory_rolls.update_one(
-        {"id": roll_id}, {"$set": {"rfid_tag_id": tag["id"], "tracking_mode": "rfid", "updated_at": now_iso()}})
+    # Sesi 13 — CAS: roll harus MASIH tanpa tag saat ditulis; kalah → tag yang baru lahir dihapus (kompensasi).
+    upd = await db.inventory_rolls.find_one_and_update(
+        {"id": roll_id, "rfid_tag_id": {"$in": [None, ""]}},
+        {"$set": {"rfid_tag_id": tag["id"], "tracking_mode": "rfid", "updated_at": now_iso()}}, projection={"_id": 0})
+    if not upd:
+        await db.rfid_tags.delete_one({"id": tag["id"]})
+        raise HTTPException(status_code=409, detail={"code": "STATE_CHANGED",
+                            "message": "Roll baru saja diberi tag oleh proses lain. Muat ulang daftar."})
     return safe_doc(tag)
 
 
@@ -164,7 +170,13 @@ async def retire_tag(tag_id: str, scope_ids: List[str]) -> Dict[str, Any]:
         raise HTTPException(status_code=404, detail="Tag tidak ditemukan")
     if tag.get("owner_entity_id") not in scope_ids:
         raise HTTPException(status_code=403, detail="Tag di luar entitas Anda")
-    await db.rfid_tags.update_one({"id": tag_id}, {"$set": {"status": "retired", "retired_at": now_iso()}})
+    # Sesi 13 — CAS: hanya tag aktif yang bisa di-retire; kalah (sudah retired) → 409.
+    won = await db.rfid_tags.find_one_and_update(
+        {"id": tag_id, "status": "active"},
+        {"$set": {"status": "retired", "retired_at": now_iso()}}, projection={"_id": 0})
+    if not won:
+        raise HTTPException(status_code=409, detail={"code": "STATE_CHANGED",
+                            "message": f"Tag sudah berstatus '{tag.get('status')}' — tidak bisa di-retire dua kali."})
     if tag.get("roll_id"):
         await db.inventory_rolls.update_one(
             {"id": tag["roll_id"], "rfid_tag_id": tag_id},

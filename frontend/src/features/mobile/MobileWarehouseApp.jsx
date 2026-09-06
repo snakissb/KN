@@ -71,7 +71,7 @@ function ScanPanel({ onOpenTask }) {
       const { data } = await axios.get(`${API}/rfid/lookup`, { params: { code: code.trim() } });
       const r = data.roll || {};
       const held = ["reserved", "committed", "picked", "packed"].includes(r.status);
-      setRes({ kind: held ? "warn" : "ok", title: held ? "TERIKAT PESANAN" : "COCOK", roll: r, productName: data.product_name,
+      setRes({ kind: held ? "warn" : "ok", title: held ? "TERIKAT PESANAN" : "COCOK", roll: r, productName: data.product_name, lastScan: data.last_scan,
         text: `${r.roll_no} · ${data.product_name || r.product_id || ""} · status ${r.status || "-"} · ${r.warehouse_id || ""} · sisa ${r.length_remaining ?? "-"} ${r.unit || ""} · ${data.via === "rfid" ? "via tag RFID" : "via label QR"}${data.tagged ? "" : " · roll belum bertag"}` });
       // Pindai → aksi: tugas terbuka yang menyentuh roll ini (dari backend) langsung ditawarkan.
       setTasks(data.open_tasks || []);
@@ -117,6 +117,7 @@ function ScanPanel({ onOpenTask }) {
           <div className="text-sm mt-1">{res.text}</div>
           {res.roll && (
             <div className="mt-3 space-y-2 text-left">
+              <div className="text-xs text-[#3C3C43]" data-testid="mw-scan-last">Pindai ini tercatat{res.lastScan ? ` · ${new Date(res.lastScan.at).toLocaleString("id-ID", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })} oleh ${res.lastScan.by || "-"}` : ""}.</div>
               <button className="secondary-button w-full py-3 flex items-center justify-center gap-2" onClick={reprint} data-testid="mw-scan-reprint"><Printer size={16} /> Cetak ulang label QR</button>
               {tasks.length > 0 && <div className="text-xs font-semibold text-[#3C3C43]" data-testid="mw-scan-tasks">Tugas terbuka untuk roll ini:</div>}
               {tasks.map((t) => (

@@ -1,0 +1,35 @@
+{
+  "summary": "Sesi 13 RETEST — advance dgn expected_status. BACKEND: `python3 scripts/probe_sesi13.py` → SEMUA PASS (15 cek), termasuk 'advance 2× bersamaan (expected_status=created) → [200, 409]; status maju TEPAT satu tahap (receiving)' dan 'advance ulang dgn expected_status basi → 409 STATE_CHANGED'. Tambahan pytest `backend/tests/test_wms_advance_expected.py` (2 tes) PASS: (a) POST /api/wms/tasks/{id}/advance?expected_status=created dua kali berurutan pada tugas inbound sintetis (status=created) → 200 (status → receiving) lalu 409 STATE_CHANGED; status akhir DB tetap 'receiving' (tidak lompat dua tahap); (b) tanpa expected_status advance biasa tetap 200 → receiving. Tugas sintetis dibersihkan oleh fixture. FRONTEND: Login admin@kainnusantara.id → pilih ent_ksc → sidebar Gudang & Logistik → Operasi Gudang → seluruh 6 tab wms-tab-* muncul (stok/inbound/outbound/transfer/cycle/health). NAMUN `[data-testid=\"advance-wms-task-button\"]` (ScannerTaskPanel) TIDAK DIRENDER di layar mana pun (0 hasil di seluruh DOM sesudah masuk & sesudah pilih tab inbound). Grep repo: ScannerTaskPanel.jsx tidak diimpor oleh file apa pun (dead code); build js juga tidak memuat testid tersebut. Verifikasi kontrak API dari sisi browser: fetch POST /api/wms/tasks/does_not_exist/advance?expected_status=created dari halaman aplikasi (menggunakan token localStorage) → 404 'Task tidak ditemukan' (bukti bahwa query expected_status diterima router; format URL benar); URL request tercatat: `.../api/wms/tasks/does_not_exist/advance?expected_status=created`. Verifikasi kode: `frontend/src/hooks/useAppActions.js:607-615` `advanceTask(taskId, expectedStatus)` mengirim `params: { expected_status }` HANYA bila expectedStatus truthy — sesuai kontrak. `ScannerTaskPanel.jsx:233` memanggil `onAdvanceTask(selectedTask?.id, selectedTask?.status)` — wiring benar seandainya panel dirender.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "ScannerTaskPanel", "issue": "Komponen (dan tombol advance-wms-task-button) tidak dirender di UI mana pun — file .jsx tidak diimpor. OperationsView menggunakan InboundScanInterface / OutboundScanInterface. Sehingga instruksi retest 'Operasi Gudang / Scanner' tidak dapat dieksekusi di UI. Namun kontrak advanceTask(taskId, expectedStatus) benar & dapat diverifikasi via fetch API.", "selector": "[data-testid=advance-wms-task-button]", "priority": "LOW"}
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/scripts/probe_sesi13.py",
+    "/app/backend/tests/test_wms_advance_expected.py",
+    "/app/test_reports/pytest/sesi13_advance.xml"
+  ],
+  "action_items": [
+    "OPTIONAL: Jika Sesi 13 ingin tombol 'Lanjutkan Tahap' terlihat di UI Scanner sesuai deskripsi problem_statement, render ScannerTaskPanel di suatu tab (mis. tab baru 'Scanner' di OperationsView) atau hapus file dead-code untuk menghilangkan kebingungan."
+  ],
+  "critical_code_review_comments": [
+    "backend/routers/wms.py advance_task: perbaikan CAS + expected_status BENAR. Cek `task and expected_status and task.get('status') != expected_status` dilakukan SEBELUM CAS — bagus (menghasilkan 409 STATE_CHANGED yang informatif). CAS berbasis {id,status} tetap dipertahankan sebagai second line of defense.",
+    "frontend/src/hooks/useAppActions.js advanceTask: mengirim `params: { expected_status }` hanya jika expectedStatus truthy — backward compatible.",
+    "features/wms/ScannerTaskPanel.jsx adalah dead code (tidak diimpor). Konsisten menyisakan file yang tidak dipakai memicu miskomunikasi antar sesi (seperti retest ini)."
+  ],
+  "updated_files": ["/app/backend/tests/test_wms_advance_expected.py"],
+  "success_rate": {"backend": "100% (15/15 probe + 2/2 pytest)", "frontend": "N/A (UI target tidak ada; API contract terverifikasi)"},
+  "test_credentials": "admin@kainnusantara.id / demo12345",
+  "seed_data_creation": "Tidak ada. Tugas sintetis dibuat + dihapus dalam fixture pytest & probe.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "advance CAS + expected_status sudah kontraktual. ScannerTaskPanel dead code; bila ingin tes UI advance, gunakan InboundScanInterface / OutboundScanInterface (bila mereka mengekspos tombol advance). Endpoint POST /api/wms/tasks/{id}/advance menerima `expected_status` sebagai QUERY param.",
+  "rca of the issue": "Sesi 13 iteration_327 gagal karena CAS status saja tidak menjaga double-click sekuensial. Fix: router menerima expected_status (status yang dilihat UI); bila DB sudah beranjak → 409 STATE_CHANGED sebelum CAS. Iteration_328 memverifikasi: probe [200,409] konsisten, pytest sintetis lulus, dan status tidak melompat dua tahap."
+}

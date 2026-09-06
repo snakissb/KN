@@ -4,8 +4,9 @@
  * Dipisah dari view utama agar tiap file di bawah batas guardrail (<500 baris).
  */
 import { useEffect, useState } from "react";
-import { AlertTriangle, GitBranch, Layers3, Printer, RefreshCw, Save, Scissors,
+import { AlertTriangle, GitBranch, Layers3, ListOrdered, Printer, RefreshCw, Save, Scissors,
          Merge, Repeat, ShieldCheck, X } from "lucide-react";
+import axios, { API } from "../../../services/apiClient";
 import { formatQty } from "../../../utils/formatters";
 import { reprintRollLabel, printRollLabelsBulk } from "../../../utils/rollLabels";
 import LotGenealogyTree from "./LotGenealogyTree";
@@ -26,6 +27,16 @@ export default function LotDetailPanel({
   onSaveIdentity, onSplit, onMerge, onRework, onStatus, onLabel, savingIdentity, saveMsg,
 }) {
   const [draft, setDraft] = useState({ supplier_lot: "", dye_lot: "", shade_ref: "", note: "" });
+  const [queueBusy, setQueueBusy] = useState(false);
+  const [queueInfo, setQueueInfo] = useState("");
+  const queueLabels = async () => {
+    setQueueBusy(true); setQueueInfo("");
+    try {
+      const { data } = await axios.post(`${API}/rfid/print-jobs`, { roll_ids: (lot?.rolls || []).map((r) => r.id), kind: "qr_label", source: `lot:${lot?.id}` });
+      setQueueInfo(`Antrean ${data.job_number} · ${data.item_count} label.`);
+    } catch (e) { const d = e.response?.data?.detail; setQueueInfo((d && (d.message || d)) || "Gagal mengantrekan."); }
+    finally { setQueueBusy(false); }
+  };
 
   useEffect(() => {
     setDraft({
@@ -95,6 +106,12 @@ export default function LotDetailPanel({
           title="Cetak label QR semua roll di lot ini (58×40 mm per roll)">
           <span className="flex items-center gap-1"><Printer size={11} /> Label {rolls.length} roll</span>
         </button>
+        <button data-testid="lot-action-queue-roll-labels" className="btn-secondary !px-2 !py-1 !text-[10.5px]"
+          disabled={rolls.length === 0 || queueBusy} onClick={queueLabels}
+          title="Kirim label QR semua roll ke antrean printer gudang">
+          <span className="flex items-center gap-1"><ListOrdered size={11} /> {queueBusy ? "Mengantrekan…" : "Antrean printer"}</span>
+        </button>
+        {queueInfo && <span className="text-[10.5px] text-[#6B6B73]" data-testid="lot-action-queue-info">{queueInfo}</span>}
         <div className="ml-auto flex items-center gap-1">
           {TABS.map((t) => (
             <button key={t.id} data-testid={`lot-tab-${t.id}`}

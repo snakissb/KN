@@ -1,5 +1,5 @@
 """WMS router: tasks, scanning, stage advance."""
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, HTTPException, Request
 from pymongo import ReturnDocument
 from db import db
@@ -161,9 +161,14 @@ async def scan_task(task_id: str, payload: ScannerScan, request: Request) -> Dic
 
 
 @router.post("/wms/tasks/{task_id}/advance")
-async def advance_task(task_id: str, request: Request) -> Dict[str, Any]:
+async def advance_task(task_id: str, request: Request, expected_status: Optional[str] = None) -> Dict[str, Any]:
+    """Maju satu tahap. `expected_status` (opsional, dikirim UI) = status yang DILIHAT pengguna;
+    bila sudah berubah (klik ganda / orang lain lebih dulu) → 409, bukan melompat dua tahap."""
     actor = await require_permission(request, "wms", "update")
     task = safe_doc(await db.wms_tasks.find_one({"id": task_id}, {"_id": 0}))
+    if task and expected_status and task.get("status") != expected_status:
+        raise HTTPException(status_code=409, detail={"code": "STATE_CHANGED",
+                            "message": f"Tugas sudah berstatus '{task.get('status')}' (Anda melihat '{expected_status}'). Muat ulang layar."})
     if not task:
         raise HTTPException(status_code=404, detail="Task tidak ditemukan")
     assert_entity_access(task, "wms_tasks", await entity_ctx(request))  # S#074 IDOR
@@ -191,9 +196,13 @@ async def advance_task(task_id: str, request: Request) -> Dict[str, Any]:
         await audit(actor["name"], "wms_task_advanced", "wms_task", task_id,
                     {"status": updated_task["status"], "shipment_no": shipment["shipment_no"]})
         return updated_task
+    # Sesi 13 — CAS: status harus masih sama seperti saat dibaca; klik ganda → 409.
     updated = await db.wms_tasks.find_one_and_update(
-        {"id": task_id}, {"$set": update_data},
+        {"id": task_id, "status": status}, {"$set": update_data},
         projection={"_id": 0}, return_document=ReturnDocument.AFTER
     )
+    if not updated:
+        raise HTTPException(status_code=409, detail={"code": "STATE_CHANGED",
+                            "message": f"Tugas sudah berubah dari '{status}' (aksi lain masuk lebih dulu). Muat ulang layar."})
     await audit(actor["name"], "wms_task_advanced", "wms_task", task_id, {"status": next_stage})
     return safe_doc(updated)

@@ -1,0 +1,25 @@
+{
+  "summary": "Sesi 13 verifikasi. Backend: python3 scripts/probe_sesi13.py — 13/14 PASS, 1 FAIL: 'advance 2× bersamaan → [200,409]' — dua request paralel via httpx.AsyncClient sering diserialkan sehingga keduanya sukses (task melompat created→receiving→qc_check). CAS pada find_one_and_update({id,status}) benar secara implementasi, tetapi TIDAK melindungi double-click yang sebetulnya terpisah (baca status baru → advance lagi). Untuk memenuhi kontrak sesi 13 'maju TEPAT satu tahap' perlu perlindungan tambahan (idempotency key / expected_status di body / cooldown singkat). Bagian lain probe: PASS — encode/retire CAS, lookup+roll_scans+timeline, POST print-jobs qr_label, ZPL ^BQN tanpa ^RFW, device-jobs/pending + ack. verify_atomic_claim.py PASS 51 checks (baseline 36). --self-test HIJAU. Manual GET /api/rfid/lookup?code=RL-00025 (admin, ent_ksc): 2× → roll_scans bertambah, respons memuat last_scan; GET /rfid/roll-scans/{id} count=2; record=false tidak menambah; timeline memuat event kind='scan' + roll.last_scan. Frontend Desktop (1920x900): entitas KSC — Inventori→Lot detail KSC/LOT-2609-0030 → lot-action-queue-roll-labels → lot-action-queue-info 'Antrean PJ00006 · 2 label' (butuh single entity; mode 'Semua Entitas' menampilkan info panduan). RFID→tab Cetak & Verifikasi → job baru muncul dgn badge rfid-job-kind-{id} 'QR', judul modal 'PJ00006 — 2 label QR (tanpa encode RFID)', tanpa tombol rfid-job-verify, tombol Tandai Tercetak + Unduh ZPL ada. Operasi Gudang → tab Roll → cari RL-00025 → tombol 'Jejak' (roll-journey-btn-{id}) → RollJourneyPopup: roll-journey-last-scan 'Terakhir dipindai HP: 06 Sep, 07.02 · Budi Santoso · wh_surabaya' dan event 'Dipindai QR label oleh Budi Santoso · wh_surabaya' terlihat. Frontend Mobile (390x800, kn_force_mobile=1, warehouse@kainnusantara.id) → tab Pindai isi RL-00025 → mw-scan-last 'Pindai ini tercatat · 06 Sep, 07.12 oleh Eko Prasetyo.'; scan kedua kali → mw-scan-last menampilkan waktu & nama pemindai sebelumnya. Regresi: mw-scan-reprint + mw-scan-task hadir; lot-action-print-roll-labels tetap ada di lot detail. Inbound Scan complete tidak diuji (menghindari kerusakan data demo — sesuai instruksi 'catat bila terpaksa dilewati').",
+  "backend_issues": {
+    "critical": [
+      {"endpoint": "POST /api/wms/tasks/{id}/advance", "issue": "Probe sesi13 gagal (~2/3 run): 2 klik advance yang hampir bersamaan menghasilkan [200,200] dan status berpindah DUA tahap (created→qc_check). CAS pada find_one_and_update({id,status}) hanya melindungi RACE benar-benar simultan; klik ganda yang mendarat sekuensial di server tidak tertangkap karena baca ulang mengembalikan status baru. Solusi disarankan: terima expected_status di body dan bandingkan sebelum advance, ATAU idempotency key/short-cooldown per task_id.", "priority": "HIGH"}
+    ],
+    "minor": []
+  },
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": ["/app/scripts/probe_sesi13.py", "/app/scripts/guardrails/verify_atomic_claim.py"],
+  "action_items": [
+    "Advance CAS: tambah proteksi double-tap. Opsi minimal: parameter expected_status di body → 409 jika !=. Alternatif: cooldown pendek (mis. 500ms) di key (task_id + status target) via koleksi ephemeral atau field last_advance_at."
+  ],
+  "critical_code_review_comments": [
+    "backend/routers/wms.py advance_task: CAS status benar tetapi tidak cukup untuk 'maju TEPAT satu tahap' pada double-click sekuensial. Perlu expected_status dari client atau state machine di sisi klien menekan tombol setelah state settle."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "93% (13/14 probe)", "frontend": "100% (semua target UI Sesi 13 terverifikasi)"},
+  "test_credentials": "admin@kainnusantara.id / demo12345; warehouse@kainnusantara.id / demo12345",
+  "seed_data_creation": "Print job qr_label PJ00006 (2 label utk KSC/LOT-2609-0030) dibiarkan (Antre Cetak) — boleh dihapus dari koleksi rfid_print_jobs jika perlu. Probe otomatis membersihkan artefaknya sendiri.",
+  "retest_needed": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Untuk membuka lot detail dengan roll gunakan lot-row-lot_a5769137f7ba (KSC/LOT-2609-0030, 2 rolls) — WAJIB switch entitas ke KSC dulu, mode Semua Entitas menampilkan info panduan. Tombol Jejak berada di tab Roll (Operasi Gudang), pilih toggle 'Roll' di pojok kanan bawah bilah filter, cari RL-00025, klik data-testid=roll-journey-btn-roll_3d407b1d7ac2. Print jobs muncul di RfidTagsView (view=cs-rfid-tags) tab 'Cetak & Verifikasi' — modal QR memakai 'label QR (tanpa encode RFID)' di judul.",
+  "rca of the issue": "advance CAS: find_one_and_update({id,status}) hanya efektif kalau kedua request MASIH memegang status lama saat menulis. Ketika request kedua tiba sedikit setelah request pertama commit (yang umum di single-loop asyncio + net latency), request kedua membaca status baru (receiving) dan advance ke tahap berikutnya (qc_check) — keduanya 200. Bukti: 2 dari 3 run probe menampilkan [200,200] qc_check; 1 run [200,409] receiving. Perlu proteksi berbasis intent (expected_status) atau kunci ephemeral."
+}

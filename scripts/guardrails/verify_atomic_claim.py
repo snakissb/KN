@@ -26,7 +26,7 @@ import inventaris_multi_koleksi as inv  # noqa: E402
 
 # Baseline "BELUM DITINJAU" saat penjaga lahir (2026-09-05). Turunkan angka ini setiap
 # kali satu endpoint selesai ditinjau — jangan pernah dinaikkan.
-BASELINE_UNREVIEWED = 38
+BASELINE_UNREVIEWED = 36
 
 # (berkas router, potongan path) → (mekanisme, alasan). mekanisme ∈ {claim, cas, service, log}
 REVIEWED: dict[tuple[str, str], tuple[str, str]] = {
@@ -76,12 +76,15 @@ REVIEWED: dict[tuple[str, str], tuple[str, str]] = {
     ("outbound_picking.py", "/outbound/tasks/{task_id}/scan-pick"): ("cas", "find_one_and_update wms_tasks berprasyarat status hidup + picked_qty sama seperti saat dibaca → 409 STATE_CHANGED bila kalah; SO status diturunkan sesudahnya (idempoten)"),
     ("outbound_picking.py", "/outbound/tasks/{task_id}/dispatch"): ("service", "klaim wms_tasks (status dispatchable) sesudah validasi qty, sebelum roll dikirim/surat jalan; release bila ship_order_rolls gagal; finish_set status+shipped_qty", "shipment_service.dispatch_task"),
     ("inbound_receiving_extra.py", "/inbound/tasks/{task_id}/qc-decision"): ("service", "klaim wms_tasks (status qc_pending) sesudah validasi qty/grade/disposisi, sebelum roll karantina dikonsumsi/retur/balance; mark_failed bila gagal; finish_set status+jejak QC", "qc_service.process_qc_decision"),
+    ("rfid.py", "/rfid/tags/encode"): ("service_cas", "insert rfid_tags lalu CAS inventory_rolls (find_one_and_update rfid_tag_id kosong → tag); kalah → tag baru dihapus (kompensasi) + 409 STATE_CHANGED", "rfid_service.encode_tag"),
+    ("rfid.py", "/rfid/tags/{tag_id}"): ("service_cas", "DELETE: find_one_and_update rfid_tags berprasyarat status active → retired; kalah → 409; roll dilepas hanya bila rfid_tag_id masih menunjuk tag ini (idempoten)", "rfid_service.retire_tag"),
+    ("wms.py", "/wms/tasks/{task_id}/advance"): ("cas", "find_one_and_update wms_tasks berprasyarat status == status saat dibaca → 409 STATE_CHANGED; jalur dispatched didelegasikan ke dispatch_task (klaim sesi 12)"),
     ("auth.py", "/auth/login"): ("service", "login_attempts + sessions + users(last_login): tulisan independen, tidak ada saldo/stok — aman diulang"),
 }
 
 RE_CLAIM = re.compile(r"atomic_claim|_saga\.claim\(")
 RE_FINISH = re.compile(r"finish_set\(|\$unset\"?\s*:\s*\{\s*\"saga_lock\"|so_transition|_transition\(|_saga\.release\(")
-RE_CAS = re.compile(r"find_one_and_update\(\s*\{[^}]*\"(status|escalation\.status)\"|_transition\(|find_one_and_update\(\s*\n?\s*\{\"id\": bill_id, \"status\"")
+RE_CAS = re.compile(r"find_one_and_update\(\s*\{[^}]*\"(status|escalation\.status|rfid_tag_id)\"|_transition\(|find_one_and_update\(\s*\n?\s*\{\"id\": bill_id, \"status\"")
 RE_COMP = re.compile(r"except[^\n]*:\s*\n\s*await (release_|_release|rollback|compensate)")
 # Validasi 400/404/422 SESUDAH klaim meninggalkan saga_lock → percobaan ulang yang benar ditolak 409
 # (bukti: inbound complete × pagar lot mode block, sesi 4). Klaim wajib SESUDAH semua validasi.
@@ -185,6 +188,12 @@ def check(sources: dict[tuple[str, str], str], reviewed=REVIEWED, unreviewed: li
                 g.add(f"backend/services/{svc_ref}: dicatat klaim di service tetapi tidak ada atomic_claim.claim() + finish_set/release.")
             elif (late := validation_after_claim(ssrc)):
                 g.add(f"backend/services/{svc_ref}: validasi 4xx SESUDAH klaim (`{late[:70]}`) — kunci tertinggal.")
+        if mech == "service_cas":
+            ssrc = service_function_source(svc_ref or "")
+            if ssrc is None:
+                g.add(f"{rf} {frag}: rujukan service '{svc_ref}' tidak ditemukan di backend/services.")
+            elif not RE_CAS.search(ssrc):
+                g.add(f"backend/services/{svc_ref}: dicatat 'service_cas' tetapi find_one_and_update di service tidak berprasyarat status/rfid_tag_id.")
     if unreviewed is not None:
         g.bump()
         if len(unreviewed) > baseline:
@@ -233,6 +242,10 @@ def self_test() -> int:
     case("service nyata berklaim (putaway confirm_arrival) → hijau", {("r.py", "/x/{id}/go"): no_claim}, R5, False)
     R6 = {("r.py", "/x/{id}/go"): ("service", "alasan yang cukup panjang untuk lolos uji", "putaway_order_service.dispatch")}
     case("service nyata TANPA klaim → MERAH", {("r.py", "/x/{id}/go"): no_claim}, R6, True)
+    R7 = {("r.py", "/x/{id}/go"): ("service_cas", "alasan yang cukup panjang untuk lolos uji", "rfid_service.retire_tag")}
+    case("service_cas nyata berprasyarat status (retire_tag) → hijau", {("r.py", "/x/{id}/go"): no_claim}, R7, False)
+    R8 = {("r.py", "/x/{id}/go"): ("service_cas", "alasan yang cukup panjang untuk lolos uji", "putaway_order_service.dispatch")}
+    case("service_cas nyata TANPA find_one_and_update berprasyarat → MERAH", {("r.py", "/x/{id}/go"): no_claim}, R8, True)
     case("entri REVIEWED basi (endpoint hilang) → MERAH", {}, R1, True)
     case("alasan pendek → MERAH", {("r.py", "/x/{id}/go"): good_claim}, {("r.py", "/x/{id}/go"): ("claim", "pendek")}, True)
     case("BELUM DITINJAU naik di atas baseline → MERAH", {}, {}, True, unreviewed=[("a.py", "/b")], baseline=0)

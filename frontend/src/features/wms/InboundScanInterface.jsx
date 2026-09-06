@@ -10,6 +10,7 @@ import InboundTaskPanel, { TaskBadge } from "./inbound/InboundTaskPanel";
 import { hasRolls, rollsText } from "../../components/QtyDual";
 import useReceivingUom from "../../hooks/useReceivingUom";
 import { formatQty } from "../../utils/formatters";
+import RollLabelActions from "../../components/RollLabelActions";
 import { kgPerBaseUnit } from "../../utils/uom";
 
 function MiniBar({ pct, status }) {
@@ -206,7 +207,7 @@ export default function InboundScanInterface({ user, focusPoId = "", onFocusCons
         lot_number: lotFields.lot_number || "",
         shade_ref: lotFields.shade_ref || "",
       });
-      setLotResult({ lots: res.data?.lots || [], warnings: res.data?.lot_warnings || [] });
+      setLotResult({ lots: res.data?.lots || [], warnings: res.data?.lot_warnings || [], rolls: res.data?.created_rolls || [], task: selectedTask });
       setShowGRModal(false);
       setGrRolls([]);
       setLotFields({ supplier_lot: "", lot_number: "", shade_ref: "" });
@@ -263,6 +264,10 @@ export default function InboundScanInterface({ user, focusPoId = "", onFocusCons
                 <p className="text-[10.5px] text-emerald-700">
                   Identitas lot lengkap — traceability & recall siap dipakai.
                 </p>
+              )}
+              {(lotResult.rolls || []).length > 0 && (
+                <RollLabelActions rolls={lotResult.rolls} ctx={{ product_name: lotResult.task?.product_name, po_number: lotResult.task?.po_number, warehouse_id: lotResult.task?.warehouse_id }}
+                  source={`inbound:${lotResult.task?.id || ""}`} testPrefix="gr-labels" />
               )}
             </div>
             <button data-testid="gr-lot-result-close" className="text-[#6B6B73]"

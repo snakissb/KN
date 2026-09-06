@@ -156,7 +156,8 @@ export default function RfidPrintVerifyPanel({ whId, selectedEntity, onChanged }
                     className={`flex w-full items-center gap-2 rounded-lg border px-2 py-1.5 text-left ${
                       activeJob?.id === j.id ? "border-[#0058CC] bg-[#EAF2FF]" : "border-[#F0F0F2] bg-white hover:bg-[#FAFAFB]"}`}>
                     <span className="min-w-0 flex-1">
-                      <span className="block text-[12px] font-bold">{j.job_number} <span className="font-normal text-[#6B6B73]">· {j.item_count} tag</span></span>
+                      <span className="block text-[12px] font-bold">{j.job_number} <span className="font-normal text-[#6B6B73]">· {j.item_count} {j.kind === "qr_label" ? "label QR" : "tag"}</span>
+                        {j.kind === "qr_label" && <span className="ml-1 rounded bg-[#EAF2FF] px-1 text-[9.5px] font-bold text-[#0058CC]" data-testid={`rfid-job-kind-${j.id}`}>QR</span>}</span>
                       <span className="block text-[10.5px] text-[#8E8E93]">{j.warehouse_name} · {fmtTime(j.created_at)} · {j.created_by}</span>
                     </span>
                     <Pill color={color}>{label}</Pill>
@@ -172,7 +173,7 @@ export default function RfidPrintVerifyPanel({ whId, selectedEntity, onChanged }
       {activeJob && (
         <DetailModal onClose={() => { setActiveJob(null); setSession(null); }} size="lg"
           label={`Rincian job cetak ${activeJob.job_number}`} testId="rfid-job-detail-modal">
-        <SectionCard title={`${activeJob.job_number} — ${activeJob.item_count} tag`} right={
+        <SectionCard title={`${activeJob.job_number} — ${activeJob.item_count} ${activeJob.kind === "qr_label" ? "label QR (tanpa encode RFID)" : "tag"}`} right={
           <div className="flex flex-wrap gap-1.5">
             <button data-testid="rfid-job-close" onClick={() => { setActiveJob(null); setSession(null); }}
               className="secondary-button text-[11px]"><X size={12} /> Tutup</button>
@@ -184,7 +185,7 @@ export default function RfidPrintVerifyPanel({ whId, selectedEntity, onChanged }
                 <Printer size={12} /> Tandai Tercetak
               </button>
             )}
-            {["printed", "queued"].includes(activeJob.status) && !session && (
+            {["printed", "queued"].includes(activeJob.status) && !session && activeJob.kind !== "qr_label" && (
               <button data-testid="rfid-job-verify" disabled={busy} onClick={startVerify}
                 className="flex items-center gap-1 rounded-lg bg-[#0058CC] px-3 py-1.5 text-[11px] font-semibold text-white disabled:opacity-40">
                 <ScanLine size={12} /> Mulai Verifikasi

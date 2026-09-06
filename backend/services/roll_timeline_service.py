@@ -95,6 +95,12 @@ async def roll_timeline(roll_id: str, scope_ids: List[str]) -> Dict[str, Any]:
                        "label": f"{'🟢' if r.get('result') == 'green' else '🔴' if r.get('result') == 'red' else '·'} "
                                 f"{r.get('device_name', 'Reader')}: {r.get('reason', '')}",
                        "ref": r.get("device_name", ""), "result": r.get("result")})
+    # Sesi 13 — jejak pindai HP gudang (QR label / EPC via /rfid/lookup)
+    async for s in db.roll_scans.find({"roll_id": roll_id}, {"_id": 0}).sort("at", -1).limit(15):
+        ev.append({"at": s.get("at"), "kind": "scan",
+                   "label": f"Dipindai {'QR label' if s.get('via') == 'label' else 'tag RFID'} oleh {s.get('by') or 'HP gudang'}"
+                            f"{' · ' + s['warehouse_id'] if s.get('warehouse_id') else ''}",
+                   "ref": s.get("warehouse_id", "")})
 
     ref = roll.get("reserved_ref") or {}
     if isinstance(ref, dict) and ref.get("type") == "sales_order" and ref.get("id"):
@@ -119,7 +125,7 @@ async def roll_timeline(roll_id: str, scope_ids: List[str]) -> Dict[str, Any]:
         "roll": {"id": roll["id"], "roll_no": roll.get("roll_no"), "status": roll.get("status"),
                  "grade": roll.get("grade"), "warehouse_name": wh.get("name", ""),
                  "qty": roll.get("length_remaining"), "unit": roll.get("unit"),
-                 "epc": (tag or {}).get("epc"),
+                 "epc": (tag or {}).get("epc"), "last_scan": roll.get("last_scan"),
                  "journey_stage": journey.get("stage"),
                  "journey_stage_label": STAGE_LABEL.get(journey.get("stage"), journey.get("stage") or "—"),
                  "routing": journey.get("routing")},

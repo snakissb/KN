@@ -59,6 +59,57 @@ def generate_rfid_zpl(epc: str, roll: Dict[str, Any], tag: Dict[str, Any]) -> st
     )
 
 
+def generate_qr_zpl(roll: Dict[str, Any], product_name: str = "") -> str:
+    """ZPL label 58×40 mm (203dpi ≈ 464×320 dot) dengan QR NOMOR ROLL (tanpa encode RFID) —
+    isi QR sama dengan label browser, jadi HP gudang memindainya lewat GET /rfid/lookup."""
+    roll_no = roll.get("roll_no", "")
+    name = (product_name or roll.get("product_name") or "")[:30]
+    qty = f"{float(roll.get('length_remaining') or roll.get('length') or 0):g} {roll.get('unit', 'm')}"
+    lot = roll.get("lot") or roll.get("supplier_lot") or "-"
+    return (
+        "^XA\n^PW464\n^LL320\n"
+        f"^FO16,16^BQN,2,6^FDQA,{roll_no}^FS\n"
+        f"^FO200,20^A0N,34,34^FD{roll_no}^FS\n"
+        f"^FO200,64^A0N,22,22^FD{name}^FS\n"
+        f"^FO200,96^A0N,24,24^FD{qty}  Grade {roll.get('grade') or 'A'}^FS\n"
+        f"^FO200,128^A0N,22,22^FDLot {lot}^FS\n"
+        "^XZ"
+    )
+
+
+async def create_qr_label_job(roll_ids: List[str], scope_ids: List[str], actor_name: str,
+                              source: str = "") -> Dict[str, Any]:
+    """Antrean label QR (kind=qr_label) — satu antrean printer bersama dengan tag RFID, tanpa encode."""
+    if not roll_ids:
+        raise HTTPException(status_code=400, detail="Pilih minimal satu roll")
+    rolls = await db.inventory_rolls.find({"id": {"$in": roll_ids}}, {"_id": 0}).to_list(len(roll_ids) + 5)
+    if len(rolls) != len(set(roll_ids)):
+        raise HTTPException(status_code=404, detail="Sebagian roll tidak ditemukan")
+    wh_id = rolls[0].get("warehouse_id")
+    for roll in rolls:
+        if roll.get("owner_entity_id") not in scope_ids:
+            raise HTTPException(status_code=403, detail=f"Roll {roll.get('roll_no')} di luar entitas Anda")
+        if roll.get("warehouse_id") != wh_id:
+            raise HTTPException(status_code=400, detail="Semua roll dalam satu job harus di gudang yang sama")
+    pids = list({r.get("product_id") for r in rolls})
+    names = {p["id"]: p.get("name", "") for p in await db.products.find({"id": {"$in": pids}}, {"_id": 0, "id": 1, "name": 1}).to_list(len(pids) or 1)}
+    items = [{"roll_id": r["id"], "roll_no": r.get("roll_no", ""), "tag_id": None, "epc": None,
+              "sku": r.get("sku", ""), "product_name": names.get(r.get("product_id"), ""),
+              "lot": r.get("lot", ""), "qty": float(r.get("length_remaining") or 0), "unit": r.get("unit", "meter"),
+              "zpl": generate_qr_zpl(r, names.get(r.get("product_id"), ""))} for r in rolls]
+    wh = await db.warehouses.find_one({"id": wh_id}, {"_id": 0, "name": 1}) or {}
+    job = {
+        "id": new_id("rpj"), "kind": "qr_label", "source": source,
+        "job_number": await next_doc_number("rfid_print_jobs", "job_number", "PJ"),
+        "warehouse_id": wh_id, "warehouse_name": wh.get("name", ""),
+        "owner_entity_id": rolls[0].get("owner_entity_id"), "status": "queued",
+        "items": items, "item_count": len(items),
+        "created_at": now_iso(), "created_by": actor_name, "printed_at": None, "verified_at": None,
+    }
+    await db.rfid_print_jobs.insert_one(dict(job))
+    return safe_doc(job)
+
+
 async def create_print_job(roll_ids: List[str], scope_ids: List[str],
                            actor_name: str) -> Dict[str, Any]:
     if not roll_ids:
@@ -88,7 +139,7 @@ async def create_print_job(roll_ids: List[str], scope_ids: List[str],
         })
     wh = await db.warehouses.find_one({"id": wh_id}, {"_id": 0, "name": 1}) or {}
     job = {
-        "id": new_id("rpj"),
+        "id": new_id("rpj"), "kind": "rfid_tag",
         "job_number": await next_doc_number("rfid_print_jobs", "job_number", "PJ"),
         "warehouse_id": wh_id, "warehouse_name": wh.get("name", ""),
         "owner_entity_id": owner, "status": "queued",
