@@ -319,8 +319,7 @@ async def sync_permission_revocations() -> None:
             # E8.2 — uang masuk & pajak keluaran pindah ke peran `finance`;
             # keputusan selisih bayar juga. Sales tetap boleh MELIHAT.
             "tax_invoice": ["view"],
-            "ar_receipt": ["view"],
-            "payment_variance": ["view"],
+            "ar_receipt": ["view", "create"],   # Sesi 16 — kwitansi dari HP sales
             "payment_plan": ["view"],
         },
         # E8.10b#3 — menandai pesanan TERKIRIM: boleh gudang MAUPUN Admin Sales.
@@ -353,6 +352,18 @@ async def sync_permission_revocations() -> None:
             if m in rm and rm[m] != actions:
                 rm[m] = actions
                 changed = True
+    # Sesi 16 — sales lapangan mencatat kwitansi penerimaan dari HP (keputusan user); alokasi tetap
+    # ke tagihan terbuka & selisih ditangani finance. Ditambahkan tanpa mencabut aksi lain.
+    GRANT = {"sales": {"ar_receipt": ["create"]}}
+    for role, mp in GRANT.items():
+        rm = matrix.setdefault(role, {})
+        for m, actions in mp.items():
+            cur = list(rm.get(m, []))
+            for a in actions:
+                if a not in cur:
+                    cur.append(a)
+                    changed = True
+            rm[m] = cur
     if changed:
         await db.permission_settings.update_one(
             {"id": "default"}, {"$set": {"matrix": matrix, "updated_at": now_iso()}}

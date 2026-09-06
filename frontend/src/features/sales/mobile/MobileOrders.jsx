@@ -1,3 +1,4 @@
+import MobilePendingQueue from "./MobilePendingQueue";
 import { useMemo, useState } from "react";
 import { ClipboardList, Search, PackageX, ChevronDown } from "lucide-react";
 import { formatCurrency } from "../../../utils/formatters";
@@ -29,6 +30,7 @@ export default function MobileOrders({ orders = [], loading, onBrowse }) {
 
   return (
     <div data-testid="mobile-orders">
+      <MobilePendingQueue />
       <div className="mb-2 flex items-center gap-2">
         <ClipboardList size={16} className="text-[#0058CC]" />
         <h2 className="m-section-title">Pesanan Saya</h2>

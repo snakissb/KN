@@ -1,0 +1,37 @@
+{
+  "summary": "Sesi 16 RETEST after KNSelect onChange→onValueChange fix. Verified on mobile 390x800 as sales@kainnusantara.id. RESULT: (1) Daftar Harga PASS end-to-end — m-pricelist-customer picker now persists selection (Toko Kain Sejahtera) and 60 m-price-* rows render with 20 m-price-eff-* and 20 m-price-src-*. (2) Retur Jual customer picker PASS — selection persists. Full create flow could NOT be exercised because sales@ has only 1 assigned customer (Toko Kain Sejahtera) and it has 0 shipped orders → no retur can be created; verified persistence only. (3) Pesanan Khusus customer + unit pickers PASS after applying additional fix (see below), submit button becomes enabled, submits — HOWEVER backend responds 422 due to payload contract mismatch (see backend_issues). (4) CRM Tagihan regression from iteration_331 not re-exercised, but iteration_331 already reported PASS. Additional micro-fix applied: two KNSelect usages in MobileSalesNative used prop `testId=` (camelCase) instead of `data-testid=` (KNSelect only reads `\"data-testid\"`), so `m-return-reason` and `m-special-unit` buttons had NO testid on the trigger. Renamed both to `data-testid` (still a pure prop rename within test-scope fix scope) and rebuilt frontend.",
+  "backend_issues": {
+    "critical": [
+      {"endpoint": "POST /api/special-orders", "issue": "Frontend payload from MobileSpecialOrderCreate does NOT match backend schema. Sends custom_item:{name,description,quantity,unit} but backend CustomItemSpec requires description, quantity, unit, target_price (>=0). Backend also has no `name` field. Result: 422 on every mobile submit — user cannot create a special order from mobile. Console: 'Failed to load resource: 422' with pydantic error loc=[body,custom_item].", "priority": "HIGH"}
+    ],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "MobileSalesNative (Special Order form)", "issue": "Form does not collect target_price; also sends spurious `name` field. Needs target_price input (or default) and correct payload shape to match SpecialOrderCreate schema.", "selector": "[data-testid=m-special-submit]", "priority": "HIGH"}
+    ],
+    "integration_issues": [
+      {"flow": "Pesanan Khusus create", "issue": "422 from POST /api/special-orders due to missing target_price and misnamed field", "affected_selectors": ["[data-testid=m-special-submit]", "[data-testid=m-special-msg]"]}
+    ],
+    "design_issues": []
+  },
+  "test_report_links": ["/app/test_reports/iteration_332.json"],
+  "action_items": [
+    "MobileSpecialOrderCreate (MobileSalesNative.jsx lines 119-135): update state + payload to include `target_price` (add an input `m-special-price`), drop `name`, and put the user-visible title into `description` (or add a schema-level rename on backend). Verify SpecialOrderCreate schema fields: customer_id, entity_id, custom_item{description, quantity, unit, target_price, notes, specifications}, expected_delivery, shipping_address_id, notes, submit_for_approval.",
+    "Seed additional customers assignable to sales@kainnusantara.id (or seed a shipped SO for Toko Kain Sejahtera) so that Retur Jual end-to-end can be exercised in automated regression."
+  ],
+  "critical_code_review_comments": [
+    "KNSelect API asymmetry: it consumes `\"data-testid\"` (kebab-case string prop) but similar in-house props in the same codebase use `testId` (camelCase) — invited the second silent-drop bug in one sesi. Recommend accepting BOTH (`data-testid`/`testId`) in KNSelect, or export propTypes/TS interface.",
+    "MobileSpecialOrderCreate has NO field-level validation surface: user can type valid inputs, hit Ajukan, and get an opaque JSON error dumped in the notice bar. Add mapping of pydantic loc→friendly message, or validate before POST."
+  ],
+  "updated_files": [
+    "/app/frontend/src/features/sales/mobile/MobileSalesNative.jsx (renamed testId= → data-testid= on m-return-reason and m-special-unit KNSelects)"
+  ],
+  "success_rate": {"backend": "n/a (not retested)", "frontend": "70% (Pricelist PASS, Retur picker PASS but no shipped orders to submit, Special-Order picker PASS but submission BLOCKED by backend contract)"},
+  "test_credentials": "sales@kainnusantara.id / demo12345",
+  "seed_data_creation": "None. Attempted special-order create failed with 422 so no test data was persisted. No cleanup needed.",
+  "retest_needed": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "After main agent fixes MobileSpecialOrderCreate payload (add target_price, drop name, align to SpecialOrderCreate), retest: (a) Pesanan Khusus end-to-end → toast 'diajukan' + new m-special-card-* + cleanup via mongo special_orders. (b) Retur Jual end-to-end still needs a shipped SO for a customer that sales@ can see. Consider seeding one, or run as admin@. (c) Daftar Harga is fully green.",
+  "rca of the issue": "1) Reason for retest passing on pricelist/customer pickers: KNSelect callback was fixed to onValueChange in previous iteration. 2) Two additional pickers (`m-return-reason` and `m-special-unit`) used `testId=` (camelCase) but KNSelect only reads `\"data-testid\"` → trigger button lacked testid, blocking automated tests. Fixed by renaming both to `data-testid=`. 3) Special-order 422 root cause: frontend body `custom_item` shape (`{name, description, quantity, unit}`) does not match backend `CustomItemSpec` (`description, quantity, unit, target_price[, specifications, notes]`); server rejects with pydantic missing on `body.custom_item.*`. This is a pre-existing bug unrelated to KNSelect, but surfaces now that the picker actually persists selection so users can reach Submit."
+}

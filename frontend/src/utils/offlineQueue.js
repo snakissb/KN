@@ -17,6 +17,7 @@ export const pending = () => read(Q_KEY);
 export const results = () => read(R_KEY);
 export const subscribe = (fn) => { listeners.add(fn); return () => listeners.delete(fn); };
 export const clearResults = () => write(R_KEY, []);
+export const removePending = (key) => write(Q_KEY, read(Q_KEY).filter((it) => it.key !== key));
 
 export function enqueue(item) {
   const q = read(Q_KEY);

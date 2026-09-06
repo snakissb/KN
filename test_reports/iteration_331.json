@@ -1,0 +1,36 @@
+{
+  "summary": "Sesi 16 testing: Backend probe_sesi16 + verify_atomic_claim baseline 26 PASS. New pytest test_sesi16_ar_receipt PASS (sales@ POST /api/ar-receipts 200 + Idempotency-Key replay same id + admin void). Frontend mobile sales (390x800): Lainnya menu, Pelanggan (CRM) → MobileCustomers → detail (m-customer-outstanding Rp 14.782.200, tab Tagihan m-customer-ar-so_006/so_001, tombol m-customer-receipt-btn) → MobileArReceipt sheet works: m-ar-amount 1000 → allocations auto-filled (m-ar-summary 'Teralokasi Rp 1.000 pas') → m-ar-submit created KSC/AR-00024 (verified in Kwitansi tab, outstanding decremented to 14.781.200). Retur Jual / Special Order / Daftar Harga screens render (scrollWidth<=390 everywhere, no overflow). HOWEVER: critical bug — the KNSelect pickers in MobileSalesNative use prop `onChange` but KNSelect only fires `onValueChange`, so customer/order/reason/unit pickers do NOT persist selection — Retur Jual, Pesanan Khusus, and Daftar Harga flows are effectively broken at the picker step.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "MobileSalesNative (MobileReturns / MobileSpecialOrders / MobilePricelist)", "issue": "KNSelect used with prop `onChange` instead of `onValueChange` — selections never propagate. Blocks m-return-customer, m-return-order, m-return-reason, m-pricelist-customer, m-special-customer, m-special-unit.", "selector": "[data-testid=m-return-customer], [data-testid=m-pricelist-customer], [data-testid=m-special-customer]", "priority": "CRITICAL"}
+    ],
+    "integration_issues": [
+      {"flow": "Retur Jual create", "issue": "After picking customer from dropdown option, m-return-customer still shows 'Pilih pelanggan' and m-return-order stays 'Pilih pelanggan dulu' — cannot proceed.", "affected_selectors": ["[data-testid=m-return-customer]", "[data-testid=m-return-order]"]},
+      {"flow": "Daftar Harga", "issue": "Selecting customer via m-pricelist-customer does not render m-price-* rows; hint stays visible.", "affected_selectors": ["[data-testid=m-pricelist-customer]", "[data-testid=m-price-*]"]}
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_sesi16_ar_receipt.py",
+    "/app/test_reports/pytest/sesi16.xml",
+    "/app/scripts/probe_sesi16.py",
+    "/app/scripts/guardrails/verify_atomic_claim.py"
+  ],
+  "action_items": [
+    "MobileSalesNative.jsx lines 78-80, 140, 143, 173: replace `onChange={...}` with `onValueChange={...}` on every KNSelect (Retur customer/order/reason, Special customer/unit, Pricelist customer). This is a one-word rename per prop.",
+    "Optional: also verify m-ar-msg is displayed on success (currently the sheet closes so quickly the message is not visible; receipt is correctly created in DB)."
+  ],
+  "critical_code_review_comments": [
+    "Prop mismatch bug: KNSelect exposes onValueChange but MobilePricelist / MobileReturns / MobileSpecialOrders pass onChange. Compile-time silent; runtime = selections silently ignored. Should add a PropTypes / TS interface or fallback (`onChange || onValueChange`) inside KNSelect to prevent this class of bug.",
+    "MobileMore uses id 'crm' for the Customers tile while the spec calls the testid `m-customers` — actual button testid is `mobile-more-crm`. Fine but be consistent with spec docs."
+  ],
+  "updated_files": ["/app/backend/tests/test_sesi16_ar_receipt.py"],
+  "success_rate": {"backend": "100%", "frontend": "55%"},
+  "test_credentials": "sales@kainnusantara.id / demo12345 ; admin@kainnusantara.id / demo12345",
+  "seed_data_creation": "Created 1 AR receipt KSC/AR-00024 (Rp 1.000) for cust_toko_kain via mobile UI, and 1 more via pytest (voided). The KSC/AR-00024 created via UI was NOT voided — main agent may void via POST /api/ar-receipts/{id}/void as admin to keep demo data clean.",
+  "retest_needed": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend and AR receipt happy-path (creation + idempotency + void by admin) is solid. Bug is purely a prop rename on KNSelect usages in MobileSalesNative.jsx. After fix + rebuild_frontend.sh, retest: Retur create end-to-end (m-return-submit → toast 'Retur … dibuat'), Special Order create (m-special-submit → 'diajukan'), Pricelist rows (m-price-* / m-price-eff-* / m-price-src-*). Offline pending queue (context.set_offline) was not exercised in this iteration because the runner context object isn't exposed to the automation runner; consider using playwright BrowserContext.set_offline via a raw test script.",
+  "rca of the issue": "Root cause: `KNSelect` component (in /app/frontend/src/components/KNSelect.jsx) only invokes callback via `onValueChange` prop (both in the combobox and radix Select paths). Callers in MobileSalesNative.jsx (lines 78, 79, 80, 140, 143, 173) pass `onChange={setter}` — a prop the component ignores. Reproduction: open mobile sales as sales@, Lainnya → Retur Jual → 'Buat retur jual' → click 'Pilih pelanggan' → choose Toko Kain Sejahtera → field remains 'Pilih pelanggan'. Mitigation: rename all six `onChange` props to `onValueChange` in MobileSalesNative.jsx, rebuild frontend."
+}

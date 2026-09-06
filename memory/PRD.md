@@ -37,6 +37,12 @@ Admin · Manajer · Admin Sales · Finance · Sales · Gudang · Desainer · Sop
 - Lingkungan: `backend/.env` wajib `CORS_ORIGINS` eksplisit (template `*` membuat backend menolak start).
 - Testing agent iteration_314: semua PASS. `gate.sh --quick`: 5 merah pra-eksisting saja.
 
+## Yang dikerjakan 2026-09-06 sesi 16 (laporan: `memory/LAPORAN_SESI_2026-09-06_SESI16.md`)
+- Mobile sales native: Pelanggan (360 + piutang + kwitansi dari HP), Retur Jual, Pesanan Khusus, Daftar Harga — menggantikan komponen desktop yang terpotong; `MobilePendingQueue` (pesanan/aksi antre offline, bisa dibatalkan).
+- Kebijakan: peran `sales` diberi `ar_receipt.create` (kwitansi dari HP) — bootstrap GRANT idempoten.
+- Ratchet INV-ATOMIC-01 30 → 26 (archive entity CAS, impact-apply klaim, POST entities ditinjau). Guard 64 cek.
+- Probe `scripts/probe_sesi16.py` SEMUA PASS · gate hijau · testing agent: lihat iteration terbaru.
+
 ## Yang dikerjakan 2026-09-06 sesi 15 (laporan: `memory/LAPORAN_SESI_2026-09-06_SESI15.md`)
 - BUG FIX (user): harga khusus disetujui kini terpakai di keranjang/pesanan HP sales (`MobileCart` + `useEffectivePrices`, badge sumber harga).
 - Offline sales: idempotency `/sales-orders`, `/hr/visits`, `/price-approvals`; check-in/out & pesanan lewat antrean; `OfflineBanner` di app sales.
@@ -101,8 +107,8 @@ Admin · Manajer · Admin Sales · Finance · Sales · Gudang · Desainer · Sop
 
 ## Backlog (prioritas)
 - P1 COGS eksplisit per potongan sampel bila kebijakan menuntut; `simulate-payment` (invoices.py) tinjau sebagai compensate/log-only.
-- P0 30 endpoint multi-koleksi BELUM DITINJAU (INV-ATOMIC-01 ratchet): berikutnya entities POST/DELETE/archive, config impact-apply, categories PATCH.
-- P1 Mobile sales: audit paritas fitur ERP vs HP (user melaporkan banyak fitur terpotong) — layar "Lainnya" masih menyematkan komponen desktop (CRM, Retur, Pesanan Khusus, Daftar Harga); buat versi mobile-native + tambah Piutang/tagih, Inbox persetujuan harga, Customer 360.
+- P0 26 endpoint multi-koleksi BELUM DITINJAU (INV-ATOMIC-01 ratchet): berikutnya categories PATCH, rfid devices, wms outbound-from-order, hr payroll.
+- P1 Mobile sales: Leads pipeline, inbox persetujuan harga untuk manajer di HP, target/komisi sales.
 - P1 Offline: katalog/pelanggan tersimpan cache (SW sudah menyimpan GET /products, /customers, /dashboard); antrean pesanan offline butuh UI daftar pesanan tertunda.
 - P1 T-05: 2 REGISTRY GAP (P2); T-04 perbaiki 2 lokasi `PERBAIKI`.
 - P1 `warehouse_id` saran reorder (keputusan pemilik masih terbuka).

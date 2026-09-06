@@ -128,7 +128,11 @@ def blok_punya_modal(blok: str) -> bool:
     return False
 
 #: Create INLINE yang memang dibiarkan — WAJIB beralasan (dinilai orang, bukan dibisukan).
-INLINE_DIBOLEHKAN: Dict[str, str] = {}
+INLINE_DIBOLEHKAN: Dict[str, str] = {
+    "features/sales/mobile/MobileSalesNative.jsx":
+        "Layar HP (Sesi 16): form create MENUKAR seluruh layar (sub-halaman dengan tombol Kembali), "
+        "bukan menyelip di tengah daftar — pola standar mobile; pop-up desktop tidak muat di HP.",
+}
 
 #: Create NAVIGATE yang disetujui pemilik (alur kompleks tetap halaman penuh).
 NAVIGATE_DISETUJUI: Dict[str, str] = {

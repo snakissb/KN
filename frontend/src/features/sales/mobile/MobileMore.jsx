@@ -1,10 +1,9 @@
 import { useState } from "react";
 import { Users, RotateCcw, FileStack, Tags, Monitor, LogOut, ChevronRight, ArrowLeft, UserCircle } from "lucide-react";
 import { roleLabel } from "../../../config/roles";
-import CrmView from "../../crm/CrmView";
-import SalesReturns from "../SalesReturns";
-import SpecialOrders from "../SpecialOrders";
-import PricelistView from "../PricelistView";
+import MobileCustomers from "./MobileCustomers";
+import { MobileReturns, MobileSpecialOrders, MobilePricelist } from "./MobileSalesNative";
+import MobilePendingQueue from "./MobilePendingQueue";
 import { BadgePercent, MapPin, Boxes, Scissors } from "lucide-react";
 import { MobileSpecialPrice, MobileVisits, MobileStock } from "./MobileFieldViews";
 import SampleRequestForm from "../../samples/SampleRequestForm";
@@ -37,10 +36,10 @@ export default function MobileMore({ user, token, selectedEntity, entities, onLo
           {sub === "sample" && <div className="p-3"><SampleRequestForm compact /></div>}
           {sub === "visits" && <MobileVisits />}
           {sub === "stock" && <MobileStock />}
-          {sub === "crm" && <CrmView currentUser={user} selectedEntity={selectedEntity} />}
-          {sub === "returns" && <SalesReturns currentUser={user} />}
-          {sub === "special" && <SpecialOrders currentUser={user} />}
-          {sub === "pricelist" && <PricelistView entities={entities} selectedEntity={selectedEntity} currentUser={user} />}
+          {sub === "crm" && <MobileCustomers selectedEntity={selectedEntity} />}
+          {sub === "returns" && <MobileReturns user={user} />}
+          {sub === "special" && <MobileSpecialOrders />}
+          {sub === "pricelist" && <MobilePricelist selectedEntity={selectedEntity} />}
         </div>
       </div>
     );
@@ -48,6 +47,7 @@ export default function MobileMore({ user, token, selectedEntity, entities, onLo
 
   return (
     <div className="space-y-3" data-testid="mobile-more">
+      <MobilePendingQueue />
       {/* Profile card */}
       <div className="m-card flex items-center gap-3 p-4">
         <span className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-[#0058CC] text-[16px] font-bold text-white">

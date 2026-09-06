@@ -171,6 +171,20 @@ async def apply(product_id: str, new_price: float, doc_ids: List[str], *,
     new_price = plan["price_new"]
     old_price = plan["price_now"]
 
+    # Sesi 16 — klaim saga produk sesudah validasi (alasan, cakupan doc), sebelum master & SO ditulis ulang.
+    from services import atomic_claim as _saga
+    await _saga.claim("products", product_id, "price_impact_apply", actor=actor)
+    try:
+        return await _apply_plan(product_id, new_price, old_price, plan, selected, before, update_master, reason, actor)
+    except Exception as e:
+        await _saga.mark_failed("products", product_id, str(e))
+        raise
+    finally:
+        await _saga.release("products", product_id)
+
+
+async def _apply_plan(product_id, new_price, old_price, plan, selected, before, update_master, reason, actor):
+    changed = []
     if update_master:
         await db.products.update_one(
             {"id": product_id},

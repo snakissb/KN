@@ -26,7 +26,7 @@ import inventaris_multi_koleksi as inv  # noqa: E402
 
 # Baseline "BELUM DITINJAU" saat penjaga lahir (2026-09-05). Turunkan angka ini setiap
 # kali satu endpoint selesai ditinjau — jangan pernah dinaikkan.
-BASELINE_UNREVIEWED = 30
+BASELINE_UNREVIEWED = 26
 
 # (berkas router, potongan path) → (mekanisme, alasan). mekanisme ∈ {claim, cas, service, log}
 REVIEWED: dict[tuple[str, str], tuple[str, str]] = {
@@ -88,6 +88,10 @@ REVIEWED: dict[tuple[str, str], tuple[str, str]] = {
     ("bank_reconciliation.py", "/bank-reconciliation/lines/{line_id}/holding/allocate"): ("service", "klaim bank_statement_lines (status holding) sesudah validasi Σ alokasi, AR+jurnal per alokasi di dalam klaim; mark_failed bila gagal; finish_set holding_remaining", "bank_recon_service.allocate_holding"),
     ("bank_reconciliation.py", "/bank-reconciliation/lines/{line_id}/holding/cancel"): ("service", "klaim bank_statement_lines (status holding) sesudah validasi, sebelum kas void + jurnal balik; finish_set status unmatched", "bank_recon_service.cancel_holding"),
     ("access_review.py", "/access/role-reality/{user_id}/apply"): ("service", "dua tulisan idempoten: users.role (update_user) + sesi dicabut (delete_many); pengulangan → 400 'peran sudah sama'; tidak ada saldo/stok"),
+    ("entities.py", "/entities"): ("service", "POST: id badan usaha baru per permintaan; insert lalu seed COA (idempoten) + upsert system_settings; sinkron partner grup best-effort — tak ada saldo bersama, aman diulang"),
+    ("entities.py", "/entities/{entity_id}/archive"): ("service_cas", "find_one_and_update business_entities berprasyarat status ≠ archived → 409 STATE_CHANGED; sesi pengguna dicabut idempoten (delete_many)", "entity_lifecycle_service.archive_entity"),
+    ("entities.py", "/entities/{entity_id}"): ("service_cas", "DELETE (=archive): CAS status ≠ archived di lifecycle.archive_entity → 409 bila kalah", "entity_lifecycle_service.archive_entity"),
+    ("config.py", "/impact-apply"): ("service", "klaim products sesudah validasi alasan/cakupan (ImpactError), master + SO ditulis ulang di dalam klaim; mark_failed bila gagal; release di finally", "config_impact_service.apply"),
     ("auth.py", "/auth/login"): ("service", "login_attempts + sessions + users(last_login): tulisan independen, tidak ada saldo/stok — aman diulang"),
 }
 

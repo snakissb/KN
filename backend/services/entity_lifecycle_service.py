@@ -337,7 +337,12 @@ async def archive_entity(entity_id: str, actor: Dict[str, Any], reason: str = ""
              "archived_by": (actor or {}).get("name", ""),
              "archive_reason": (reason or "").strip(),
              "archive_forced": bool(force), "updated_at": now_iso()}
-    await db.business_entities.update_one({"id": entity_id}, {"$set": patch})
+    # Sesi 16 — CAS: hanya badan usaha yang belum diarsipkan; klik ganda/balapan → 409.
+    won = await db.business_entities.find_one_and_update(
+        {"id": entity_id, "status": {"$ne": STATUS_ARCHIVED}}, {"$set": patch}, projection={"_id": 0})
+    if not won:
+        raise HTTPException(status_code=409, detail={"code": "STATE_CHANGED",
+                            "message": "Badan usaha sudah diarsipkan oleh proses lain."})
     # Cabut sesi pengguna yang badan usaha utamanya diarsipkan (tidak boleh masuk lagi).
     home_ids = [u["id"] for u in impact["home_users"]]
     revoked = 0
