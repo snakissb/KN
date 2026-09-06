@@ -37,6 +37,14 @@ Admin · Manajer · Admin Sales · Finance · Sales · Gudang · Desainer · Sop
 - Lingkungan: `backend/.env` wajib `CORS_ORIGINS` eksplisit (template `*` membuat backend menolak start).
 - Testing agent iteration_314: semua PASS. `gate.sh --quick`: 5 merah pra-eksisting saja.
 
+## Yang dikerjakan 2026-09-06 sesi 15 (laporan: `memory/LAPORAN_SESI_2026-09-06_SESI15.md`)
+- BUG FIX (user): harga khusus disetujui kini terpakai di keranjang/pesanan HP sales (`MobileCart` + `useEffectivePrices`, badge sumber harga).
+- Offline sales: idempotency `/sales-orders`, `/hr/visits`, `/price-approvals`; check-in/out & pesanan lewat antrean; `OfflineBanner` di app sales.
+- Job `printer_stuck_watch` (label > 30 mnt tanpa printer online → notifikasi kepala gudang & manager, dedupe).
+- Service worker `public/sw.js` (app shell + data terakhir, `X-From-Cache`, banner tugas dari cache).
+- Ratchet INV-ATOMIC-01 34 → 30 (bank recon book-charge/holding/allocate/cancel). Guard 60 cek.
+- Probe `scripts/probe_sesi15.py` SEMUA PASS · gate hijau · testing agent iteration_330 semua PASS.
+
 ## Yang dikerjakan 2026-09-06 sesi 14 (laporan: `memory/LAPORAN_SESI_2026-09-06_SESI14.md`)
 - Offline HP gudang: middleware `Idempotency-Key` (replay balasan pertama, `X-Idempotent-Replay`), antrean localStorage + `OfflineBanner`, `POST /rfid/roll-scans` (replay pindai offline, last_scan hanya maju).
 - Ratchet INV-ATOMIC-01 36 → 34: klaim verify/cycle-count complete; kompensasi transfer antar-PT; guard 55 cek.

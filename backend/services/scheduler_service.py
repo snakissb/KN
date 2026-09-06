@@ -36,6 +36,7 @@ from services import rnd_sla_service as rndsla          # PS-18 — eskalasi SLA
 from services import approval_reminder as aprem          # 2026-08-15 — pengingat antrean persetujuan
 from services import inventory_drift_watch as invdrift   # 2026-06 — pemantau drift persediaan
 from services import saga_lock_watch as sagawatch         # 2026-09 — kunci saga menggantung (T-01 Opsi B)
+from services import printer_stuck_watch as prstuck       # Sesi 15 — label tertahan tanpa printer online
 from services import wa_alert_service as wa
 
 logger = logging.getLogger("scheduler")
@@ -175,6 +176,14 @@ JOBS: List[Dict[str, Any]] = [
                     "Job ini TIDAK melepas kunci. Idempotent: satu notifikasi per hari per kunci.",
      "kind": "interval", "interval_minutes": 10, "fn": sagawatch.job_saga_lock_watch,
      "link": "settings-config"},
+    # ── Sesi 15 — label tertahan ─────────────────────────────────────────
+    {"id": "printer_stuck_watch", "label": "Label Tertahan di Printer",
+     "description": "Antrean label (QR/RFID) yang menunggu > 30 menit di gudang tanpa printer "
+                    "online (heartbeat > 5 menit) diberitahukan ke kepala gudang & manager: "
+                    "jumlah label, umur antrean, gudang. Satu notifikasi per gudang sampai "
+                    "antrean bersih (dedupe unread). Job ini TIDAK mengubah antrean.",
+     "kind": "interval", "interval_minutes": 10, "fn": prstuck.job_printer_stuck_watch,
+     "link": "operations"},
 ]
 JOB_MAP: Dict[str, Dict[str, Any]] = {j["id"]: j for j in JOBS}
 

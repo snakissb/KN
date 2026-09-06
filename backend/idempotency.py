@@ -18,7 +18,8 @@ from core_utils import now_iso
 HEADER = "idempotency-key"
 TTL_DAYS = 7
 IDEMPOTENT_PREFIXES = ("/api/inbound/", "/api/outbound/", "/api/sample-requests/", "/api/wms/tasks/",
-                       "/api/rfid/lookup", "/api/rfid/roll-scans", "/api/rfid/print-jobs")
+                       "/api/rfid/lookup", "/api/rfid/roll-scans", "/api/rfid/print-jobs",
+                       "/api/hr/visits", "/api/sales-orders", "/api/price-approvals")
 
 
 class IdempotencyMiddleware(BaseHTTPMiddleware):

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { MapPin, LogIn, LogOut, Loader2 } from "lucide-react";
 import axios, { API } from "../../../services/apiClient";
+import { offlinePost } from "../../../utils/offlineQueue";
 import KNSelect from "../../../components/KNSelect";
 import SpecialPriceRequestForm from "../../pricing/SpecialPriceRequestForm";
 
@@ -29,8 +30,8 @@ export function MobileVisits() {
   const load = () => axios.get(`${API}/hr/visits/me`).then((r) => { setMe(r.data); setErr(""); }).catch((e) => setErr(e.response?.status === 404 ? "Akun Anda belum ditautkan ke profil karyawan — minta admin SDM." : (e.response?.data?.detail || "Gagal memuat kunjungan.")));
   useEffect(() => { load(); }, []);
   const geo = () => new Promise((res) => { if (!navigator.geolocation) return res({}); navigator.geolocation.getCurrentPosition((p) => res({ lat: p.coords.latitude, lon: p.coords.longitude }), () => res({}), { timeout: 4000 }); });
-  const checkIn = async () => { setBusy(true); try { await axios.post(`${API}/hr/visits/check-in`, { customer_name: custName, notes: note, ...(await geo()) }); setCustName(""); setNote(""); await load(); } catch (e) { setErr(e.response?.data?.detail || "Check-in gagal."); } finally { setBusy(false); } };
-  const checkOut = async () => { setBusy(true); try { await axios.post(`${API}/hr/visits/${me.ongoing.id}/check-out`, { outcome: "other", notes: note, ...(await geo()) }); setNote(""); await load(); } catch (e) { setErr(e.response?.data?.detail || "Check-out gagal."); } finally { setBusy(false); } };
+  const checkIn = async () => { setBusy(true); setErr(""); try { const r = await offlinePost(`${API}/hr/visits/check-in`, { customer_name: custName, notes: note, ...(await geo()) }, { label: `Check-in ${custName}` }); setCustName(""); setNote(""); if (r.queued) setErr("Offline — check-in tersimpan di HP, dikirim saat sinyal kembali."); else await load(); } catch (e) { setErr(e.response?.data?.detail || "Check-in gagal."); } finally { setBusy(false); } };
+  const checkOut = async () => { setBusy(true); setErr(""); try { const r = await offlinePost(`${API}/hr/visits/${me.ongoing.id}/check-out`, { outcome: "other", notes: note, ...(await geo()) }, { label: `Check-out ${me.ongoing.customer_name || ""}` }); setNote(""); if (r.queued) setErr("Offline — check-out tersimpan di HP, dikirim saat sinyal kembali."); else await load(); } catch (e) { setErr(e.response?.data?.detail || "Check-out gagal."); } finally { setBusy(false); } };
   if (err) return <div className="notice-bar danger m-3" data-testid="m-visits-error">{String(err)}</div>;
   if (!me) return <div className="p-6 text-center text-sm"><Loader2 size={16} className="animate-spin inline" /> Memuat…</div>;
   return (

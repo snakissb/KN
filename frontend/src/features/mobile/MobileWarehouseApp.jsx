@@ -16,7 +16,8 @@ function TaskList({ type, focusTaskId, onFocused }) {
   const [open, setOpen] = useState(focusTaskId || "");
   const [lastCut, setLastCut] = useState(null);
   const [lastInbound, setLastInbound] = useState(null);
-  const load = () => axios.get(`${API}/wms/tasks`).then((r) => setRows((Array.isArray(r.data) ? r.data : r.data.items || r.data.tasks || []).filter((t) => (t.flow_type || t.type) === type && !["completed", "shipped", "cancelled", "done"].includes(t.status))))
+  const [fromCache, setFromCache] = useState(false);
+  const load = () => axios.get(`${API}/wms/tasks`).then((r) => { setFromCache(r.headers?.["x-from-cache"] === "true"); setRows((Array.isArray(r.data) ? r.data : r.data.items || r.data.tasks || []).filter((t) => (t.flow_type || t.type) === type && !["completed", "shipped", "cancelled", "done"].includes(t.status))); })
     .catch((e) => setErr(e.response?.data?.detail || "Gagal memuat tugas."));
   useEffect(() => { load(); }, [type]); // eslint-disable-line
   // Pindai → aksi: kartu tugas hasil pindai dibuka & digulir ke layar, lalu fokus dilepas.
@@ -33,6 +34,7 @@ function TaskList({ type, focusTaskId, onFocused }) {
   const Actions = { inbound: InboundActions, outbound: OutboundActions, sample_cut: SampleCutActions }[type];
   return (
     <div className="space-y-2 p-3" data-testid={`mw-task-list-${type}`}>
+      {fromCache && <div className="notice-bar warning text-xs" data-testid="mw-task-from-cache">Offline — menampilkan daftar tugas terakhir yang tersimpan di HP. Aksi akan diantrekan.</div>}
       {lastInbound && (
         <div className="m-card p-3 bg-[#E6F6EC] space-y-2" data-testid={`mw-inbound-done-${lastInbound.task.id}`}>
           <div className="notice-bar success" data-testid={`mw-action-msg-${lastInbound.task.id}`}>SELESAI · {lastInbound.task.product_name} · {lastInbound.rolls.length} roll baru masuk stok{lastInbound.rolls.length ? `: ${lastInbound.rolls.map((r) => r.roll_no).join(", ")}` : ""}</div>

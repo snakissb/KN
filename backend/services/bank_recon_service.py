@@ -903,16 +903,25 @@ async def book_charge(line_id: str, kind: str, note: str, actor: str,
         "reconciled": False, "reconciled_amount": 0.0,
         "created_by": actor, "created_at": now_iso(), "updated_at": now_iso(),
     }
-    await db.cash_transactions.insert_one(cdoc)
-    je = await gl.post_cash_transaction(cdoc)
-    await db.bank_statement_lines.update_one({"id": line_id}, {"$set": {
-        "charge": {"kind": kind, "label": label, "cash_txn_id": cdoc["id"],
-                   "cash_number": number, "je_id": (je or {}).get("id", ""),
-                   "je_number": (je or {}).get("number", ""), "account_code": contra,
-                   "at": now_iso(), "by": actor, "note": note},
-        "suggestions": [], "updated_at": now_iso()}})
-    ln = await _line(line_id, entity_ids)
-    await _link(ln, [{"txn_id": cdoc["id"], "amount": amount}], actor, "charge", "1:1")
+    # Sesi 15 — klaim saga baris koran (status belum matched/holding) sesudah validasi, sebelum kas/jurnal.
+    from services import atomic_claim as _saga
+    await _saga.claim("bank_statement_lines", line_id, "book_charge", actor=actor,
+                      precondition={"status": {"$nin": ["matched", "holding"]}})
+    try:
+        await db.cash_transactions.insert_one(cdoc)
+        je = await gl.post_cash_transaction(cdoc)
+        await db.bank_statement_lines.update_one({"id": line_id}, {"$set": {
+            "charge": {"kind": kind, "label": label, "cash_txn_id": cdoc["id"],
+                       "cash_number": number, "je_id": (je or {}).get("id", ""),
+                       "je_number": (je or {}).get("number", ""), "account_code": contra,
+                       "at": now_iso(), "by": actor, "note": note},
+            "suggestions": [], "updated_at": now_iso()}})
+        ln = await _line(line_id, entity_ids)
+        await _link(ln, [{"txn_id": cdoc["id"], "amount": amount}], actor, "charge", "1:1")
+    except Exception as e:
+        await _saga.mark_failed("bank_statement_lines", line_id, str(e))
+        raise
+    await db.bank_statement_lines.update_one({"id": line_id}, _saga.finish_set({"updated_at": now_iso()}))
     out = safe_doc(await db.bank_statement_lines.find_one({"id": line_id}, {"_id": 0}))
     return {**out, "kind": kind, "label": label, "cash_number": number,
             "je_number": (je or {}).get("number", ""), "account_code": contra}
@@ -1065,19 +1074,27 @@ async def to_holding(line_id: str, note: str, actor: str,
         "matched_line_ids": [ln["id"]], "reconciled_at": now_iso(),
         "created_by": actor, "created_at": now_iso(), "updated_at": now_iso(),
     }
-    await db.cash_transactions.insert_one(cdoc)
+    # Sesi 15 — klaim saga baris koran (belum matched/holding) sesudah validasi, sebelum kas/jurnal titipan.
+    from services import atomic_claim as _saga
+    await _saga.claim("bank_statement_lines", line_id, "to_holding", actor=actor,
+                      precondition={"status": {"$nin": ["matched", "holding"]}})
+    try:
+        await db.cash_transactions.insert_one(cdoc)
+    except Exception as e:
+        await _saga.mark_failed("bank_statement_lines", line_id, str(e))
+        raise
     je = None
     try:
         je = await gl.post_cash_transaction(cdoc)
     except Exception:  # noqa: BLE001
         je = None
-    await db.bank_statement_lines.update_one({"id": line_id}, {"$set": {
+    await db.bank_statement_lines.update_one({"id": line_id}, _saga.finish_set({
         "status": "holding", "suggestions": [],
         "holding": {"cash_txn_id": cdoc["id"], "cash_number": number,
                     "je_id": (je or {}).get("id", ""), "je_number": (je or {}).get("number", ""),
                     "at": now_iso(), "by": actor, "note": note},
         "holding_allocated": [], "holding_remaining": amount,
-        "updated_at": now_iso()}})
+        "updated_at": now_iso()}))
     return safe_doc(await db.bank_statement_lines.find_one({"id": line_id}, {"_id": 0}))
 
 
@@ -1104,49 +1121,57 @@ async def allocate_holding(line_id: str, allocations: List[Dict[str, Any]], cust
 
     from services import ar_receipt_service as ar
     from services import gl_service as gl
-    done: List[Dict[str, Any]] = []
-    for a in allocations:
-        order_id, amt = a.get("order_id"), _round(a.get("amount"))
-        if not order_id or amt <= 0:
-            raise ValueError("Alokasi tidak sah (order_id/amount kosong)")
-        # KN-G8-ALLOC-CROSSPT (temuan penutupan fase): alokasi hanya memeriksa BARIS-nya,
-        # tidak pernah memeriksa PESANAN tujuannya. Karena `_apply_to_order` mencari pesanan
-        # hanya dengan id, titipan PT-A bisa diarahkan melunasi pesanan PT-B lewat id yang
-        # dikirim tangan — uang PT-A membayar piutang PT-B, dan jurnalnya pecah di dua buku
-        # (Cr Piutang di buku PT-B, Cr Titipan di buku PT-A). Tutup di sini.
-        order = await db.sales_orders.find_one({"id": order_id}, {"_id": 0})
-        if not order:
-            raise ValueError("Pesanan tidak ditemukan")
-        oent = order.get("entity_id") or ""
-        lent = ln.get("entity_id") or ""
-        if entity_ids is not None and oent and oent != GROUP_ENTITY and oent not in entity_ids:
-            raise HTTPException(status_code=403, detail="Pesanan milik entitas lain")
-        if lent and oent and oent != lent and GROUP_ENTITY not in (oent, lent):
-            raise HTTPException(
-                status_code=403,
-                detail=f"Pesanan {order.get('number', order_id)} berada di entitas lain — "
-                       "titipan dana hanya boleh melunasi pesanan pada entitas rekening itu")
-        if customer_id and order.get("customer_id") and order["customer_id"] != customer_id:
-            raise ValueError(
-                f"Pesanan {order.get('number', order_id)} bukan milik pelanggan yang dipilih")
-        res = await ar.apply_from_bank_holding(order_id, amt, ln["id"],
-                                               ln.get("holding", {}).get("cash_number", ""),
-                                               {"name": actor})
-        je = await gl.post_bank_holding_allocation(
-            source_id=f"{ln['id']}:{order_id}:{len(done)}",
-            entity_id=res.get("entity_id") or ln.get("entity_id", ""), amount=amt,
-            label=f"{res.get('order_number', order_id)}", date=now_iso(), created_by=actor)
-        done.append({"order_id": order_id, "order_number": res.get("order_number", ""),
-                     "amount": amt, "je_id": (je or {}).get("id", ""),
-                     "je_number": (je or {}).get("number", ""),
-                     "reason_code": reason_code, "note": note,
-                     "customer_id": customer_id, "at": now_iso(), "by": actor,
-                     "outstanding_after": res.get("outstanding_after")})
+    # Sesi 15 — klaim saga baris titipan (status holding) sesudah validasi jumlah; per-alokasi
+    # AR + jurnal ditulis di dalam klaim; gagal di tengah → mark_failed (jejak untuk saga_lock_watch).
+    from services import atomic_claim as _saga
+    await _saga.claim("bank_statement_lines", line_id, "allocate_holding", actor=actor, precondition={"status": "holding"})
+    try:
+        done: List[Dict[str, Any]] = []
+        for a in allocations:
+            order_id, amt = a.get("order_id"), _round(a.get("amount"))
+            if not order_id or amt <= 0:
+                raise ValueError("Alokasi tidak sah (order_id/amount kosong)")
+            # KN-G8-ALLOC-CROSSPT (temuan penutupan fase): alokasi hanya memeriksa BARIS-nya,
+            # tidak pernah memeriksa PESANAN tujuannya. Karena `_apply_to_order` mencari pesanan
+            # hanya dengan id, titipan PT-A bisa diarahkan melunasi pesanan PT-B lewat id yang
+            # dikirim tangan — uang PT-A membayar piutang PT-B, dan jurnalnya pecah di dua buku
+            # (Cr Piutang di buku PT-B, Cr Titipan di buku PT-A). Tutup di sini.
+            order = await db.sales_orders.find_one({"id": order_id}, {"_id": 0})
+            if not order:
+                raise ValueError("Pesanan tidak ditemukan")
+            oent = order.get("entity_id") or ""
+            lent = ln.get("entity_id") or ""
+            if entity_ids is not None and oent and oent != GROUP_ENTITY and oent not in entity_ids:
+                raise HTTPException(status_code=403, detail="Pesanan milik entitas lain")
+            if lent and oent and oent != lent and GROUP_ENTITY not in (oent, lent):
+                raise HTTPException(
+                    status_code=403,
+                    detail=f"Pesanan {order.get('number', order_id)} berada di entitas lain — "
+                           "titipan dana hanya boleh melunasi pesanan pada entitas rekening itu")
+            if customer_id and order.get("customer_id") and order["customer_id"] != customer_id:
+                raise ValueError(
+                    f"Pesanan {order.get('number', order_id)} bukan milik pelanggan yang dipilih")
+            res = await ar.apply_from_bank_holding(order_id, amt, ln["id"],
+                                                   ln.get("holding", {}).get("cash_number", ""),
+                                                   {"name": actor})
+            je = await gl.post_bank_holding_allocation(
+                source_id=f"{ln['id']}:{order_id}:{len(done)}",
+                entity_id=res.get("entity_id") or ln.get("entity_id", ""), amount=amt,
+                label=f"{res.get('order_number', order_id)}", date=now_iso(), created_by=actor)
+            done.append({"order_id": order_id, "order_number": res.get("order_number", ""),
+                         "amount": amt, "je_id": (je or {}).get("id", ""),
+                         "je_number": (je or {}).get("number", ""),
+                         "reason_code": reason_code, "note": note,
+                         "customer_id": customer_id, "at": now_iso(), "by": actor,
+                         "outstanding_after": res.get("outstanding_after")})
+    except Exception as e:
+        await _saga.mark_failed("bank_statement_lines", line_id, str(e))
+        raise
     new_remaining = _round(remaining - total)
     await db.bank_statement_lines.update_one({"id": line_id}, {"$push": {
-        "holding_allocated": {"$each": done}}, "$set": {
+        "holding_allocated": {"$each": done}}, **_saga.finish_set({
         "holding_remaining": new_remaining, "customer_id": customer_id,
-        "updated_at": now_iso()}})
+        "updated_at": now_iso()})})
     return {**safe_doc(await db.bank_statement_lines.find_one({"id": line_id}, {"_id": 0})),
             "allocated_now": total, "holding_remaining": new_remaining}
 
@@ -1165,19 +1190,22 @@ async def cancel_holding(line_id: str, actor: str,
         raise ValueError("Titipan sudah dialokasikan — koreksi harus lewat amandemen")
     from services import gl_service as gl
     hold = ln.get("holding") or {}
-    if hold.get("cash_txn_id"):
-        await db.cash_transactions.update_one({"id": hold["cash_txn_id"]}, {"$set": {
-            "status": "void", "void_reason": "titipan dibatalkan", "updated_at": now_iso()}})
-        # KN-G8-CANCEL-JE (temuan penutupan fase): dulu memanggil `gl.void_entry(je_id)` yang
-        # MENOLAK jurnal non-manual (`source_type='cash_transaction'`) lalu galatnya ditelan,
-        # sehingga kas jadi void tapi jurnal `Dr Bank / Cr 2-1950` tetap hidup → saldo titipan
-        # buku besar tidak pernah kembali nol (INV-BNK-03 MERAH). Sekarang dibalik dengan
-        # reversing entry (append-only, idempoten) seperti seluruh pembatalan lain di repo.
-        await gl.reverse_document("cash_transaction", hold["cash_txn_id"],
-                                  reason="titipan dana dibatalkan", actor_name=actor)
-    await db.bank_statement_lines.update_one({"id": line_id}, {"$set": {
+    # Sesi 15 — klaim saga baris (status holding) sesudah validasi, sebelum kas di-void & jurnal dibalik.
+    from services import atomic_claim as _saga
+    await _saga.claim("bank_statement_lines", line_id, "cancel_holding", actor=actor, precondition={"status": "holding"})
+    try:
+        if hold.get("cash_txn_id"):
+            await db.cash_transactions.update_one({"id": hold["cash_txn_id"]}, {"$set": {
+                "status": "void", "void_reason": "titipan dibatalkan", "updated_at": now_iso()}})
+            # KN-G8-CANCEL-JE: jurnal dibalik dengan reversing entry (append-only, idempoten).
+            await gl.reverse_document("cash_transaction", hold["cash_txn_id"],
+                                      reason="titipan dana dibatalkan", actor_name=actor)
+    except Exception as e:
+        await _saga.mark_failed("bank_statement_lines", line_id, str(e))
+        raise
+    await db.bank_statement_lines.update_one({"id": line_id}, _saga.finish_set({
         "status": "unmatched", "holding": {}, "holding_allocated": [],
-        "holding_remaining": 0.0, "updated_at": now_iso()}})
+        "holding_remaining": 0.0, "updated_at": now_iso()}))
     return safe_doc(await db.bank_statement_lines.find_one({"id": line_id}, {"_id": 0}))
 
 

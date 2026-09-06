@@ -18,6 +18,12 @@ window.addEventListener("error", (e) => {
 });
 
 
+// Sesi 15 — service worker: app shell + data tugas terakhir agar HP gudang bisa dibuka tanpa sinyal.
+// Hanya di production build (dev server CRA memakai hot reload sendiri).
+if ("serviceWorker" in navigator && process.env.NODE_ENV === "production") {
+  window.addEventListener("load", () => { navigator.serviceWorker.register("/sw.js").catch(() => {}); });
+}
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {

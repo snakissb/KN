@@ -6,8 +6,7 @@ import { PosFBT } from "../../pos/PosFBT";
 import { SalesTeamEditor, salesTeamError, customerDefaultTeam } from "../../pos/SalesTeamEditor";
 import { formatCurrency } from "../../../utils/formatters";
 import { onImageError, productImage } from "../../../utils/productImage";
-
-const lineTotal = (it) => Number(it.product?.price || 0) * Number(it.quantity || 0);
+import { useEffectivePrices, pickPrice, sourceMeta } from "../../../hooks/useEffectivePrices";
 
 export default function MobileCart({
   cart, setCart, data, selectedCustomer, setSelectedCustomer,
@@ -16,6 +15,18 @@ export default function MobileCart({
 }) {
   const customers = data?.customers || [];
   const [step, setStep] = useState("cart");      // "cart" | "checkout"
+  // Harga EFEKTIF per pelanggan (harga khusus disetujui → pelanggan → PT → umum) — SAMA
+  // dengan desktop CheckoutDrawer; tanpa ini pesanan dari HP mengabaikan harga khusus yang disetujui.
+  const { priceMap } = useEffectivePrices({
+    customerId: selectedCustomer?.id || "",
+    entityId: entityId && entityId !== "all" ? entityId : (selectedCustomer?.entity_id || ""),
+    productIds: cart.map((i) => i.product.id),
+    enabled: cart.length > 0 && !!selectedCustomer?.id,
+  });
+  const linePrices = {};
+  cart.forEach((i) => { linePrices[i.product.id] = pickPrice(priceMap[i.product.id], i.quantity); });
+  const unitPrice = (it) => Number(linePrices[it.product.id]?.price ?? it.product?.price ?? 0);
+  const lineTotal = (it) => unitPrice(it) * Number(it.quantity || 0);
   const [termCode, setTermCode] = useState("");
   const [allowBackorder, setAllowBackorder] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -38,7 +49,7 @@ export default function MobileCart({
     if (salesTeamError(salesTeam)) { setStep("checkout"); return; }
     setSubmitting(true);
     try {
-      const ok = await onSubmitOrder({ payment_term_code: termCode, allow_backorder: allowBackorder, sales_team: salesTeam, delivery_date: deliveryDate });
+      const ok = await onSubmitOrder({ payment_term_code: termCode, allow_backorder: allowBackorder, sales_team: salesTeam, delivery_date: deliveryDate, special_prices: linePrices });
       if (ok) { setStep("cart"); onDone && onDone(); }
     } finally {
       setSubmitting(false);
@@ -70,7 +81,15 @@ export default function MobileCart({
                 <img src={productImage(it.product)} onError={onImageError} alt={it.product.name} className="h-14 w-14 rounded-lg object-cover" />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-[12.5px] font-semibold">{it.product.name}</p>
-                  <p className="text-[11px] tabular-nums m-muted">{formatCurrency(it.product.price)}/{it.unit}</p>
+                  <p className="text-[11px] tabular-nums m-muted" data-testid={`mobile-cart-price-${it.product.id}`}>
+                    {formatCurrency(unitPrice(it))}/{it.unit}
+                    {linePrices[it.product.id] && ["customer", "special_approval"].includes(linePrices[it.product.id].source) && (
+                      <span className="ml-1 rounded px-1 text-[9.5px] font-bold" style={{ color: sourceMeta(linePrices[it.product.id].source).fg, background: sourceMeta(linePrices[it.product.id].source).bg }} data-testid={`mobile-cart-price-source-${it.product.id}`}>
+                        {sourceMeta(linePrices[it.product.id].source).label}
+                      </span>
+                    )}
+                    {unitPrice(it) !== Number(it.product.price || 0) && <span className="ml-1 line-through">{formatCurrency(it.product.price)}</span>}
+                  </p>
                   <p className="text-[12px] font-bold tabular-nums text-[#0058CC]">{formatCurrency(lineTotal(it))}</p>
                 </div>
                 <div className="flex flex-col items-end gap-1.5">

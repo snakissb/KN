@@ -3,6 +3,7 @@ import axios, { API, setAuthToken, setActiveEntity } from "../services/apiClient
 import { defaultViewForRole, defaultNavIdForRole } from "../config/navigationConfig";
 import { can } from "../config/roles";
 import { formatQty } from "../utils/formatters";
+import { offlinePost } from "../utils/offlineQueue";
 import { blocksOrder, isOrderable, notOrderableReason } from "../utils/lifecycle";
 import { sirenOnNewAlarms } from "../utils/sirenAlarm";
 import { askConfirm } from "@/services/confirmService";
@@ -315,7 +316,14 @@ export function useAppActions(state) {
           return base;
         }),
       };
-      const response = await axios.post(`${API}/sales-orders`, payload);
+      const r = await offlinePost(`${API}/sales-orders`, payload, { label: `Pesanan ${selectedCustomer?.name || ""} (${cart.length} baris)` });
+      if (r.queued) {
+        // Offline (HP sales): pesanan antre dengan Idempotency-Key — dikirim sekali saat sinyal kembali.
+        setNotice("Offline — pesanan tersimpan di HP dan akan dikirim otomatis saat sinyal kembali (tanpa dobel).");
+        setCart([]);
+        return true;
+      }
+      const response = { data: r.data };
       const o = response.data;
       const tail = o.ppn_amount > 0 ? ` · PPN ${formatQty(o.ppn_amount)}` : "";
       setNotice(`${o.number} dibuat (${o.status.replaceAll("_", " ")})${tail}. Grand total Rp ${formatQty(o.grand_total)}.`);

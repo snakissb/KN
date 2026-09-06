@@ -3,6 +3,7 @@ import { Home, Store, ShoppingCart, ClipboardList, Menu, Bell, Layers, X, CheckC
 import MobileSalesHome from "./MobileSalesHome";
 import MobileCatalog from "./MobileCatalog";
 import MobileCart from "./MobileCart";
+import OfflineBanner from "../../mobile/OfflineBanner";
 import MobileOrders from "./MobileOrders";
 import MobileMore from "./MobileMore";
 import { entityShortById } from "../../../utils/entityLabel";
@@ -84,6 +85,7 @@ export default function MobileSalesApp(props) {
       {notifOpen && <NotifSheet notifications={notifications} onClose={() => setNotifOpen(false)} onMarkAll={onMarkAllRead} />}
 
       <main className={`m-main ${tab === "catalog" ? "m-flush" : ""}`} data-testid={`mobile-view-${tab}`}>
+        <OfflineBanner />
         {tab === "home" && <MobileSalesHome token={token} user={user} onNewOrder={goCatalog} onOpenTab={setTab} />}
         {tab === "catalog" && (
           <MobileCatalog data={data} loading={loading} onAdd={onAdd} onInspect={onInspect}

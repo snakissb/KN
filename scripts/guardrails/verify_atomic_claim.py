@@ -26,7 +26,7 @@ import inventaris_multi_koleksi as inv  # noqa: E402
 
 # Baseline "BELUM DITINJAU" saat penjaga lahir (2026-09-05). Turunkan angka ini setiap
 # kali satu endpoint selesai ditinjau — jangan pernah dinaikkan.
-BASELINE_UNREVIEWED = 34
+BASELINE_UNREVIEWED = 30
 
 # (berkas router, potongan path) → (mekanisme, alasan). mekanisme ∈ {claim, cas, service, log}
 REVIEWED: dict[tuple[str, str], tuple[str, str]] = {
@@ -83,6 +83,11 @@ REVIEWED: dict[tuple[str, str], tuple[str, str]] = {
     ("rfid.py", "/rfid/cycle-count/{session_id}/complete"): ("service", "klaim rfid_verify_sessions (status open) sesudah validasi; insert rfid_cycle_counts lalu finish_set sesi → klik ganda/balapan hanya satu CC", "cycle_count_service.complete"),
     ("transfers.py", "/transfers/inter-company"): ("compensate", "POST: id transfer baru per permintaan; reservasi roll + validasi interco + insert dokumen dalam satu try, except → release_transfer_rolls (kompensasi saga)"),
     ("rfid.py", "/rfid/roll-scans"): ("service", "POST: roll_scans append-only (id baru per pindai) + inventory_rolls.last_scan CAS 'hanya maju' (last_scan.at < at) — idempoten via Idempotency-Key; tak ada saldo/status dokumen"),
+    ("bank_reconciliation.py", "/bank-reconciliation/lines/{line_id}/book-charge"): ("service", "klaim bank_statement_lines (status bukan matched/holding) sesudah validasi jenis/nominal, sebelum kas+jurnal+link; mark_failed bila gagal; finish_set", "bank_recon_service.book_charge"),
+    ("bank_reconciliation.py", "/bank-reconciliation/lines/{line_id}/holding"): ("service", "POST: klaim bank_statement_lines (bukan matched/holding) sesudah validasi arah/status, sebelum kas titipan+jurnal; finish_set status holding", "bank_recon_service.to_holding"),
+    ("bank_reconciliation.py", "/bank-reconciliation/lines/{line_id}/holding/allocate"): ("service", "klaim bank_statement_lines (status holding) sesudah validasi Σ alokasi, AR+jurnal per alokasi di dalam klaim; mark_failed bila gagal; finish_set holding_remaining", "bank_recon_service.allocate_holding"),
+    ("bank_reconciliation.py", "/bank-reconciliation/lines/{line_id}/holding/cancel"): ("service", "klaim bank_statement_lines (status holding) sesudah validasi, sebelum kas void + jurnal balik; finish_set status unmatched", "bank_recon_service.cancel_holding"),
+    ("access_review.py", "/access/role-reality/{user_id}/apply"): ("service", "dua tulisan idempoten: users.role (update_user) + sesi dicabut (delete_many); pengulangan → 400 'peran sudah sama'; tidak ada saldo/stok"),
     ("auth.py", "/auth/login"): ("service", "login_attempts + sessions + users(last_login): tulisan independen, tidak ada saldo/stok — aman diulang"),
 }
 
