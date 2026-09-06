@@ -1,0 +1,18 @@
+{
+  "summary": "Sesi 16 RETEST after MobileSpecialOrderCreate payload fix. Mobile 390x844, kn_force_mobile='1', sales@kainnusantara.id / demo12345. RESULT: PASS. Full flow: Lainnya → Pesanan Khusus → m-special-new → picked Toko Kain Sejahtera via m-special-customer → filled m-special-name ('TEST Batik motif custom'), m-special-desc, m-special-qty=10, m-special-unit=meter, m-special-target-price=50000, m-special-date=besok → m-special-submit. POST /api/special-orders returned 200 with body id=sord_ec202204fd55 number=SORD-260906-0001; UI showed m-special-msg success and returned to list where the new SORD-260906-0001 card is visible alongside the pre-existing SORD-260618-0001. REGRESSION: Daftar Harga picker persists selection (Toko Kain Sejahtera) and renders 60 m-price-* cards. CLEANUP: deleted special_orders id=sord_ec202204fd55 from Mongo.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": ["/app/test_reports/iteration_333.json"],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "MobileSpecialOrderCreate now maps UI 'Nama barang' → custom_item.description and 'Spesifikasi' → specifications.detail + notes. Works, but the 'notes' inside custom_item duplicates the top-level free-text notes which is empty; consider removing duplication or exposing a distinct field."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (not retested)", "frontend": "100% (Pesanan Khusus create + Daftar Harga regression)"},
+  "test_credentials": "sales@kainnusantara.id / demo12345",
+  "seed_data_creation": "Created 1 special order for verification (SORD-260906-0001, sord_ec202204fd55) and deleted it in cleanup.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Special order mobile create end-to-end is green after aligning payload to CustomItemSpec (description, specifications.detail, quantity, unit, target_price, notes) and adding m-special-target-price input. Daftar Harga regression remains green.",
+  "rca of the issue": "Fix in MobileSpecialOrderCreate: state now includes target_price and payload body.custom_item = {description: f.name, specifications:{detail:f.description}, quantity, unit, target_price:Number(f.target_price||0), notes:f.description}. Backend accepted → 200. Previously 422 because 'name' was sent and target_price was missing (SpecialOrderCreate.CustomItemSpec requires target_price ≥ 0 and does not accept 'name')."
+}

@@ -116,7 +116,7 @@ export function MobileSpecialOrders() {
 
 function MobileSpecialOrderCreate({ onBack, onDone }) {
   const [customers, setCustomers] = useState([]);
-  const [f, setF] = useState({ customer_id: "", name: "", description: "", quantity: "", unit: "yard", expected_delivery: "", notes: "" });
+  const [f, setF] = useState({ customer_id: "", name: "", description: "", quantity: "", unit: "yard", target_price: "", expected_delivery: "", notes: "" });
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState(null);
   useEffect(() => { axios.get(`${API}/customers`).then((r) => setCustomers(Array.isArray(r.data) ? r.data : r.data.items || [])).catch(() => {}); }, []);
@@ -126,7 +126,7 @@ function MobileSpecialOrderCreate({ onBack, onDone }) {
     setBusy(true); setMsg(null);
     try {
       const body = { customer_id: f.customer_id, entity_id: cust?.entity_id || "", shipping_address_id: (cust?.addresses || [])[0]?.id || "", expected_delivery: new Date(f.expected_delivery).toISOString(), notes: f.notes, submit_for_approval: true,
-        custom_item: { name: f.name, description: f.description, quantity: Number(f.quantity), unit: f.unit } };
+        custom_item: { description: f.name, specifications: { detail: f.description }, quantity: Number(f.quantity), unit: f.unit, target_price: Number(f.target_price || 0), notes: f.description } };
       const r = await offlinePost(`${API}/special-orders`, body, { label: `Pesanan khusus ${cust?.name || ""}` });
       if (r.queued) { setMsg({ ok: true, text: "Offline — pesanan khusus tersimpan di HP." }); return; }
       setMsg({ ok: true, text: `Pesanan khusus ${r.data?.number || ""} diajukan.` }); setTimeout(onDone, 800);
@@ -141,6 +141,7 @@ function MobileSpecialOrderCreate({ onBack, onDone }) {
         <input className="w-full rounded-xl border border-[#E5E5EA] p-2.5 text-sm" placeholder="Nama barang (mis. Batik motif custom)" value={f.name} onChange={set("name")} data-testid="m-special-name" />
         <textarea className="w-full rounded-xl border border-[#E5E5EA] p-2.5 text-sm" rows={3} placeholder="Spesifikasi: bahan, warna, motif, lebar, finishing…" value={f.description} onChange={set("description")} data-testid="m-special-desc" />
         <div className="flex gap-2"><input type="number" inputMode="decimal" className="flex-1 rounded-xl border border-[#E5E5EA] p-2.5 text-sm" placeholder="Jumlah" value={f.quantity} onChange={set("quantity")} data-testid="m-special-qty" /><KNSelect value={f.unit} onValueChange={set("unit")} options={[{ value: "yard", label: "yard" }, { value: "meter", label: "meter" }, { value: "roll", label: "roll" }, { value: "pcs", label: "pcs" }]} data-testid="m-special-unit" /></div>
+        <input type="number" inputMode="decimal" className="w-full rounded-xl border border-[#E5E5EA] p-2.5 text-sm" placeholder="Harga target per satuan (Rp, boleh 0)" value={f.target_price} onChange={set("target_price")} data-testid="m-special-target-price" />
         <input type="date" className="w-full rounded-xl border border-[#E5E5EA] p-2.5 text-sm" value={f.expected_delivery} onChange={set("expected_delivery")} data-testid="m-special-date" />
         <textarea className="w-full rounded-xl border border-[#E5E5EA] p-2.5 text-sm" rows={2} placeholder="Catatan" value={f.notes} onChange={set("notes")} data-testid="m-special-notes" />
         {msg && <div className={`notice-bar ${msg.ok ? "success" : "danger"} text-xs`} data-testid="m-special-msg">{msg.text}</div>}

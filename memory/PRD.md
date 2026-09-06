@@ -41,7 +41,7 @@ Admin · Manajer · Admin Sales · Finance · Sales · Gudang · Desainer · Sop
 - Mobile sales native: Pelanggan (360 + piutang + kwitansi dari HP), Retur Jual, Pesanan Khusus, Daftar Harga — menggantikan komponen desktop yang terpotong; `MobilePendingQueue` (pesanan/aksi antre offline, bisa dibatalkan).
 - Kebijakan: peran `sales` diberi `ar_receipt.create` (kwitansi dari HP) — bootstrap GRANT idempoten.
 - Ratchet INV-ATOMIC-01 30 → 26 (archive entity CAS, impact-apply klaim, POST entities ditinjau). Guard 64 cek.
-- Probe `scripts/probe_sesi16.py` SEMUA PASS · gate hijau · testing agent: lihat iteration terbaru.
+- Probe `scripts/probe_sesi16.py` SEMUA PASS · gate hijau · testing agent iteration_331 (+ retest 332/333: KNSelect `onValueChange`, payload special-order `CustomItemSpec`).
 
 ## Yang dikerjakan 2026-09-06 sesi 15 (laporan: `memory/LAPORAN_SESI_2026-09-06_SESI15.md`)
 - BUG FIX (user): harga khusus disetujui kini terpakai di keranjang/pesanan HP sales (`MobileCart` + `useEffectivePrices`, badge sumber harga).

@@ -16,4 +16,5 @@ Mobile sales native (Pelanggan, Retur, Pesanan Khusus, Daftar Harga) · Piutang 
 - `POST /entities` ditinjau `service` (id baru, seed idempoten). Guard 64 cek PASS.
 
 ## Verifikasi
-- `scripts/probe_sesi16.py` SEMUA PASS (archive balapan `[200,409]`, impact-apply 409/400/200 tanpa kunci, 360 + open-orders + kwitansi idempoten oleh sales, customer-prices, retur/pesanan khusus). Gate: ux/i18n/create_modal/blocking_dialogs hijau. Testing agent: iteration terbaru.
+- `scripts/probe_sesi16.py` SEMUA PASS. Testing agent iteration_331 → 2 temuan diperbaiki (KNSelect `onValueChange`; payload special-order sesuai `CustomItemSpec` + kolom harga target) → retest 332/333 PASS.
+- Catatan data demo: `sales@` hanya punya 1 pelanggan tanpa pesanan terkirim → alur buat retur di HP baru bisa diuji sampai pemilihan (tombol disabled benar); backend `POST /sales-returns` lolos probe.
