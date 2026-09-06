@@ -254,9 +254,13 @@ async def create_user(payload: Dict[str, Any]) -> Tuple[Dict[str, Any], Dict[str
         raise HTTPException(status_code=400, detail="Nama pengguna wajib diisi.")
     await db.users.insert_one(user)
     if employee_id:
-        await db.hr_employees.update_one(
-            {"id": employee_id},
-            {"$set": {"user_id": user["id"], "updated_at": now_iso()}})
+        try:
+            await db.hr_employees.update_one(
+                {"id": employee_id},
+                {"$set": {"user_id": user["id"], "updated_at": now_iso()}})
+        except Exception:
+            await db.users.delete_one({"id": user["id"]})   # kompensasi: akun tanpa tautan karyawan dihapus
+            raise
     user.pop("password_hash", None)
     return safe_doc(user), info
 

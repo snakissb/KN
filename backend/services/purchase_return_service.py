@@ -571,14 +571,23 @@ async def create_from_sales_return(sales_return_id: str, actor: str,
         supplier_flow=True, origin_sales_return_id=sales_return_id,
         bypass_import_policy=bypass_import_policy,
     )
-    pr = await create_purchase_return(payload, created_by=actor)
+    # INV-ATOMIC-01 — klaim retur jual (belum tertaut retur beli) SESUDAH validasi, sebelum
+    # retur beli lahir; dua klik → satu 409, bukan dua retur beli dari satu retur jual.
+    from services import atomic_claim as _saga
+    await _saga.claim("sales_returns", sales_return_id, "sales_return_create_purchase_return",
+                      precondition={"linked_purchase_return_id": {"$in": [None, ""]}}, actor=actor)
+    try:
+        pr = await create_purchase_return(payload, created_by=actor)
+    except Exception:
+        await _saga.release("sales_returns", sales_return_id)   # retur beli belum lahir → aman
+        raise
 
     # Tautkan 2 arah.
     await db.purchase_returns.update_one({"id": pr["id"]},
         {"$set": {"origin_sales_return_number": sr.get("number", ""), "updated_at": now_iso()}})
     await db.sales_returns.update_one({"id": sales_return_id},
-        {"$set": {"linked_purchase_return_id": pr["id"],
-                  "linked_purchase_return_number": pr["number"], "updated_at": now_iso()}})
+        _saga.finish_set({"linked_purchase_return_id": pr["id"],
+                          "linked_purchase_return_number": pr["number"], "updated_at": now_iso()}))
     pr["origin_sales_return_number"] = sr.get("number", "")
     return pr
 

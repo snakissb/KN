@@ -222,6 +222,16 @@ async def run_depreciation(period: str, actor: Dict[str, Any],
                 {"asset_id": a["id"], "period": period}, {"_id": 1}):
             skipped += 1
             continue
+        # INV-ATOMIC-01 — CAS per aset: hanya pemenang yang belum mencatat periode ini yang
+        # boleh menjurnal + menulis entri; balapan run ganda → aset dilewati, bukan dobel.
+        won = await db.fin_fixed_assets.find_one_and_update(
+            {"id": a["id"], "status": a.get("status", "active"),
+             "depreciation_periods": {"$ne": period}},
+            {"$addToSet": {"depreciation_periods": period}},
+            projection={"_id": 0, "id": 1})
+        if not won:
+            skipped += 1
+            continue
         monthly = _monthly_amount(cost, salvage, life)
         amt = monthly if remaining > monthly + EPS else remaining
         amt = round(max(amt, 0.0), 2)

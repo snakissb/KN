@@ -71,7 +71,11 @@ async def create_request(payload: Dict[str, Any], actor: Dict[str, Any], entity_
     }
     req["wms_task_id"] = task["id"]
     await db.sample_requests.insert_one(dict(req))
-    await db.wms_tasks.insert_one(task)
+    try:
+        await db.wms_tasks.insert_one(task)
+    except Exception:
+        await db.sample_requests.delete_one({"id": req["id"]})   # kompensasi: permintaan tanpa tugas dihapus
+        raise
     return safe_doc(req)
 
 

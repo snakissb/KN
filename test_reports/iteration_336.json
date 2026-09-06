@@ -1,0 +1,32 @@
+{
+  "summary": "Sesi 18 (INV-ATOMIC-01 ratchet 24→0) — regresi backend LULUS PENUH. 14/14 test hijau (sekali skip diselesaikan dengan mengambil bin nested dari koleksi warehouses). Menguji: (1) POST /users + PATCH /users/{id}; (2) POST /sample-requests → wms_tasks flow_type=sample_cut lahir, lalu cancel; (3) POST /hr/payroll/runs 2× bersamaan → satu run id; (4) POST /fixed-assets/run-depreciation sukses + idempoten (posted 0 pada ulangan); (5) POST /input-tax-invoices + /cancel → bill kembali eligible; (6) DELETE /product-templates → varian template_id kosong; (7) POST /esign/request + /verify, verify ulang → 400; (8) POST /inventory/putaway roll→bin valid. Sampling 3-4 saga_lock 409 (product_templates DELETE, rfqs award, input-tax POST, special-orders create-pr). Tidak ada saga_lock tertinggal di 12 koleksi terlindungi. GET /api/saga-locks memuat koleksi baru (product_categories, special_orders, rfqs). Probe internal scripts/probe_sesi18.py juga ALL PASS.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_sesi18_regression.py",
+    "/app/test_reports/pytest/sesi18_regression.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Konsistensi bagus: LOCKED_COLLECTIONS di routers/saga_locks.py telah diperluas mencakup koleksi sesi 18 (product_templates, product_categories, special_orders, rfqs, esign_requests, tax_invoices_in, landed_cost_vouchers, makloon_orders, rfid_verify_sessions).",
+    "run_depreciation idempoten: ulangan periode yang sama pada aset yang sudah dijalankan mengembalikan posted=0 (bukan error) — sesuai kontrak.",
+    "input-tax cancel benar-benar melepas bill (input_faktur_status='cancelled', tanpa saga_lock tertinggal) sehingga bill kembali eligible."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_sesi18_regression.py"
+  ],
+  "success_rate": {"backend": "100%", "frontend": "N/A (skip - request backend only)"},
+  "test_credentials": "admin@kainnusantara.id / demo12345 (X-Entity-Id: ent_ksc); sales@kainnusantara.id / demo12345",
+  "seed_data_creation": "Tidak ada seed permanen. Semua fixture uji dibersihkan (user probe, sample_request+wms_task, payroll_run+payslip, fin_depreciation_entries+journal_entries, aset dikembalikan lewat replace_one dokumen sebelum, tax_invoices_in+field bill di-unset, product_template+products probe, document_signatures+esign_requests, bin roll dipulihkan).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Skrip regresi berada di /app/backend/tests/test_sesi18_regression.py. Karena file /app/backend/pytest.ini memuat xdist loadscope, koleksi test paralel bisa membuat TestNoLeftoverSagaLocks bertabrakan dengan TestSagaLocksEndpoint (yang sengaja menanam saga_lock by=probe). Test leftover sudah difilter {\"saga_lock.by\": {\"$ne\": \"probe\"}} sehingga aman untuk paralel. Untuk determinism, jalankan dengan `-n0`.",
+  "rca_of_the_issue": "N/A — tidak ada bug. Sesi 18 ratchet lulus regresi jalur sukses dan sampling 409 saga_lock."
+}

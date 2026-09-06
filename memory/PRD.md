@@ -37,6 +37,11 @@ Admin · Manajer · Admin Sales · Finance · Sales · Gudang · Desainer · Sop
 - Lingkungan: `backend/.env` wajib `CORS_ORIGINS` eksplisit (template `*` membuat backend menolak start).
 - Testing agent iteration_314: semua PASS. `gate.sh --quick`: 5 merah pra-eksisting saja.
 
+## Yang dikerjakan 2026-09-06 sesi 18 (laporan: `memory/LAPORAN_SESI_2026-09-06_SESI18.md`)
+- **Ratchet INV-ATOMIC-01 24 → 0** (guard 91 cek, self-test hijau). Klaim saga: esign verify, input-tax create/cancel, landed-cost approve/pay, makloon receive/record-service, loading-check complete, product-templates DELETE, RFQ award, create-purchase-return, request-credit-approval, special-order create-pr/create-sku. CAS: run-depreciation (per aset `depreciation_periods $addToSet`), R&D issue-material (roll status+length_remaining), mark-delivered (`_transition`). Kompensasi: payroll run (run ganda/slip gagal → dihapus), sample-request, POST users. Ditinjau-alasan: esign request, putaway, users PATCH, seed-blueprint.
+- Guard: `raise 4xx` sesudah `mark_failed(` diterima (kunci sengaja dibiarkan + alasan tercatat). `saga_locks.LOCKED_COLLECTIONS` + label panel Kunci Saga ditambah 11 koleksi baru.
+- Probe `scripts/probe_sesi18.py` ALL PASS; probe 16/17 regresi PASS; gate `--quick` hijau; testing agent iteration_336 14/14 PASS (jalur sukses + kunci + tanpa saga_lock tertinggal).
+
 ## Yang dikerjakan 2026-09-06 sesi 17 (laporan: `memory/LAPORAN_SESI_2026-09-06_SESI17.md`)
 - HP sales: **Prospek (Lead)** di menu Lainnya (`MobileLeads.jsx`) — kartu per tahap, catat prospek (offline-queue), geser tahap (KNSelect), **Jadikan pelanggan** (`POST /crm/leads/{id}/convert`).
 - HP manajer/finance (`MobileOpsApp`): tab **Persetujuan** = `MobileApprovalInbox` (harga khusus & pesanan khusus pending → Setujui/Tolak langsung, dialog alasan), tab **Notifikasi** (belum dibaca; klik → tandai terbaca; notifikasi persetujuan → lompat ke tab Persetujuan), tab Antrean (my-queue) & Ringkas tetap.
@@ -113,7 +118,7 @@ Admin · Manajer · Admin Sales · Finance · Sales · Gudang · Desainer · Sop
 
 ## Backlog (prioritas)
 - P1 COGS eksplisit per potongan sampel bila kebijakan menuntut; `simulate-payment` (invoices.py) tinjau sebagai compensate/log-only.
-- P0 24 endpoint multi-koleksi BELUM DITINJAU (INV-ATOMIC-01 ratchet): berikutnya product-templates DELETE, users POST/PATCH, hr payroll runs, special-orders create-pr/create-sku.
+- P0 INV-ATOMIC-01 baseline **0** — setiap endpoint multi-koleksi BARU wajib klaim/CAS/kompensasi + entri REVIEWED (guard merah bila naik).
 - P1 Mobile sales: target/komisi sales di HP; follow-up/interaksi per prospek dari HP; inbox HP untuk SO kredit & makloon (baru tampil di Antrean).
 - P1 Offline: katalog/pelanggan tersimpan cache (SW sudah menyimpan GET /products, /customers, /dashboard); antrean pesanan offline butuh UI daftar pesanan tertunda.
 - P1 T-05: 2 REGISTRY GAP (P2); T-04 perbaiki 2 lokasi `PERBAIKI`.

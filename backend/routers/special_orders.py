@@ -503,13 +503,21 @@ async def create_pr_from_special_order(
         notes=payload.notes,
         submit_now=payload.submit_now,
     )
+    # INV-ATOMIC-01 — klaim special order (belum punya PR) SESUDAH validasi, sebelum PR lahir.
+    from services import atomic_claim as _saga
+    await _saga.claim("special_orders", order_id, "special_order_create_pr",
+                      precondition={"linked_pr_id": {"$in": [None, ""]}}, actor=user.get("name", ""))
     try:
         pr = await pr_svc.create_requisition(pr_payload, created_by=user.get("name", "Admin"))
     except ValueError as e:
+        await _saga.release("special_orders", order_id)   # PR belum lahir → aman dilepas
         raise HTTPException(status_code=400, detail=str(e))
+    except Exception:
+        await _saga.release("special_orders", order_id)
+        raise
 
-    await db.special_orders.update_one({"id": order_id}, {"$set": {
-        "linked_pr_id": pr["id"], "linked_pr_number": pr["number"], "updated_at": now_iso()}})
+    await db.special_orders.update_one({"id": order_id}, _saga.finish_set({
+        "linked_pr_id": pr["id"], "linked_pr_number": pr["number"], "updated_at": now_iso()}))
 
     # Gerakkan ke in_production (purchasing started) bila masih confirmed
     if so["status"] == "confirmed":

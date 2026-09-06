@@ -252,14 +252,23 @@ async def approve_landed_cost(voucher_id: str, request: Request) -> Dict[str, An
     if not rolls:
         raise HTTPException(status_code=400, detail="Tidak ada roll target untuk dialokasi (mungkin sudah dihapus).")
     alloc = compute_allocation(rolls, v.get("total_cost", 0), v.get("basis", "value"))
-    applied_count = await apply_allocation_to_rolls(v["voucher_number"], alloc["allocations"])
+    # INV-ATOMIC-01 — klaim voucher (masih pending approval) SESUDAH validasi, sebelum HPP roll
+    # ditulis: klik ganda / dua approver → satu 409, bukan alokasi dobel ke roll.
+    from services import atomic_claim as _saga
+    await _saga.claim("landed_cost_vouchers", voucher_id, "landed_cost_approve",
+                      precondition={"status": v.get("status")}, actor=actor["name"])
+    try:
+        applied_count = await apply_allocation_to_rolls(v["voucher_number"], alloc["allocations"])
+    except Exception as exc:  # noqa: BLE001
+        await _saga.mark_failed("landed_cost_vouchers", voucher_id, str(exc))
+        raise
     updated = await db.landed_cost_vouchers.find_one_and_update(
         {"id": voucher_id},
-        {"$set": {"status": "applied", "approval_status": "approved",
-                  "approved_by": actor["name"], "approved_at": now_iso(), "applied_at": now_iso(),
-                  "effective_basis": alloc["basis"], "allocations": alloc["allocations"],
-                  "target_roll_count": alloc["roll_count"],
-                  "payment_status": "unpaid", "updated_at": now_iso()},
+        {**_saga.finish_set({"status": "applied", "approval_status": "approved",
+                             "approved_by": actor["name"], "approved_at": now_iso(), "applied_at": now_iso(),
+                             "effective_basis": alloc["basis"], "allocations": alloc["allocations"],
+                             "target_roll_count": alloc["roll_count"],
+                             "payment_status": "unpaid", "updated_at": now_iso()}),
          "$push": {"timeline": timeline_entry(
              "applied", "Disetujui & dialokasikan ke HPP roll", actor["name"],
              f"{applied_count} roll · {rupiah(alloc['allocated_total'])} · basis {alloc['basis']}")}},
@@ -317,6 +326,11 @@ async def pay_landed_cost(voucher_id: str, payload: LandedCostPaymentCreate, req
         raise HTTPException(status_code=400,
                             detail=f"Pembayaran ({amount}) melebihi sisa ({fin['outstanding']}).")
     cash_entity = "all" if payload.cash_type == "kas_besar" else (payload.entity_id or v.get("entity_id") or DEFAULT_ENTITY_ID)
+    # INV-ATOMIC-01 — klaim voucher (status applied) SESUDAH validasi sisa, sebelum kas lahir:
+    # dua pembayaran bersamaan tidak boleh sama-sama lolos cek sisa → satu 409.
+    from services import atomic_claim as _saga
+    await _saga.claim("landed_cost_vouchers", voucher_id, "landed_cost_pay",
+                      precondition={"status": "applied"}, actor=actor["name"])
     cash_doc = {
         "id": new_id("cash"), "number": await next_doc_number("cash_transactions", "number", "CASH-", entity_id=cash_entity),
         "cash_type": payload.cash_type, "direction": "out", "amount": amount,
@@ -326,10 +340,14 @@ async def pay_landed_cost(voucher_id: str, payload: LandedCostPaymentCreate, req
         "txn_date": payload.paid_at or now_iso(), "status": "posted",
         "created_by": actor["name"], "created_at": now_iso(), "updated_at": now_iso(),
     }
-    await db.cash_transactions.insert_one(cash_doc)
-    # S#074 (LC-PAY): posting GL inline (Dr Hutang / Cr Kas) — idempotent, tak menunggu backfill
-    from services import gl_service
-    await gl_service.post_cash_transaction(cash_doc)
+    try:
+        await db.cash_transactions.insert_one(cash_doc)
+        # S#074 (LC-PAY): posting GL inline (Dr Hutang / Cr Kas) — idempotent, tak menunggu backfill
+        from services import gl_service
+        await gl_service.post_cash_transaction(cash_doc)
+    except Exception as exc:  # noqa: BLE001
+        await _saga.mark_failed("landed_cost_vouchers", voucher_id, str(exc))
+        raise
     payment = {
         "id": new_id("pay"), "amount": amount, "method": payload.method,
         "cash_txn_id": cash_doc["id"], "cash_txn_number": cash_doc["number"],
@@ -342,7 +360,7 @@ async def pay_landed_cost(voucher_id: str, payload: LandedCostPaymentCreate, req
     await db.landed_cost_vouchers.update_one(
         {"id": voucher_id},
         {"$inc": {"amount_paid": amount},
-         "$set": {"status": new_status, "payment_status": new_pay_status, "updated_at": now_iso()},
+         **_saga.finish_set({"status": new_status, "payment_status": new_pay_status, "updated_at": now_iso()}),
          "$push": {"payments": payment, "timeline": timeline_entry(
              "paid", "Pembayaran dicatat", actor["name"],
              f"{rupiah(amount)} via {payload.method} ({payload.cash_type})")}})

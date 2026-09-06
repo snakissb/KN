@@ -136,13 +136,23 @@ async def create_input_tax(payload: InputTaxInvoiceCreate, request: Request) -> 
         "created_at": now_iso(),
         "updated_at": now_iso(),
     }
-    await db.tax_invoices_in.insert_one(doc)
-    # Tandai bill agar tak dobel + tampil di UI.
+    # INV-ATOMIC-01 — klaim vendor_bills (belum punya faktur aktif) SESUDAH semua validasi,
+    # sebelum faktur ditulis: dua pencatatan bersamaan atas bill yang sama → satu 409.
+    from services import atomic_claim as _saga
+    await _saga.claim("vendor_bills", bill["id"], "input_tax_record",
+                      precondition={"input_faktur_status": {"$nin": list(ACTIVE_INPUT_STATUSES)}},
+                      actor=actor.get("name", ""))
+    try:
+        await db.tax_invoices_in.insert_one(doc)
+    except Exception as exc:  # noqa: BLE001
+        await _saga.release("vendor_bills", bill["id"])   # faktur belum lahir → aman dilepas
+        raise
+    # Tandai bill agar tak dobel + tampil di UI (tulisan akhir sekaligus mencabut kunci).
     await db.vendor_bills.update_one(
         {"id": bill["id"]},
-        {"$set": {"input_faktur_id": doc["id"], "input_faktur_number": number,
-                  "input_faktur_status": "recorded", "input_faktur_nsfp": nsfp_raw,
-                  "updated_at": now_iso()}})
+        _saga.finish_set({"input_faktur_id": doc["id"], "input_faktur_number": number,
+                          "input_faktur_status": "recorded", "input_faktur_nsfp": nsfp_raw,
+                          "updated_at": now_iso()}))
     await audit(actor["name"], "input_tax_recorded", "input_tax", doc["id"],
                 {"number": number, "nsfp": nsfp_raw, "bill": bill.get("bill_number"),
                  "ppn": snap.get("ppn_amount")})
@@ -163,18 +173,22 @@ async def cancel_input_tax(fpm_id: str, payload: InputTaxInvoiceCancel, request:
         raise HTTPException(status_code=409, detail="Faktur Pajak Masukan sudah dibatalkan.")
     if not (payload.reason or "").strip():
         raise HTTPException(status_code=400, detail="Alasan pembatalan wajib diisi.")
-    updated = await db.tax_invoices_in.find_one_and_update(
-        {"id": fpm_id},
-        {"$set": {"status": "cancelled", "cancel_reason": payload.reason.strip(),
-                  "cancelled_by": actor["name"], "cancelled_at": now_iso(), "updated_at": now_iso()},
-         "$push": {"timeline": timeline_entry("cancelled", "Faktur Masukan dibatalkan",
-                                              actor["name"], payload.reason.strip())}},
-        projection={"_id": 0}, return_document=ReturnDocument.AFTER)
+    # INV-ATOMIC-01 — klaim faktur (status != cancelled) SESUDAH validasi, sebelum bill dilepas.
+    from services import atomic_claim as _saga
+    await _saga.claim("tax_invoices_in", fpm_id, "input_tax_cancel",
+                      precondition={"status": {"$ne": "cancelled"}}, actor=actor["name"])
     if d.get("vendor_bill_id"):
         await db.vendor_bills.update_one(
             {"id": d["vendor_bill_id"]},
             {"$set": {"input_faktur_status": "cancelled", "updated_at": now_iso()},
              "$unset": {"input_faktur_id": "", "input_faktur_number": "", "input_faktur_nsfp": ""}})
+    updated = await db.tax_invoices_in.find_one_and_update(
+        {"id": fpm_id},
+        {**_saga.finish_set({"status": "cancelled", "cancel_reason": payload.reason.strip(),
+                             "cancelled_by": actor["name"], "cancelled_at": now_iso(), "updated_at": now_iso()}),
+         "$push": {"timeline": timeline_entry("cancelled", "Faktur Masukan dibatalkan",
+                                              actor["name"], payload.reason.strip())}},
+        projection={"_id": 0}, return_document=ReturnDocument.AFTER)
     await audit(actor["name"], "input_tax_cancelled", "input_tax", fpm_id,
                 {"number": d.get("number"), "reason": payload.reason})
     return _hydrate(safe_doc(updated))

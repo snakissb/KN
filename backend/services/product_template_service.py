@@ -129,9 +129,16 @@ async def delete_template(template_id: str) -> Dict[str, Any]:
     tpl = await db.product_templates.find_one({"id": template_id}, {"_id": 0})
     if not tpl:
         raise ValueError("Template tidak ditemukan")
+    # INV-ATOMIC-01 — klaim template sebelum varian dilepas; hapus ganda → 409, bukan detach dobel.
+    from services import atomic_claim as _saga
+    await _saga.claim("product_templates", template_id, "template_delete")
     # Non-destruktif: lepas tautan varian (produk tetap utuh), lalu hapus template.
-    res = await db.products.update_many(
-        {"template_id": template_id}, {"$set": {"template_id": "", "updated_at": now_iso()}})
+    try:
+        res = await db.products.update_many(
+            {"template_id": template_id}, {"$set": {"template_id": "", "updated_at": now_iso()}})
+    except Exception:
+        await _saga.release("product_templates", template_id)
+        raise
     await db.product_templates.delete_one({"id": template_id})
     return {"deleted": True, "id": template_id, "detached_variants": res.modified_count}
 

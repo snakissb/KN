@@ -129,7 +129,16 @@ async def verify_and_sign(request_id: str, otp: str, signature_b64: str, ip: str
     if not (signature_b64 or "").strip():
         raise ValueError("Gambar tanda tangan wajib diisi")
 
-    doc_hash, _built = await compute_doc_hash(req["doc_type"], req["source_id"], req["entity_id"])
+    # INV-ATOMIC-01 — klaim permintaan (status pending) SESUDAH OTP tervalidasi, sebelum
+    # tanda tangan ditulis: dua verifikasi bersamaan tidak boleh melahirkan dua signature.
+    from services import atomic_claim as _saga
+    await _saga.claim("esign_requests", request_id, "esign_verify",
+                      precondition={"status": "pending"}, actor=req.get("signer_name", ""))
+    try:
+        doc_hash, _built = await compute_doc_hash(req["doc_type"], req["source_id"], req["entity_id"])
+    except Exception as exc:  # noqa: BLE001
+        await _saga.mark_failed("esign_requests", request_id, str(exc))
+        raise
     existing = await db.document_signatures.find_one(
         {"doc_type": req["doc_type"], "source_id": req["source_id"], "status": "signed"},
         {"_id": 0, "verification_code": 1})
@@ -144,7 +153,7 @@ async def verify_and_sign(request_id: str, otp: str, signature_b64: str, ip: str
     await db.document_signatures.insert_one(sig)
     await db.esign_requests.update_one(
         {"id": request_id},
-        {"$set": {"status": "verified", "verified_at": now_iso(), "verification_code": code}})
+        _saga.finish_set({"status": "verified", "verified_at": now_iso(), "verification_code": code}))
     return {"status": "signed", "verification_code": code, "signed_at": sig["signed_at"],
             "signer_name": sig["signer_name"], "doc_hash": doc_hash,
             "verify_url": f"{public_base()}/verify-document/{code}"}

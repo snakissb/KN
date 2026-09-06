@@ -1023,10 +1023,18 @@ async def issue_material(sample_id: str, payload: Dict[str, Any],
     unit_cost = float(roll.get("unit_cost") or roll.get("base_unit_cost") or 0)
     cost = round(unit_cost * qty, 2)
     at = now_iso()
-    await db.inventory_rolls.update_one({"id": roll["id"]}, {"$set": {
-        "length_remaining": max(new_len, 0.0),
-        "status": "consumed" if new_len <= EPS else roll.get("status"),
-        "updated_at": at}})
+    # INV-ATOMIC-01 — CAS roll: prasyarat status + sisa panjang sama seperti saat dibaca;
+    # kalah (dua pengambilan bersamaan) → ditolak, bukan sisa roll negatif.
+    won = await db.inventory_rolls.find_one_and_update(
+        {"id": roll["id"], "status": roll.get("status"), "length_remaining": roll.get("length_remaining")},
+        {"$set": {
+            "length_remaining": max(new_len, 0.0),
+            "status": "consumed" if new_len <= EPS else roll.get("status"),
+            "updated_at": at}},
+        projection={"_id": 0, "id": 1})
+    if not won:
+        raise RndError(f"Roll {roll.get('roll_no')} berubah (dipakai proses lain) sebelum bahan "
+                       "diambil — muat ulang lalu coba lagi.")
     mov = {
         "id": new_id("mov"), "product_id": roll.get("product_id"),
         "warehouse_id": roll.get("warehouse_id"),

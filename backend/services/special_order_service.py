@@ -329,18 +329,26 @@ async def create_sku_from_special_order(special_order_id: str,
         "updated_at": now_iso(),
     }
     _dr.stamp_domain_defaults(product, source="special_order")
-    await db.products.insert_one(product)
+    # INV-ATOMIC-01 — klaim special order (belum punya SKU) SESUDAH validasi, sebelum produk lahir.
+    from services import atomic_claim as _saga
+    await _saga.claim("special_orders", special_order_id, "special_order_create_sku",
+                      precondition={"linked_product_id": {"$in": [None, ""]}}, actor=created_by)
+    try:
+        await db.products.insert_one(product)
+    except Exception:
+        await _saga.release("special_orders", special_order_id)   # produk belum lahir → aman
+        raise
 
     await db.special_orders.update_one(
         {"id": special_order_id},
-        {"$set": {
+        _saga.finish_set({
             "linked_product_id": product["id"],
             "linked_product_sku": sku,
             "linked_product_name": product["name"],
             "sku_created_at": now_iso(),
             "sku_created_by": created_by,
             "updated_at": now_iso(),
-        }})
+        }))
     return safe_doc(product)
 
 

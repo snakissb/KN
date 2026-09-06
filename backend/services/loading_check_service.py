@@ -76,13 +76,17 @@ async def complete(session_id: str, scope_ids: List[str]) -> Dict[str, Any]:
         raise HTTPException(status_code=400, detail="Sesi sudah selesai")
     clean = "clean" if not prog["missing"] and not prog["extra"] else "with_issues"
     now = now_iso()
-    await db.rfid_verify_sessions.update_one({"id": session_id}, {"$set": {
-        "status": "completed", "result": clean, "missing": prog["missing"],
-        "extra": prog["extra"], "completed_at": now}})
+    # INV-ATOMIC-01 — klaim sesi (status open) SESUDAH validasi, sebelum SO ditulis; finish_set.
+    from services import atomic_claim as _saga
+    await _saga.claim("rfid_verify_sessions", session_id, "loading_check_complete",
+                      precondition={"status": "open"})
     await db.sales_orders.update_one({"id": prog["order_id"]}, {"$set": {"loading_check": {
         "session_id": session_id, "result": clean,
         "matched": prog["matched_count"], "expected": prog["expected_count"],
         "missing": prog["missing"], "extra": prog["extra"], "checked_at": now}}})
+    await db.rfid_verify_sessions.update_one({"id": session_id}, _saga.finish_set({
+        "status": "completed", "result": clean, "missing": prog["missing"],
+        "extra": prog["extra"], "completed_at": now}))
     return await _verify_progress(session_id)
 
 

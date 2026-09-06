@@ -327,18 +327,30 @@ async def award_rfq(rfq: Dict[str, Any], mode: str, full_supplier_id: str,
         raise ValueError("mode award harus 'full' atau 'line'")
 
     pos: List[Dict[str, Any]] = []
-    for sid, lines in grouped.items():
-        # FASE E-7 (E7.2) — undangan RFQ sudah dipagari, tetapi RFQ LAMA (dibuat sebelum
-        # fase ini) bisa berisi badan usaha grup. Award-nya melahirkan PO biasa, jadi
-        # pagarnya diulang tepat sebelum PO dibuat.
-        from services import group_partner_service as _grp
-        await _grp.assert_supplier_not_group_entity(
-            await db.suppliers.find_one({"id": sid}, {"_id": 0}),
-            doc_label="Pesanan Pembelian (PO) hasil award RFQ")
-        po = await _create_po_from_lines(sid, lines, entity_id, warehouse, actor, rfq)
-        pos.append(po)
-        for ln in lines:
-            await _upsert_price_list(sup_by_id[sid], ln, ln["price"], entity_id, actor.get("name", "Admin"))
+    # INV-ATOMIC-01 — klaim RFQ (status open) SESUDAH semua validasi, sebelum PO lahir;
+    # award ganda / bersamaan → 409, bukan dua set PO.
+    from services import atomic_claim as _saga
+    await _saga.claim("rfqs", rfq["id"], "rfq_award", precondition={"status": "open"},
+                      actor=actor.get("name", ""))
+    try:
+        for sid, lines in grouped.items():
+            # FASE E-7 (E7.2) — undangan RFQ sudah dipagari, tetapi RFQ LAMA (dibuat sebelum
+            # fase ini) bisa berisi badan usaha grup. Award-nya melahirkan PO biasa, jadi
+            # pagarnya diulang tepat sebelum PO dibuat.
+            from services import group_partner_service as _grp
+            await _grp.assert_supplier_not_group_entity(
+                await db.suppliers.find_one({"id": sid}, {"_id": 0}),
+                doc_label="Pesanan Pembelian (PO) hasil award RFQ")
+            po = await _create_po_from_lines(sid, lines, entity_id, warehouse, actor, rfq)
+            pos.append(po)
+            for ln in lines:
+                await _upsert_price_list(sup_by_id[sid], ln, ln["price"], entity_id, actor.get("name", "Admin"))
+    except Exception as exc:  # noqa: BLE001
+        if pos:
+            await _saga.mark_failed("rfqs", rfq["id"], str(exc))
+        else:
+            await _saga.release("rfqs", rfq["id"])   # belum ada PO lahir → aman dilepas
+        raise
 
     award = {
         "mode": mode, "awarded_by": actor.get("name", "Admin"), "awarded_at": now_iso(),
@@ -349,7 +361,7 @@ async def award_rfq(rfq: Dict[str, Any], mode: str, full_supplier_id: str,
         "po_ids": [p["id"] for p in pos], "po_numbers": [p["po_number"] for p in pos],
     }
     await db.rfqs.update_one({"id": rfq["id"]}, {
-        "$set": {"status": "awarded", "award": award, "updated_at": now_iso()},
+        **_saga.finish_set({"status": "awarded", "award": award, "updated_at": now_iso()}),
         "$push": {"timeline": timeline_entry(
             "awarded", f"RFQ di-award ({mode}) → {len(pos)} PO",
             actor.get("name", "Admin"), ", ".join(award["po_numbers"]))}})

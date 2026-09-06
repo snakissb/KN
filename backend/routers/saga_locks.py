@@ -10,7 +10,9 @@ router = APIRouter(prefix="/api")
 # Koleksi induk yang endpoint-nya memakai `atomic_claim.claim()` — sumber: INV-ATOMIC-01.
 LOCKED_COLLECTIONS = ["wms_tasks", "sales_orders", "warehouse_transfers", "cycle_count_sessions",
                       "purchase_returns", "sales_returns", "putaway_orders",
-                      "vendor_bills", "payment_variance_decisions", "ar_receipts", "sample_requests", "crm_leads", "period_closings"]
+                      "vendor_bills", "payment_variance_decisions", "ar_receipts", "sample_requests", "crm_leads", "period_closings",
+                      "product_categories", "special_orders", "esign_requests", "tax_invoices_in", "landed_cost_vouchers",
+                      "makloon_orders", "rfid_verify_sessions", "product_templates", "rfqs", "products", "business_entities"]
 
 
 @router.get("/saga-locks")

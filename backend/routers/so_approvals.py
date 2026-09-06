@@ -148,6 +148,10 @@ async def request_credit_approval(order_id: str, payload: SoCreditApprovalReques
         raise HTTPException(status_code=409, detail="Sudah ada permintaan approval kredit yang menunggu.")
     amount = float(order.get("grand_total", 0) or 0)
     cro_id = new_id("cro")
+    # INV-ATOMIC-01 — klaim SO SESUDAH validasi, sebelum credit_overrides lahir; dua permintaan
+    # bersamaan tidak boleh sama-sama lolos cek "belum ada entri kredit pending".
+    from services import atomic_claim as _saga
+    await _saga.claim("sales_orders", order_id, "so_request_credit_approval", actor=actor["name"])
     await db.credit_overrides.insert_one({
         "id": cro_id, "customer_id": order.get("customer_id"), "customer_name": order.get("customer_name"),
         "order_id": order_id, "order_number": order.get("number"), "amount": amount,
@@ -160,7 +164,7 @@ async def request_credit_approval(order_id: str, payload: SoCreditApprovalReques
         "kredit", required_role="manager", reason=(payload.reason or "").strip() or "Over-limit kredit.",
         requested_by=actor["name"], requested_by_id=actor["id"], ref_id=cro_id, amount=amount))
     result = await _persist_pending(order_id, pa)
-    await db.sales_orders.update_one({"id": order_id}, {"$set": {"credit_hold": True}})
+    await db.sales_orders.update_one({"id": order_id}, _saga.finish_set({"credit_hold": True}))
     await audit(actor["name"], "so_credit_approval_requested", "sales_order", order_id, {"amount": amount})
     return safe_doc(await db.sales_orders.find_one({"id": order_id}, {"_id": 0}))
 

@@ -275,18 +275,37 @@ async def create_run(entity_id: str, period: str, actor: Dict[str, Any]) -> Dict
         "created_by": actor.get("name", "system"), "created_at": now_iso(), "updated_at": now_iso(),
     }
     await db.hr_payroll_runs.insert_one(run)
-    slip_docs = []
-    for s in prev["payslips"]:
-        sid = new_id("slip")
-        snum = await next_doc_number("hr_payslips", "number", "SLIP-", entity_id=entity_id)
-        slip_docs.append({
-            "id": sid, "number": snum, "run_id": run_id, "entity_id": entity_id, "period": period,
-            "status": "draft", "pdf_url": "", **s,
-            "created_at": now_iso(), "updated_at": now_iso(),
-        })
-    if slip_docs:
-        await db.hr_payslips.insert_many(slip_docs)
+    # INV-ATOMIC-01 — kompensasi saga: run adalah dokumen baru per permintaan. Bila balapan
+    # melahirkan run kedua untuk entitas+periode yang sama, atau slip gagal ditulis, run
+    # milik permintaan ini dihapus lagi (tanpa slip yatim).
+    dup = await db.hr_payroll_runs.find_one(
+        {"entity_id": entity_id, "period": period, "id": {"$ne": run_id},
+         "status": {"$nin": ["cancelled", "rejected"]}}, {"_id": 0, "id": 1, "created_at": 1})
+    if dup and dup.get("created_at", "") <= run["created_at"]:
+        await db.hr_payroll_runs.delete_one({"id": run_id})
+        return await get_run(dup["id"])
+    try:
+        slip_docs = []
+        for s in prev["payslips"]:
+            sid = new_id("slip")
+            snum = await next_doc_number("hr_payslips", "number", "SLIP-", entity_id=entity_id)
+            slip_docs.append({
+                "id": sid, "number": snum, "run_id": run_id, "entity_id": entity_id, "period": period,
+                "status": "draft", "pdf_url": "", **s,
+                "created_at": now_iso(), "updated_at": now_iso(),
+            })
+        if slip_docs:
+            await db.hr_payslips.insert_many(slip_docs)
+    except Exception:
+        await rollback_run(run_id)
+        raise
     return await get_run(run_id)
+
+
+async def rollback_run(run_id: str) -> None:
+    """Kompensasi: hapus run + slip yang lahir dari permintaan yang gagal."""
+    await db.hr_payslips.delete_many({"run_id": run_id})
+    await db.hr_payroll_runs.delete_one({"id": run_id})
 
 
 async def get_run(run_id: str) -> Optional[Dict[str, Any]]:

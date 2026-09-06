@@ -805,6 +805,9 @@ async def record_service_step(mko_id: str, seq: int, data: Dict[str, Any], *,
                    "(hapus langkahnya atau isi tarifnya).")
 
     service_bill_id = new_id("vb")
+    # INV-ATOMIC-01 — klaim order SESUDAH validasi, sebelum tagihan jasa lahir; klik ganda → 409.
+    from services import atomic_claim as _saga
+    await _saga.claim("makloon_orders", mko_id, "makloon_record_service", actor=actor_name)
     bill_no = await _next_service_bill_no()
     await db.vendor_bills.insert_one({
         "id": service_bill_id, "bill_number": bill_no, "bill_type": "makloon_service",
@@ -859,7 +862,9 @@ async def record_service_step(mko_id: str, seq: int, data: Dict[str, Any], *,
     order["claim_summary"] = mclaim.summarize(order)
     await _flush_unabsorbed_service(order, label)
     order["updated_at"] = now_iso()
+    order.pop("saga_lock", None)
     await db.makloon_orders.replace_one({"id": mko_id}, order)
+    await _saga.release("makloon_orders", mko_id)   # replace_one sudah mencabut kunci; jaga-jaga
     return safe_doc(order)
 
 
@@ -918,6 +923,9 @@ async def receive_step(mko_id: str, seq: int, data: Dict[str, Any], *,
     label = f"{order.get('mko_number')} step{seq}"
 
     # 1) Konsumsi roll subcon (retire input) → nilai material terkonsumsi
+    # INV-ATOMIC-01 — klaim order SESUDAH validasi, sebelum roll input dikonsumsi/tagihan lahir.
+    from services import atomic_claim as _saga
+    await _saga.claim("makloon_orders", mko_id, "makloon_receive_step", actor=actor_name)
     consumed = await sb.consume_subcon_by_ref(step["issue_ref"])
     material_value = consumed["consumed_value"] or step.get("material_value", 0.0)
 
@@ -948,6 +956,8 @@ async def receive_step(mko_id: str, seq: int, data: Dict[str, Any], *,
                 roll_count=len(rolls_in), colors=int(data.get("colors") or 0),
                 repeats=int(data.get("repeats") or 0), label=f"step{seq}-aktual")
         except (cs.ContractError, uomr.UomRuleError) as exc:
+            # roll input SUDAH dikonsumsi → kunci sengaja dibiarkan + alasan tercatat (saga gagal)
+            await _saga.mark_failed("makloon_orders", mko_id, str(exc))
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         tariff = round(parse_decimal(tariff_trace.get("amount"), 2), 2)
     aux = round(float(data.get("aux_cost") if data.get("aux_cost") is not None else step.get("aux_cost", 0)) or 0, 2)
@@ -1096,7 +1106,9 @@ async def receive_step(mko_id: str, seq: int, data: Dict[str, Any], *,
     # keluarkan dari WIP supaya 1-1350 kembali nol.
     await _flush_unabsorbed_service(order, label)
     order["updated_at"] = now_iso()
+    order.pop("saga_lock", None)
     await db.makloon_orders.replace_one({"id": mko_id}, order)
+    await _saga.release("makloon_orders", mko_id)   # replace_one sudah mencabut kunci; jaga-jaga
     if (step.get("claim") or {}).get("status") == "open":
         await mclaim.notify_claim_opened(order, step)
     return safe_doc(order)

@@ -26,7 +26,7 @@ import inventaris_multi_koleksi as inv  # noqa: E402
 
 # Baseline "BELUM DITINJAU" saat penjaga lahir (2026-09-05). Turunkan angka ini setiap
 # kali satu endpoint selesai ditinjau — jangan pernah dinaikkan.
-BASELINE_UNREVIEWED = 24
+BASELINE_UNREVIEWED = 0
 
 # (berkas router, potongan path) → (mekanisme, alasan). mekanisme ∈ {claim, cas, service, log}
 REVIEWED: dict[tuple[str, str], tuple[str, str]] = {
@@ -96,6 +96,31 @@ REVIEWED: dict[tuple[str, str], tuple[str, str]] = {
     ("categories.py", "/product-categories/{category_id}"): ("claim", "PATCH: klaim product_categories sesudah validasi nama/duplikat, sebelum products.update_many (rename kaskade); mark_failed bila gagal; finish_set"),
     ("special_orders.py", "/special-orders/{order_id}/convert-to-so"): ("claim", "klaim special_orders (linked_sales_order_id kosong) sesudah validasi status/SKU, sebelum SO lahir; release bila create_order gagal; finish_set tautan SO"),
     ("wms.py", "/wms/tasks/outbound-from-order/{order_id}"): ("claim", "klaim sales_orders sesudah validasi status, sebelum tugas outbound lahir (cek 'belum ada tugas' + insert tak lagi bisa balapan); release di finally"),
+    # ── Sesi 18 — ratchet ke 0 ──
+    ("esign.py", "/request"): ("service", "POST: hanya esign_requests yang ditulis (id baru per permintaan); sample_requests/wms_tasks cuma DIBACA untuk hash dokumen — tak ada saldo/status bersama"),
+    ("esign.py", "/verify"): ("service", "klaim esign_requests (status pending) sesudah OTP tervalidasi, sebelum document_signatures ditulis; mark_failed bila hash gagal; finish_set status verified", "esign_service.verify_and_sign"),
+    ("fixed_assets.py", "/fixed-assets/run-depreciation"): ("service_cas", "per aset: find_one_and_update berprasyarat status + depreciation_periods $ne periode ($addToSet) — kalah → dilewati; entri+JE hanya oleh pemenang", "fixed_asset_service.run_depreciation"),
+    ("hr_payroll.py", "/hr/payroll/runs"): ("service", "POST: run baru per permintaan; balapan run kedua untuk entitas+periode sama → run milik permintaan ini dihapus & run lain dikembalikan; slip gagal → rollback_run (kompensasi saga)"),
+    ("input_tax.py", "/input-tax-invoices"): ("claim", "POST: klaim vendor_bills (input_faktur_status bukan aktif) sesudah validasi NSFP/dedupe, sebelum tax_invoices_in lahir; release bila insert gagal; finish_set penanda bill"),
+    ("input_tax.py", "/input-tax-invoices/{fpm_id}/cancel"): ("claim", "klaim tax_invoices_in (status != cancelled) sesudah validasi alasan, sebelum bill dilepas; finish_set status cancelled"),
+    ("inventory.py", "/inventory/putaway"): ("service", "putaway_roll: roll.bin_id di-set idempoten + inventory_movements putaway qty 0 (jejak, bukan saldo) — aman diulang, tak butuh kunci"),
+    ("landed_cost.py", "/landed-costs/{voucher_id}/approve"): ("claim", "klaim landed_cost_vouchers (status pending) sesudah validasi peran/roll target, sebelum HPP roll ditulis; mark_failed bila alokasi gagal; finish_set applied"),
+    ("landed_cost.py", "/landed-costs/{voucher_id}/pay"): ("claim", "klaim landed_cost_vouchers (status applied) sesudah validasi sisa, sebelum kas+GL lahir; mark_failed bila kas gagal; finish_set + $inc amount_paid"),
+    ("makloon_orders.py", "/makloon-orders/{mko_id}/receive"): ("service", "klaim makloon_orders sesudah validasi qty/lot, sebelum roll input dikonsumsi/tagihan jasa/lot output; replace_one tanpa saga_lock + release", "makloon_order_service.receive_step"),
+    ("makloon_orders.py", "/makloon-orders/{mko_id}/record-service"): ("service", "klaim makloon_orders sesudah validasi biaya, sebelum vendor_bills jasa lahir; replace_one tanpa saga_lock + release", "makloon_order_service.record_service_step"),
+    ("outbound_picking.py", "/outbound/loading-check/{session_id}/complete"): ("service", "klaim rfid_verify_sessions (status open) sesudah validasi jenis/scope, sebelum sales_orders.loading_check ditulis; finish_set completed", "loading_check_service.complete"),
+    ("product_templates.py", "/product-templates/{template_id}"): ("service", "DELETE: klaim product_templates sebelum varian dilepas (update_many); release bila detach gagal; delete_one mencabut dokumen beserta kuncinya", "product_template_service.delete_template"),
+    ("rfq.py", "/rfqs/{rfq_id}/award"): ("service", "klaim rfqs (status open) sesudah validasi mode/harga, sebelum PO lahir; release bila belum ada PO, mark_failed bila PO parsial; finish_set awarded", "rfq_service.award_rfq"),
+    ("rnd.py", "/rnd/samples/{sample_id}/issue-material"): ("service_cas", "find_one_and_update inventory_rolls berprasyarat status + length_remaining sama seperti saat dibaca → kalah = RndError; JE gagal → mutasi & roll dipulihkan (kompensasi pra-eksisting)", "rnd_sample_service.issue_material"),
+    ("sales_orders_extra.py", "/sales-orders/{order_id}/mark-delivered"): ("cas", "_transition CAS status shipped → done (409 bila kalah); deliver_order_rolls idempoten (set status delivered pada roll order)"),
+    ("sales_returns.py", "/sales-returns/{return_id}/create-purchase-return"): ("service", "klaim sales_returns (linked_purchase_return_id kosong) sesudah validasi roll/supplier, sebelum purchase_returns lahir; release bila gagal; finish_set tautan", "purchase_return_service.create_from_sales_return"),
+    ("sample_sales.py", "/sample-requests"): ("service", "POST: id permintaan baru per permintaan; wms_tasks gagal ditulis → sample_requests yang baru lahir dihapus (kompensasi saga); tak ada saldo bersama"),
+    ("so_approvals.py", "/sales-orders/{order_id}/request-credit-approval"): ("claim", "klaim sales_orders sesudah validasi status/duplikat pending, sebelum credit_overrides lahir; finish_set credit_hold"),
+    ("special_orders.py", "/special-orders/{order_id}/create-pr"): ("claim", "klaim special_orders (linked_pr_id kosong) sesudah validasi status/gudang, sebelum PR lahir; release bila create_requisition gagal; finish_set tautan PR"),
+    ("special_orders.py", "/special-orders/{order_id}/create-sku"): ("service", "klaim special_orders (linked_product_id kosong) sesudah validasi, sebelum products lahir; release bila insert gagal; finish_set tautan SKU", "special_order_service.create_sku_from_special_order"),
+    ("users.py", "/users"): ("service", "POST: users baru per permintaan; hr_employees.user_id gagal → akun yang baru lahir dihapus (kompensasi saga); tak ada saldo bersama"),
+    ("users.py", "/users/{user_id}"): ("service", "PATCH: users $set + hr_employees.user_id (idempoten, tautan satu arah) + sesi dicabut (delete_many) — tulisan independen tanpa saldo/stok, aman diulang"),
+    ("warehouse_sites.py", "/warehouse-sites/seed-blueprint"): ("service", "POST seed: warehouses/warehouse_sites di-upsert per kode (idempoten) — pengulangan tidak menggandakan; tak ada saldo"),
 }
 
 RE_CLAIM = re.compile(r"atomic_claim|_saga\.claim\(")
@@ -105,12 +130,13 @@ RE_COMP = re.compile(r"except[^\n]*:\s*\n\s*await (release_|_release|rollback|co
 # Validasi 400/404/422 SESUDAH klaim meninggalkan saga_lock → percobaan ulang yang benar ditolak 409
 # (bukti: inbound complete × pagar lot mode block, sesi 4). Klaim wajib SESUDAH semua validasi.
 RE_LATE_VALIDATION = re.compile(r"raise HTTPException\(\s*status_code=4(00|04|22)")
-RE_RELEASE_BEFORE = re.compile(r"await _saga\.release\(|await atomic_claim\.release\(")
+RE_RELEASE_BEFORE = re.compile(r"await _saga\.release\(|await atomic_claim\.release\(|await _saga\.mark_failed\(|await atomic_claim\.mark_failed\(")
 
 
 def validation_after_claim(src: str) -> str | None:
     """Baris pertama `raise HTTPException(status_code=400/404/422)` sesudah `_saga.claim(`; None bila bersih.
-    Raise yang didahului `release(` (≤3 baris sebelumnya) dianggap sudah melepas kunci → bukan pelanggaran."""
+    Raise yang didahului `release(` atau `mark_failed(` (≤3 baris sebelumnya) dianggap sudah menangani kunci
+    (dilepas, atau sengaja dibiarkan dengan alasan tercatat karena tulisan turunan sudah terjadi) → bukan pelanggaran."""
     lines = src.splitlines()
     idx = next((i for i, l in enumerate(lines) if "_saga.claim(" in l or "atomic_claim.claim(" in l), None)
     if idx is None:
