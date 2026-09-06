@@ -43,7 +43,7 @@ export const RollJourneyPopup = ({ rollId, onClose }) => {
                 {data.roll.routing === "cross_dock" && <span className="ml-1 rounded bg-[#F3E9FA] px-1 text-[10px] font-bold text-[#6B219A]">CROSS-DOCK</span>}
               </p>
               {data.roll.epc && <p className="font-mono text-[10px] text-[#8E8E93]">EPC {data.roll.epc}</p>}
-              <p className="text-[#6B6B73]" data-testid="roll-journey-last-scan">Terakhir dipindai HP: <b>{data.roll.last_scan ? `${fmt(data.roll.last_scan.at)} · ${data.roll.last_scan.by || "—"} · ${data.roll.last_scan.warehouse_id || ""}` : "belum pernah"}</b></p>
+              <p className="text-[#6B6B73]" data-testid="roll-journey-last-scan">Terakhir dipindai HP: <b>{data.roll.last_scan ? `${fmt(data.roll.last_scan.at)} · ${data.roll.last_scan.by || "—"} · ${data.roll.last_scan.warehouse_id || ""}${data.roll.last_scan.bin_id ? ` · bin ${data.roll.last_scan.bin_id}` : ""}` : "belum pernah"}</b></p>
             </div>
             <ol className="relative ml-2 space-y-0 border-l border-[#E5E5EA]" data-testid="roll-journey-events">
               {data.events.length === 0 && <p className="pl-3 text-[11.5px] text-[#8E8E93]">Belum ada jejak.</p>}

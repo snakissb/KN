@@ -120,7 +120,7 @@ async def unassigned_rolls(request: Request, product_id: str = "",
     rows = await db.inventory_rolls.find(
         flt, {"_id": 0, "id": 1, "roll_no": 1, "product_id": 1, "lot": 1, "dye_lot": 1,
               "status": 1, "stage": 1, "length_remaining": 1, "unit": 1,
-              "warehouse_id": 1, "owner_entity_id": 1}).limit(
+              "warehouse_id": 1, "owner_entity_id": 1, "last_scan": 1}).limit(
         max(1, min(int(limit), 500))).to_list(500)
     return {"rolls": rows, "total": await db.inventory_rolls.count_documents(flt)}
 

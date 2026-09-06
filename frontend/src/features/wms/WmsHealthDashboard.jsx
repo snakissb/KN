@@ -4,8 +4,9 @@
  * roll tanpa tag, akurasi cycle count terakhir, device stale. Read-only.
  */
 import { useEffect, useState } from "react";
-import { Activity, AlertTriangle, ClipboardCheck, PackageSearch, RefreshCw } from "lucide-react";
+import { Activity, AlertTriangle, ClipboardCheck, PackageSearch, RefreshCw, Printer } from "lucide-react";
 import axios, { API } from "../../services/apiClient";
+import PrinterStatusWidget from "../../components/PrinterStatusWidget";
 
 const nf = new Intl.NumberFormat("id-ID");
 
@@ -43,6 +44,11 @@ export default function WmsHealthDashboard({ selectedEntity }) {
         </button>
       </div>
       {error && <p className="rounded bg-[#FBE9E7] px-3 py-2 text-[12px] font-semibold text-[#C0341D]">{error}</p>}
+
+      <section className="rounded-xl border border-[#EFF0F2] bg-[#FAFAFB] p-3" data-testid="wms-health-printers">
+        <p className="mb-2 flex items-center gap-1.5 text-[12px] font-bold"><Printer size={13} className="text-[#0058CC]" /> Printer Label & Antrean</p>
+        <PrinterStatusWidget />
+      </section>
 
       {data && (
         <>

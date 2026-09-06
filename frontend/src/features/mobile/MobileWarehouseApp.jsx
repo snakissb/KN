@@ -3,6 +3,9 @@ import { ClipboardList, ScanLine, Tags, PackageCheck, AlertTriangle, CheckCircle
 import axios, { API } from "../../services/apiClient";
 import MobileShell from "./MobileShell";
 import { printSampleLabel, printInboundRollLabels, reprintRollLabel } from "./MobileTaskActions";
+import { isNetworkError, queueScan } from "../../utils/offlineQueue";
+import PrinterStatusWidget from "../../components/PrinterStatusWidget";
+import OfflineBanner from "./OfflineBanner";
 import { InboundActions, OutboundActions, SampleCutActions } from "./MobileTaskActions";
 
 const STATUS_ID = { pending: "Menunggu", receiving: "Menerima", qc_check: "Cek QC", put_away: "Simpan", picking: "Ambil", packing: "Kemas", escalated: "Eskalasi", completed: "Selesai", shipped: "Terkirim" };
@@ -62,20 +65,29 @@ function ScanPanel({ onOpenTask }) {
   const [tasks, setTasks] = useState([]);
   const [busy, setBusy] = useState(false);
   const [cam, setCam] = useState(false);
+  const [myBin, setMyBin] = useState(() => localStorage.getItem("kn_my_bin") || "");
+  const setBin = (v) => { setMyBin(v); localStorage.setItem("kn_my_bin", v); };
   const videoRef = useRef(null);
   const canCamera = typeof window !== "undefined" && "BarcodeDetector" in window && !!navigator.mediaDevices;
+  const fmtScan = (s) => s ? `${new Date(s.at).toLocaleString("id-ID", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })} · ${s.by || "-"}${s.warehouse_id ? ` · ${s.warehouse_id}` : ""}${s.bin_id ? ` · bin ${s.bin_id}` : ""}` : "";
   const lookup = async (code) => {
     if (!code.trim()) return;
     setBusy(true); setRes(null); setTasks([]);
     try {
-      const { data } = await axios.get(`${API}/rfid/lookup`, { params: { code: code.trim() } });
+      const { data } = await axios.get(`${API}/rfid/lookup`, { params: { code: code.trim(), bin_id: myBin || undefined } });
       const r = data.roll || {};
       const held = ["reserved", "committed", "picked", "packed"].includes(r.status);
       setRes({ kind: held ? "warn" : "ok", title: held ? "TERIKAT PESANAN" : "COCOK", roll: r, productName: data.product_name, lastScan: data.last_scan,
         text: `${r.roll_no} · ${data.product_name || r.product_id || ""} · status ${r.status || "-"} · ${r.warehouse_id || ""} · sisa ${r.length_remaining ?? "-"} ${r.unit || ""} · ${data.via === "rfid" ? "via tag RFID" : "via label QR"}${data.tagged ? "" : " · roll belum bertag"}` });
       // Pindai → aksi: tugas terbuka yang menyentuh roll ini (dari backend) langsung ditawarkan.
       setTasks(data.open_tasks || []);
-    } catch (e) { const d = e.response?.data?.detail; setRes({ kind: "bad", title: e.response?.status === 404 ? "KODE TIDAK DIKENAL" : "GAGAL", text: (d && (d.message || d)) || "Pindai gagal, coba lagi." }); }
+    } catch (e) {
+      if (isNetworkError(e)) {
+        // Offline: jejak pindai disimpan di HP, dikirim saat online. Data roll tak bisa ditampilkan tanpa server.
+        queueScan(code.trim(), { bin_id: myBin || undefined });
+        setRes({ kind: "warn", title: "OFFLINE — PINDAI TERSIMPAN", text: `${code.trim()} akan tercatat saat sinyal kembali${myBin ? ` (bin ${myBin})` : ""}. Data roll tidak bisa ditampilkan saat offline.` });
+      } else { const d = e.response?.data?.detail; setRes({ kind: "bad", title: e.response?.status === 404 ? "KODE TIDAK DIKENAL" : "GAGAL", text: (d && (d.message || d)) || "Pindai gagal, coba lagi." }); }
+    }
     finally { setBusy(false); }
   };
   const reprint = () => res?.roll && reprintRollLabel(res.roll, res.productName);
@@ -105,6 +117,7 @@ function ScanPanel({ onOpenTask }) {
     <div className="p-4 space-y-3" data-testid="mw-scan">
       <p className="text-sm text-[#6E6E73]">Pindai QR label (nomor roll) atau tag EPC. Hasil ditampilkan besar: ikon + teks, bukan warna saja.</p>
       <input className="w-full rounded-xl border-2 border-[#E5E5EA] p-4 text-lg" placeholder="Nomor roll / EPC tag…" value={epc} onChange={(e) => setEpc(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") lookup(epc); }} data-testid="mw-scan-input" autoFocus />
+      <input className="w-full rounded-xl border border-[#E5E5EA] p-2.5 text-sm" placeholder="Bin / lokasi saya (opsional, diingat di HP)" value={myBin} onChange={(e) => setBin(e.target.value)} data-testid="mw-scan-bin" />
       <div className="flex gap-2">
         <button className="primary-button flex-1 py-4 text-lg" disabled={busy} onClick={() => lookup(epc)} data-testid="mw-scan-btn">{busy ? "Mencari…" : "Pindai"}</button>
         {canCamera && <button className="secondary-button px-4" onClick={() => setCam((c) => !c)} data-testid="mw-scan-camera-btn" aria-label="Kamera"><Camera size={20} /></button>}
@@ -117,7 +130,7 @@ function ScanPanel({ onOpenTask }) {
           <div className="text-sm mt-1">{res.text}</div>
           {res.roll && (
             <div className="mt-3 space-y-2 text-left">
-              <div className="text-xs text-[#3C3C43]" data-testid="mw-scan-last">Pindai ini tercatat{res.lastScan ? ` · ${new Date(res.lastScan.at).toLocaleString("id-ID", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })} oleh ${res.lastScan.by || "-"}` : ""}.</div>
+              <div className="text-xs text-[#3C3C43]" data-testid="mw-scan-last">Pindai ini tercatat{myBin ? ` di bin ${myBin}` : ""}. Terakhir sebelumnya: <b>{res.lastScan ? fmtScan(res.lastScan) : "belum pernah"}</b></div>
               <button className="secondary-button w-full py-3 flex items-center justify-center gap-2" onClick={reprint} data-testid="mw-scan-reprint"><Printer size={16} /> Cetak ulang label QR</button>
               {tasks.length > 0 && <div className="text-xs font-semibold text-[#3C3C43]" data-testid="mw-scan-tasks">Tugas terbuka untuk roll ini:</div>}
               {tasks.map((t) => (
@@ -129,6 +142,7 @@ function ScanPanel({ onOpenTask }) {
           )}
         </div>
       )}
+      <div className="pt-2" data-testid="mw-printer-status"><div className="text-xs font-semibold text-[#3C3C43] mb-1">Printer label gudang</div><PrinterStatusWidget compact /></div>
     </div>
   );
 }
@@ -161,5 +175,5 @@ export default function MobileWarehouseApp(props) {
     { id: "scan", label: "Pindai", icon: ScanLine, render: ({ setTab }) => <ScanPanel onOpenTask={(tab, taskId) => { setFocus({ type: { inbound: "inbound", outbound: "outbound", sample: "sample_cut" }[tab], taskId }); setTab(tab); }} /> },
     { id: "untagged", label: "Belum Tag", icon: Tags, render: () => <UntaggedPanel /> },
   ];
-  return <MobileShell {...props} tabs={tabs} testId="mobile-warehouse-app" />;
+  return <MobileShell {...props} tabs={tabs} testId="mobile-warehouse-app" topSlot={<OfflineBanner />} />;
 }

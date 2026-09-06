@@ -6,7 +6,7 @@ import { entityShortById } from "../../utils/entityLabel";
  * §3-A — SATU cangkang mobile bersama untuk semua peran (bottom-nav per peran).
  * Sasaran sentuh besar, satu tugas per layar; `tabs` = [{id,label,icon,render}].
  */
-export default function MobileShell({ user, tabs, entities = [], selectedEntity, unreadCount = 0, onLogout, onForceDesktop, testId = "mobile-shell", initialTab }) {
+export default function MobileShell({ user, tabs, entities = [], selectedEntity, unreadCount = 0, onLogout, onForceDesktop, testId = "mobile-shell", initialTab, topSlot = null }) {
   const [tab, setTab] = useState(initialTab || tabs[0]?.id);
   const active = tabs.find((t) => t.id === tab) || tabs[0];
   return (
@@ -21,7 +21,7 @@ export default function MobileShell({ user, tabs, entities = [], selectedEntity,
         <button className="m-act" data-testid="mobile-logout" onClick={onLogout} aria-label="Keluar"><LogOut size={18} /></button>
         {unreadCount > 0 && <span className="m-badge" data-testid="mobile-unread"><Bell size={10} /> {unreadCount}</span>}
       </header>
-      <main className="m-main" data-testid={`mobile-view-${active?.id}`}>{active?.render?.({ setTab })}</main>
+      <main className="m-main" data-testid={`mobile-view-${active?.id}`}>{topSlot}{active?.render?.({ setTab })}</main>
       <nav className="m-tabbar" data-testid="mobile-tabbar">
         {tabs.map((t) => {
           const Icon = t.icon; const on = t.id === tab;

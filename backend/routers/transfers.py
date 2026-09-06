@@ -317,65 +317,62 @@ async def create_inter_company_transfer(payload: InterCompanyTransferCreate, req
                 # direservasi (bukan diketik): satu fakta, satu sumber.
                 **(await _dual.stamp(it, rolls=len(roll_refs))),
             })
-    except HTTPException:
-        # rollback reservasi parsial bila ada item gagal
-        await release_transfer_rolls(transfer_id)
+        primary_wh = wh_ids[0] if wh_ids else ""
+        # FASE G-6 — tautan ke transaksi antar-PT (bila ada). Divalidasi supaya penanda
+        # anti dobel-posting tidak bisa dipakai sembarangan.
+        interco_pair_id = (payload.interco_pair_id or "").strip()
+        interco_number = ""
+        interco_id_ref = ""
+        if interco_pair_id:
+            ict = await db.interco_transactions.find_one(
+                {"pair_id": interco_pair_id, "role": "seller"}, {"_id": 0})
+            if not ict:
+                raise HTTPException(status_code=404,
+                                    detail="Transaksi antar-PT (pair) tidak ditemukan.")
+            if ict.get("status") in ("draft", "cancelled"):
+                raise HTTPException(
+                    status_code=400,
+                    detail="Transaksi antar-PT belum dikonfirmasi/sudah dibatalkan — "
+                           "barang tidak boleh berjalan tanpa dokumen sah.")
+            if (ict["seller_entity_id"] != payload.source_entity_id
+                    or ict["buyer_entity_id"] != payload.dest_entity_id):
+                await release_transfer_rolls(transfer_id)
+                raise HTTPException(
+                    status_code=400,
+                    detail="Arah transfer tidak sama dengan transaksi antar-PT "
+                           f"(seharusnya {ict['seller_entity_id']} → {ict['buyer_entity_id']}).")
+            interco_number = ict.get("number", "")
+            interco_id_ref = ict.get("id", "")
+        transfer = {
+            "id": transfer_id,
+            "code": code,
+            "transfer_kind": "inter_entity",
+            # FASE E-0 (L14) — transfer antar-entitas WAJIB ber-`entity_id` (registry
+            # `SCOPED_COLLECTIONS`). Pemiliknya = entitas ASAL barang; entitas tujuan
+            # tetap melihat dokumen ini lewat `dest_entity_id` (lihat `_transfer_scope_clause`).
+            "entity_id": payload.source_entity_id,
+            "source_entity_id": payload.source_entity_id,
+            "dest_entity_id": payload.dest_entity_id,
+            # Ownership-in-place (Sub-fase 1.5): gudang sumber = tujuan (tak ada pindah fisik)
+            "source_warehouse_id": primary_wh,
+            "dest_warehouse_id": primary_wh,
+            "status": "waiting_approval",
+            "items": items_out,
+            "line_codes": line_scope.codes_from_items(items_out),   # FASE L
+            "transfer_price": payload.transfer_price,
+            "linked_order_id": payload.linked_order_id,
+            "interco_pair_id": interco_pair_id or None,
+            "interco_id": interco_id_ref or None,
+            "interco_number": interco_number,
+            "notes": payload.notes,
+            "requested_by": payload.requested_by or actor["name"],
+            "approved_by": None, "approved_at": None,
+            "rejected_by": None, "rejected_at": None, "rejected_reason": None,
+            "created_at": now_iso(), "updated_at": now_iso(),
+        }
+    except Exception:
+        await release_transfer_rolls(transfer_id)   # kompensasi saga: reservasi parsial dilepas bila item/insert gagal
         raise
-
-    primary_wh = wh_ids[0] if wh_ids else ""
-    # FASE G-6 — tautan ke transaksi antar-PT (bila ada). Divalidasi supaya penanda
-    # anti dobel-posting tidak bisa dipakai sembarangan.
-    interco_pair_id = (payload.interco_pair_id or "").strip()
-    interco_number = ""
-    interco_id_ref = ""
-    if interco_pair_id:
-        ict = await db.interco_transactions.find_one(
-            {"pair_id": interco_pair_id, "role": "seller"}, {"_id": 0})
-        if not ict:
-            raise HTTPException(status_code=404,
-                                detail="Transaksi antar-PT (pair) tidak ditemukan.")
-        if ict.get("status") in ("draft", "cancelled"):
-            raise HTTPException(
-                status_code=400,
-                detail="Transaksi antar-PT belum dikonfirmasi/sudah dibatalkan — "
-                       "barang tidak boleh berjalan tanpa dokumen sah.")
-        if (ict["seller_entity_id"] != payload.source_entity_id
-                or ict["buyer_entity_id"] != payload.dest_entity_id):
-            await release_transfer_rolls(transfer_id)
-            raise HTTPException(
-                status_code=400,
-                detail="Arah transfer tidak sama dengan transaksi antar-PT "
-                       f"(seharusnya {ict['seller_entity_id']} → {ict['buyer_entity_id']}).")
-        interco_number = ict.get("number", "")
-        interco_id_ref = ict.get("id", "")
-    transfer = {
-        "id": transfer_id,
-        "code": code,
-        "transfer_kind": "inter_entity",
-        # FASE E-0 (L14) — transfer antar-entitas WAJIB ber-`entity_id` (registry
-        # `SCOPED_COLLECTIONS`). Pemiliknya = entitas ASAL barang; entitas tujuan
-        # tetap melihat dokumen ini lewat `dest_entity_id` (lihat `_transfer_scope_clause`).
-        "entity_id": payload.source_entity_id,
-        "source_entity_id": payload.source_entity_id,
-        "dest_entity_id": payload.dest_entity_id,
-        # Ownership-in-place (Sub-fase 1.5): gudang sumber = tujuan (tak ada pindah fisik)
-        "source_warehouse_id": primary_wh,
-        "dest_warehouse_id": primary_wh,
-        "status": "waiting_approval",
-        "items": items_out,
-        "line_codes": line_scope.codes_from_items(items_out),   # FASE L
-        "transfer_price": payload.transfer_price,
-        "linked_order_id": payload.linked_order_id,
-        "interco_pair_id": interco_pair_id or None,
-        "interco_id": interco_id_ref or None,
-        "interco_number": interco_number,
-        "notes": payload.notes,
-        "requested_by": payload.requested_by or actor["name"],
-        "approved_by": None, "approved_at": None,
-        "rejected_by": None, "rejected_at": None, "rejected_reason": None,
-        "created_at": now_iso(), "updated_at": now_iso(),
-    }
-    await db.warehouse_transfers.insert_one(transfer)
     await audit(actor["name"], "inter_company_transfer_requested", "transfer", transfer_id, {
         "source": payload.source_entity_id, "dest": payload.dest_entity_id,
         "items": [{"product_id": i["product_id"], "qty": i["qty"]} for i in items_out],

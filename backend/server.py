@@ -64,6 +64,8 @@ from routers import (
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await bootstrap.run_bootstrap()
+    from idempotency import ensure_indexes as _idem_idx
+    await _idem_idx()
     # Sub-fase 1.7 — init object storage (best-effort; tak menggagalkan startup)
     try:
         from services.storage_service import init_storage
@@ -105,6 +107,9 @@ app = FastAPI(title="Kain Nusantara API", lifespan=lifespan)
 # dan pesannya bisa ditampilkan layar. Alasan & daftar rute tingkat grup ada di
 # `entity_write_guard.py`.
 app.add_middleware(EntityWriteGuardMiddleware)
+# Sesi 14 — Idempotency-Key untuk aksi gudang HP (antrean offline / klik ganda): kunci sama → balasan pertama.
+from idempotency import IdempotencyMiddleware  # noqa: E402
+app.add_middleware(IdempotencyMiddleware)
 
 # T-02 (audit 2026-09) — CORS gagal BERISIK, bukan diam-diam permisif: tanpa
 # CORS_ORIGINS backend menolak start; '*' dilarang bersama allow_credentials=True.

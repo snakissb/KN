@@ -99,7 +99,7 @@ async def roll_timeline(roll_id: str, scope_ids: List[str]) -> Dict[str, Any]:
     async for s in db.roll_scans.find({"roll_id": roll_id}, {"_id": 0}).sort("at", -1).limit(15):
         ev.append({"at": s.get("at"), "kind": "scan",
                    "label": f"Dipindai {'QR label' if s.get('via') == 'label' else 'tag RFID'} oleh {s.get('by') or 'HP gudang'}"
-                            f"{' · ' + s['warehouse_id'] if s.get('warehouse_id') else ''}",
+                            f"{' · ' + s['warehouse_id'] if s.get('warehouse_id') else ''}{' · bin ' + s['bin_id'] if s.get('bin_id') else ''}",
                    "ref": s.get("warehouse_id", "")})
 
     ref = roll.get("reserved_ref") or {}

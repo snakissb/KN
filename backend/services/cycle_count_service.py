@@ -56,6 +56,10 @@ async def complete(session_id: str, actor_name: str) -> Dict[str, Any]:
         raise HTTPException(status_code=404, detail="Sesi cycle count tidak ditemukan")
     if sess["status"] != "open":
         raise HTTPException(status_code=400, detail="Sesi sudah selesai")
+    # Sesi 14 — klaim saga sesi (status open) sesudah validasi; klik ganda/balapan → 409, satu CC saja.
+    from services import atomic_claim as _saga
+    await _saga.claim("rfid_verify_sessions", session_id, "cycle_count_complete", actor=actor_name,
+                      precondition={"status": "open"})
     expected = {e["epc"]: e for e in sess.get("expected", [])}
     scanned = set(sess.get("scanned_epcs") or [])
     missing = [expected[e] for e in expected if e not in scanned]
@@ -88,10 +92,10 @@ async def complete(session_id: str, actor_name: str) -> Dict[str, Any]:
         "created_at": now, "created_by": actor_name,
     }
     await db.rfid_cycle_counts.insert_one(dict(cc))
-    await db.rfid_verify_sessions.update_one({"id": session_id}, {"$set": {
+    await db.rfid_verify_sessions.update_one({"id": session_id}, _saga.finish_set({
         "status": "completed", "result": "clean" if not missing and not extra_items else "with_issues",
         "missing": [m["epc"] for m in missing], "extra": extra_epcs,
-        "completed_at": now, "cycle_count_id": cc["id"]}})
+        "completed_at": now, "cycle_count_id": cc["id"]}))
     return safe_doc(cc)
 
 

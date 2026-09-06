@@ -26,7 +26,7 @@ import inventaris_multi_koleksi as inv  # noqa: E402
 
 # Baseline "BELUM DITINJAU" saat penjaga lahir (2026-09-05). Turunkan angka ini setiap
 # kali satu endpoint selesai ditinjau — jangan pernah dinaikkan.
-BASELINE_UNREVIEWED = 36
+BASELINE_UNREVIEWED = 34
 
 # (berkas router, potongan path) → (mekanisme, alasan). mekanisme ∈ {claim, cas, service, log}
 REVIEWED: dict[tuple[str, str], tuple[str, str]] = {
@@ -79,6 +79,10 @@ REVIEWED: dict[tuple[str, str], tuple[str, str]] = {
     ("rfid.py", "/rfid/tags/encode"): ("service_cas", "insert rfid_tags lalu CAS inventory_rolls (find_one_and_update rfid_tag_id kosong → tag); kalah → tag baru dihapus (kompensasi) + 409 STATE_CHANGED", "rfid_service.encode_tag"),
     ("rfid.py", "/rfid/tags/{tag_id}"): ("service_cas", "DELETE: find_one_and_update rfid_tags berprasyarat status active → retired; kalah → 409; roll dilepas hanya bila rfid_tag_id masih menunjuk tag ini (idempoten)", "rfid_service.retire_tag"),
     ("wms.py", "/wms/tasks/{task_id}/advance"): ("cas", "find_one_and_update wms_tasks berprasyarat status == status saat dibaca → 409 STATE_CHANGED; jalur dispatched didelegasikan ke dispatch_task (klaim sesi 12)"),
+    ("rfid.py", "/rfid/verify-sessions/{session_id}/complete"): ("service", "klaim rfid_verify_sessions (status open) sesudah validasi scope/status, sebelum print job & journey ditulis; mark_failed bila gagal; finish_set status completed", "rfid_print_service.complete_verify"),
+    ("rfid.py", "/rfid/cycle-count/{session_id}/complete"): ("service", "klaim rfid_verify_sessions (status open) sesudah validasi; insert rfid_cycle_counts lalu finish_set sesi → klik ganda/balapan hanya satu CC", "cycle_count_service.complete"),
+    ("transfers.py", "/transfers/inter-company"): ("compensate", "POST: id transfer baru per permintaan; reservasi roll + validasi interco + insert dokumen dalam satu try, except → release_transfer_rolls (kompensasi saga)"),
+    ("rfid.py", "/rfid/roll-scans"): ("service", "POST: roll_scans append-only (id baru per pindai) + inventory_rolls.last_scan CAS 'hanya maju' (last_scan.at < at) — idempoten via Idempotency-Key; tak ada saldo/status dokumen"),
     ("auth.py", "/auth/login"): ("service", "login_attempts + sessions + users(last_login): tulisan independen, tidak ada saldo/stok — aman diulang"),
 }
 

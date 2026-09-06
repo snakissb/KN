@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Loader2, Printer } from "lucide-react";
 import axios, { API } from "../../services/apiClient";
 import { printSampleLabel, printInboundRollLabels, reprintRollLabel } from "../../utils/rollLabels";
+import { offlinePost } from "../../utils/offlineQueue";
 
 export { printSampleLabel, printInboundRollLabels, reprintRollLabel };
 
@@ -25,14 +26,15 @@ export function InboundActions({ task, onDone, onCompleted }) {
   const [qty, setQty] = useState(String(task.expected_qty ?? task.quantity ?? ""));
   const [lot, setLot] = useState(""); const [dye, setDye] = useState("");
   const [msg, setMsg] = useState(null); const [busy, setBusy] = useState(false);
-  const run = async (fn, ok) => { setBusy(true); setMsg(null); try { await fn(); setMsg({ ok: true, text: ok }); onDone?.(); } catch (e) { setMsg({ ok: false, text: errText(e, "Gagal.") }); } finally { setBusy(false); } };
-  const receive = () => run(() => axios.post(`${API}/inbound/tasks/${task.id}/scan-receive`, { product_id: task.product_id, actual_qty: parseFloat(qty) || 0 }), "Diterima. Lanjut Selesai bila semua sudah dihitung.");
+  const run = async (fn, ok) => { setBusy(true); setMsg(null); try { const r = await fn(); setMsg(r?.queued ? { ok: true, text: "Offline — tersimpan di HP, akan dikirim saat sinyal kembali (tanpa dobel)." } : { ok: true, text: ok }); if (!r?.queued) onDone?.(); } catch (e) { setMsg({ ok: false, text: errText(e, "Gagal.") }); } finally { setBusy(false); } };
+  const receive = () => run(() => offlinePost(`${API}/inbound/tasks/${task.id}/scan-receive`, { product_id: task.product_id, actual_qty: parseFloat(qty) || 0 }, { label: `Terima ${task.product_name || task.id} ${qty}` }), "Diterima. Lanjut Selesai bila semua sudah dihitung.");
   const complete = async () => {
     setBusy(true); setMsg(null);
     try {
-      const { data } = await axios.post(`${API}/inbound/tasks/${task.id}/complete`, { supplier_lot: lot, dye_lot: dye });
+      const r = await offlinePost(`${API}/inbound/tasks/${task.id}/complete`, { supplier_lot: lot, dye_lot: dye }, { label: `Selesai barang masuk ${task.product_name || task.id}` });
+      if (r.queued) { setMsg({ ok: true, text: "Offline — penyelesaian tersimpan di HP; label roll bisa dicetak setelah sinkron." }); return; }
       // Hasil + tombol cetak label diangkat ke induk (bertahan setelah kartu hilang dari daftar).
-      onCompleted?.({ task, rolls: data.created_rolls || [] });
+      onCompleted?.({ task, rolls: r.data.created_rolls || [] });
     } catch (e) { setMsg({ ok: false, text: errText(e, "Gagal.") }); } finally { setBusy(false); }
   };
   return (
@@ -61,9 +63,9 @@ export function InboundActions({ task, onDone, onCompleted }) {
 export function OutboundActions({ task, onDone }) {
   const [qty, setQty] = useState(String(task.quantity ?? ""));
   const [msg, setMsg] = useState(null); const [busy, setBusy] = useState(false);
-  const run = async (fn, ok) => { setBusy(true); setMsg(null); try { await fn(); setMsg({ ok: true, text: ok }); onDone?.(); } catch (e) { setMsg({ ok: false, text: errText(e, "Gagal.") }); } finally { setBusy(false); } };
-  const pick = () => run(() => axios.post(`${API}/outbound/tasks/${task.id}/scan-pick`, null, { params: { actual_qty: parseFloat(qty) || 0 } }), "Diambil. Lanjut Berangkatkan bila sudah dikemas.");
-  const dispatch = () => run(() => axios.post(`${API}/outbound/tasks/${task.id}/dispatch`), "Diberangkatkan — surat jalan dibuat.");
+  const run = async (fn, ok) => { setBusy(true); setMsg(null); try { const r = await fn(); setMsg(r?.queued ? { ok: true, text: "Offline — tersimpan di HP, akan dikirim saat sinyal kembali (tanpa dobel)." } : { ok: true, text: ok }); if (!r?.queued) onDone?.(); } catch (e) { setMsg({ ok: false, text: errText(e, "Gagal.") }); } finally { setBusy(false); } };
+  const pick = () => run(() => offlinePost(`${API}/outbound/tasks/${task.id}/scan-pick`, null, { params: { actual_qty: parseFloat(qty) || 0 }, label: `Ambil ${task.product_name || task.id} ${qty}` }), "Diambil. Lanjut Berangkatkan bila sudah dikemas.");
+  const dispatch = () => run(() => offlinePost(`${API}/outbound/tasks/${task.id}/dispatch`, null, { label: `Berangkatkan ${task.order_number || task.id}` }), "Diberangkatkan — surat jalan dibuat.");
   return (
     <div className="mt-2 space-y-2" data-testid={`mw-outbound-actions-${task.id}`}>
       {["pending", "created", "picking", "in_progress", "released"].includes(task.status) && (
@@ -88,9 +90,10 @@ export function SampleCutActions({ task, onCut }) {
     setBusy(true); setMsg(null);
     try {
       const body = useSuggested ? { roll_id: task.suggested_roll_id } : { epc, roll_id: rollId, reason };
-      const { data } = await axios.post(`${API}/sample-requests/${task.sample_request_id}/cut`, body);
+      const r = await offlinePost(`${API}/sample-requests/${task.sample_request_id}/cut`, body, { label: `Potong sampel ${task.sample_number || task.id}` });
+      if (r.queued) { setMsg({ ok: true, text: "Offline — potongan tersimpan di HP; label bisa dicetak setelah sinkron." }); return; }
       // Hasil + tombol cetak diangkat ke induk (TaskList) supaya tetap tampil setelah kartu tugas hilang dari daftar.
-      onCut?.(data);
+      onCut?.(r.data);
     } catch (e) { setMsg({ ok: false, text: errText(e, "Potong gagal.") }); } finally { setBusy(false); }
   };
   return (

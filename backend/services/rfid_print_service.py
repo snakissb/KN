@@ -241,14 +241,21 @@ async def complete_verify(session_id: str, scope_ids: List[str]) -> Dict[str, An
         raise HTTPException(status_code=400, detail="Sesi sudah selesai")
     clean = "clean" if not prog["missing"] and not prog["extra"] else "with_issues"
     matched_rolls = [e["roll_id"] for e in prog["expected"] if e["epc"] in set(prog["scanned_epcs"])]
-    await db.rfid_verify_sessions.update_one({"id": session_id}, {"$set": {
+    # Sesi 14 — klaim saga sesi verifikasi (status open) sesudah validasi, sebelum job/journey ditulis.
+    from services import atomic_claim as _saga
+    await _saga.claim("rfid_verify_sessions", session_id, "verify_complete", actor="", precondition={"status": "open"})
+    try:
+        await db.rfid_print_jobs.update_one({"id": prog["print_job_id"]}, {"$set": {
+            "status": "verified" if clean == "clean" else "verified_with_issues",
+            "verified_at": now_iso(), "updated_at": now_iso()}})
+        if matched_rolls:
+            await set_journey(matched_rolls, "tag_verified", {"verify_session_id": session_id})
+    except Exception as e:
+        await _saga.mark_failed("rfid_verify_sessions", session_id, str(e))
+        raise
+    await db.rfid_verify_sessions.update_one({"id": session_id}, _saga.finish_set({
         "status": "completed", "result": clean, "missing": prog["missing"], "extra": prog["extra"],
-        "completed_at": now_iso()}})
-    await db.rfid_print_jobs.update_one({"id": prog["print_job_id"]}, {"$set": {
-        "status": "verified" if clean == "clean" else "verified_with_issues",
-        "verified_at": now_iso(), "updated_at": now_iso()}})
-    if matched_rolls:
-        await set_journey(matched_rolls, "tag_verified", {"verify_session_id": session_id})
+        "completed_at": now_iso()}))
     return await _verify_progress(session_id)
 
 

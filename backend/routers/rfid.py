@@ -6,6 +6,7 @@ Endpoint prefix /api. Perizinan:
 - device write & seed   → role admin (infra)
 """
 from typing import Any, Dict, Optional
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel
@@ -62,6 +63,13 @@ class PrintJobPayload(BaseModel):
     source: str = ""
 
 
+class RollScanPayload(BaseModel):
+    code: str
+    warehouse_id: Optional[str] = None
+    bin_id: Optional[str] = None
+    scanned_at: Optional[str] = None   # diisi HP saat offline (waktu pindai asli)
+
+
 class VerifyScanPayload(BaseModel):
     epcs: list[str]
 
@@ -94,7 +102,8 @@ async def get_tags(request: Request, warehouse_id: Optional[str] = None,
 
 @router.get("/rfid/lookup")
 async def lookup_code(request: Request, code: str = Query(..., min_length=1),
-                      record: bool = Query(True), warehouse_id: Optional[str] = Query(None)) -> Dict[str, Any]:
+                      record: bool = Query(True), warehouse_id: Optional[str] = Query(None),
+                      bin_id: Optional[str] = Query(None)) -> Dict[str, Any]:
     """Pindai label (QR = nomor roll) ATAU tag EPC → satu roll. Untuk HP gudang tanpa RFID.
     `record=true` (bawaan) mencatat jejak pindai ke `roll_scans` (append-only) + `last_scan` di roll."""
     actor = await require_permission(request, "wms", "view")
@@ -125,12 +134,44 @@ async def lookup_code(request: Request, code: str = Query(..., min_length=1),
         scan = {"id": new_id("rscan"), "roll_id": roll["id"], "roll_no": roll.get("roll_no"), "code": code, "via": via,
                 "owner_entity_id": roll.get("owner_entity_id"),
                 "by": actor.get("name", ""), "by_user_id": actor.get("id"), "warehouse_id": warehouse_id or roll.get("warehouse_id"),
+                "bin_id": (bin_id or "").strip() or None,
                 "roll_warehouse_id": roll.get("warehouse_id"), "roll_status": roll.get("status"), "at": now_iso()}
         await db.roll_scans.insert_one(dict(scan))
-        last_scan = {k: scan[k] for k in ("at", "by", "via", "warehouse_id")}
+        last_scan = {k: scan[k] for k in ("at", "by", "via", "warehouse_id", "bin_id")}
         await db.inventory_rolls.update_one({"id": roll["id"]}, {"$set": {"last_scan": last_scan}})
     return {"via": via, "roll": safe_doc(roll), "product_name": (product or {}).get("name"), "sku": (product or {}).get("sku"),
             "tagged": bool(roll.get("rfid_tag_id")), "open_tasks": open_tasks, "last_scan": last_scan}
+
+
+@router.post("/rfid/roll-scans")
+async def post_roll_scan(payload: RollScanPayload, request: Request) -> Dict[str, Any]:
+    """Catat jejak pindai (dipakai antrean offline HP; online memakai GET /rfid/lookup)."""
+    actor = await require_permission(request, "wms", "view")
+    code = payload.code.strip()
+    roll = await db.inventory_rolls.find_one({"$or": [{"roll_no": code}, {"id": code}]}, {"_id": 0})
+    via = "label"
+    if not roll:
+        tag = await db.rfid_tags.find_one({"epc": code.upper(), "status": "active"}, {"_id": 0})
+        roll = await db.inventory_rolls.find_one({"id": tag["roll_id"]}, {"_id": 0}) if tag else None
+        via = "rfid"
+    if not roll:
+        raise HTTPException(status_code=404, detail={"code": "CODE_UNKNOWN", "message": f"Kode '{code}' tidak dikenal"})
+    ctx = await entity_ctx(request)
+    assert_entity_access({"entity_id": roll.get("owner_entity_id")}, "inventory_rolls", ctx)
+    if payload.warehouse_id:
+        from services import warehouse_scope_service as whscope
+        # E4.1 — pindai di gudang khusus badan usaha lain tidak boleh dicatat sebagai lokasi
+        await whscope.assert_usable(payload.warehouse_id, ctx.active_entity_id, action="mencatat pindai roll di gudang ini")
+    at = payload.scanned_at or now_iso()
+    scan = {"id": new_id("rscan"), "roll_id": roll["id"], "roll_no": roll.get("roll_no"), "code": code, "via": via,
+            "owner_entity_id": roll.get("owner_entity_id"), "by": actor.get("name", ""), "by_user_id": actor.get("id"),
+            "warehouse_id": payload.warehouse_id or roll.get("warehouse_id"), "bin_id": (payload.bin_id or "").strip() or None,
+            "roll_warehouse_id": roll.get("warehouse_id"), "roll_status": roll.get("status"), "at": at, "offline": bool(payload.scanned_at)}
+    await db.roll_scans.insert_one(dict(scan))
+    last = {k: scan[k] for k in ("at", "by", "via", "warehouse_id", "bin_id")}
+    # last_scan hanya maju (pindai offline lama tidak menimpa pindai yang lebih baru)
+    await db.inventory_rolls.update_one({"id": roll["id"], "$or": [{"last_scan": None}, {"last_scan.at": {"$lt": at}}]}, {"$set": {"last_scan": last}})
+    return {"ok": True, "roll_no": roll.get("roll_no"), "scan_id": scan["id"], "message": f"Pindai {roll.get('roll_no')} tercatat"}
 
 
 @router.get("/rfid/roll-scans/{roll_id}")
@@ -143,6 +184,50 @@ async def get_roll_scans(roll_id: str, request: Request, limit: int = Query(15, 
     assert_entity_access({"entity_id": roll.get("owner_entity_id")}, "inventory_rolls", await entity_ctx(request))
     rows = await db.roll_scans.find({"roll_id": roll_id}, {"_id": 0}).sort("at", -1).to_list(limit)
     return {"count": len(rows), "scans": rows, "last_scan": roll.get("last_scan")}
+
+
+@router.get("/rfid/printer-status")
+async def printer_status(request: Request, warehouse_id: Optional[str] = None) -> Dict[str, Any]:
+    """Status printer label per gudang: online/offline (heartbeat ≤ 5 menit), label menunggu, job tertua."""
+    await require_permission(request, "wms", "view")
+    ctx = await entity_ctx(request)
+    scope = resolve_scope_ids(ctx, None)
+    q_dev: Dict[str, Any] = {"type": "printer"}
+    if warehouse_id:
+        q_dev["warehouse_id"] = warehouse_id
+    devices = await db.rfid_devices.find(q_dev, {"_id": 0, "api_key": 0}).to_list(200)
+    q_job: Dict[str, Any] = {"status": "queued"}
+    if scope:
+        q_job["owner_entity_id"] = {"$in": scope}
+    if warehouse_id:
+        q_job["warehouse_id"] = warehouse_id
+    queued = await db.rfid_print_jobs.find(q_job, {"_id": 0, "id": 1, "job_number": 1, "kind": 1, "item_count": 1,
+                                                   "warehouse_id": 1, "warehouse_name": 1, "created_at": 1}).sort("created_at", 1).to_list(500)
+    now = datetime.now(timezone.utc)
+    cutoff = (now - timedelta(minutes=5)).isoformat()
+    by_wh: Dict[str, Dict[str, Any]] = {}
+    for d in devices:
+        w = by_wh.setdefault(d.get("warehouse_id") or "-", {"warehouse_id": d.get("warehouse_id"), "printers": [], "queued_jobs": 0, "queued_labels": 0, "oldest_queued_at": None})
+        hb = d.get("last_heartbeat") or ""
+        w["printers"].append({"id": d["id"], "code": d.get("code"), "name": d.get("name"), "last_heartbeat": hb or None,
+                              "online": bool(hb) and hb >= cutoff})
+    for j in queued:
+        w = by_wh.setdefault(j.get("warehouse_id") or "-", {"warehouse_id": j.get("warehouse_id"), "printers": [], "queued_jobs": 0, "queued_labels": 0, "oldest_queued_at": None})
+        w["queued_jobs"] += 1
+        w["queued_labels"] += int(j.get("item_count") or 0)
+        if not w["oldest_queued_at"] or j["created_at"] < w["oldest_queued_at"]:
+            w["oldest_queued_at"] = j["created_at"]
+    names = {x["id"]: x.get("name") for x in await db.warehouses.find({}, {"_id": 0, "id": 1, "name": 1}).to_list(200)}
+    rows = []
+    for w in by_wh.values():
+        online = any(p["online"] for p in w["printers"])
+        w["warehouse_name"] = names.get(w["warehouse_id"], w["warehouse_id"])
+        w["online_printers"] = sum(1 for p in w["printers"] if p["online"])
+        w["stuck"] = w["queued_jobs"] > 0 and not online       # label menunggu tapi tak ada printer hidup
+        rows.append(w)
+    rows.sort(key=lambda r: (not r["stuck"], -r["queued_labels"]))
+    return {"count": len(rows), "warehouses": rows, "total_queued_labels": sum(r["queued_labels"] for r in rows),
+            "stuck_warehouses": sum(1 for r in rows if r["stuck"]), "as_of": now_iso()}
 
 
 @router.get("/rfid/labels")

@@ -255,6 +255,7 @@ export default function LotDetailPanel({
                     <th className="px-2 py-1.5 font-bold">Gudang / Bin</th>
                     <th className="px-2 py-1.5 font-bold">Dye lot</th>
                     <th className="px-2 py-1.5 font-bold">Terikat</th>
+                    <th className="px-2 py-1.5 font-bold">Terakhir dipindai</th>
                     <th className="px-2 py-1.5 font-bold">Label</th>
                   </tr>
                 </thead>
@@ -270,6 +271,9 @@ export default function LotDetailPanel({
                       <td className="px-2 py-1.5">{r.dye_lot || "—"}</td>
                       <td className="px-2 py-1.5 text-[10px] text-[#6B6B73]">
                         {(r.reserved_ref || {}).id || (r.earmarked_for || {}).id || "—"}
+                      </td>
+                      <td className="px-2 py-1.5 text-[10px] text-[#3C3C43]" data-testid={`lot-roll-last-scan-${r.id}`}>
+                        {r.last_scan ? `${r.last_scan.warehouse_id || ""}${r.last_scan.bin_id ? ` · bin ${r.last_scan.bin_id}` : ""} · ${new Date(r.last_scan.at).toLocaleString("id-ID", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}` : "—"}
                       </td>
                       <td className="px-2 py-1.5">
                         <button type="button" className="icon-button" data-testid={`lot-roll-reprint-${r.id}`}
