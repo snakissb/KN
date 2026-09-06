@@ -319,6 +319,10 @@ async def reopen_period(closing_id: str, actor: Dict[str, Any]) -> Optional[Dict
         return None
     if rec.get("status") != "closed":
         raise ValueError("Periode ini tidak dalam status tertutup.")
+    # INV-ATOMIC-01 — klaim periode (masih closed) sebelum jurnal penutup di-void.
+    from services import atomic_claim as _saga
+    await _saga.claim("period_closings", closing_id, "closing_reopen",
+                      precondition={"status": "closed"}, actor=actor.get("name", "system"))
     if rec.get("journal_entry_id"):
         await db.journal_entries.update_one(
             {"id": rec["journal_entry_id"]},
@@ -327,9 +331,9 @@ async def reopen_period(closing_id: str, actor: Dict[str, Any]) -> Optional[Dict
         )
     await db.period_closings.update_one(
         {"id": closing_id},
-        {"$set": {"status": "reopened", "stale": False, "stale_reason": "",
-                  "reopened_by": actor.get("name", "system"),
-                  "reopened_at": now_iso(), "updated_at": now_iso()}},
+        _saga.finish_set({"status": "reopened", "stale": False, "stale_reason": "",
+                          "reopened_by": actor.get("name", "system"),
+                          "reopened_at": now_iso(), "updated_at": now_iso()}),
     )
     return await db.period_closings.find_one({"id": closing_id}, {"_id": 0})
 
@@ -343,6 +347,11 @@ async def reclose_period(closing_id: str, actor: Dict[str, Any]) -> Optional[Dic
         return None
     if rec.get("status") != "closed":
         raise ValueError("Hanya periode berstatus tertutup yang dapat ditutup ulang.")
+    # INV-ATOMIC-01 — klaim periode sebelum JE lama di-void & JE baru dibuat (dua tutup-ulang
+    # bersamaan tidak boleh melahirkan dua jurnal penutup).
+    from services import atomic_claim as _saga
+    await _saga.claim("period_closings", closing_id, "closing_reclose",
+                      precondition={"status": "closed"}, actor=actor.get("name", "system"))
     entity_id = rec["entity_id"]
     start, end = rec["start_date"], rec["end_date"]
     period_type = rec["period_type"]
@@ -372,14 +381,14 @@ async def reclose_period(closing_id: str, actor: Dict[str, Any]) -> Optional[Dic
         )
     await db.period_closings.update_one(
         {"id": closing_id},
-        {"$set": {
+        _saga.finish_set({
             "net_income": stmt.get("net_income", 0),
             "residual_net_income": _residual_net(lines),
             "journal_entry_id": je["id"] if je else None,
             "journal_entry_number": je["number"] if je else None,
             "stale": False, "stale_at": None, "stale_reason": "",
             "reclosed_by": actor.get("name", "system"), "reclosed_at": now_iso(),
-            "updated_at": now_iso()}},
+            "updated_at": now_iso()}),
     )
     # Re-close periode ini mengubah angka → periode yang MEMUAT-nya (mis. tahunan
     # yang memuat bulan ini) residualnya jadi basi → tandai STALE agar di-close ulang.

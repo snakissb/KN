@@ -1,0 +1,33 @@
+{
+  "summary": "Sesi 9 backend probe run: 7/9 PASS, 2/9 FAIL. Guardrail INV-ATOMIC-01 PASS 40/40 & --self-test HIJAU. Kegagalan seluruhnya adalah race condition pada klaim atomik saat dua permintaan bersamaan diproses lewat asyncio.gather: keduanya berhasil (200/200) alih-alih tepat satu yang menang. Ini regresi dari kebijakan 'satu klik ganda tidak boleh menulis dua kali' — critical section antara claim() dan finish_set() terlalu pendek/tidak menutup jalur sequential-fast-path.",
+  "backend_issues": {
+    "critical": [
+      {"endpoint": "POST /api/sales-orders/{id}/simulate-payment", "issue": "2× bersamaan (asyncio.gather) mengembalikan [200,200] alih-alih [200,409]; paid_total naik 2× (1000→3000 untuk amount 1000). Klaim di services/atomic_claim.py:claim + finish_set diklaim & dilepas dalam window terlalu kecil sehingga panggilan kedua lolos setelah yang pertama selesai. RCA: tidak ada precondition yang berubah antara panggilan (mis. status/paid_total), sehingga setelah lock $unset panggilan kedua bebas jalan.", "priority": "CRITICAL"},
+      {"endpoint": "POST /api/finance/closing/{id}/reopen + /reclose", "issue": "reopen+reclose bersamaan mengembalikan [200,200] alih-alih tepat satu 200 + satu 4xx. Timeline: reclose dikirim lebih dulu (task 1) tapi teraih later; reopen sukses dan mengubah status→reopened; reclose kedua seharusnya gagal precondition status='closed' — namun stateenya berpola sebaliknya (reclose menang duluan tanpa mengubah status→ reopen precondition 'closed' masih match). Efek akhir: dokumen ter-reclose (JE baru) DAN ter-reopen (JE tsb kemudian di-void via lintasan reopen), inkonsistensi jurnal.", "priority": "CRITICAL"}
+    ],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": ["/app/scripts/probe_sesi9.py", "/app/scripts/guardrails/verify_atomic_claim.py"],
+  "action_items": [
+    "simulate-payment: perkuat klaim dengan precondition idempotency-kuat, mis. sertakan hash (payload+prev_paid) atau precondition paid_total==prev_paid; atau serialisasi via unique index sementara pada (order_id, request_id).",
+    "reopen/reclose: kedua endpoint pakai precondition status='closed' — reclose TIDAK mengubah status sehingga panggilan lain masih match. Solusi: reclose harus set status='reclosing' selama proses atau finish_set mengubah status ke penanda tersendiri; ATAU precondition juga mengecek journal_entry_id spesifik.",
+    "Tambah unit-race test (asyncio.gather) di suite CI untuk kedua endpoint agar tak regresi lagi."
+  ],
+  "critical_code_review_comments": [
+    "services/atomic_claim.py — pola saga sekarang hanya mendeteksi tumpang tindih di ruang waktu SEMPIT (antara claim & finish_set). Untuk operasi yang finish_set-nya tidak mengubah precondition (mis. reclose yang tetap 'closed'), kunci menjadi tidak efektif untuk mencegah eksekusi berurutan cepat. Pertimbangkan menahan lock hingga akhir transaksi atau menambah 'lock-until' waktu-hidup minimum.",
+    "routers/invoices.py:simulate_payment — validasi outstanding dilakukan sebelum claim(), tapi tidak ada precondition paid_total pada claim. Dua panggilan berurutan cepat sama-sama membaca outstanding lama."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "78%", "frontend": "not_tested_this_iter"},
+  "test_credentials": "admin@kainnusantara.id/demo12345, wh.admin@kainnusantara.id/demo12345 (dari /app/memory/test_credentials.md)",
+  "seed_data_creation": "Tidak ada dokumen sintetis yang tersisa; probe_sesi9.py membersihkan closing sintetis + saga_locks sendiri.",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Setelah main agent memperbaiki race di simulate-payment dan reopen/reclose, jalankan ulang: `python3 /app/scripts/probe_sesi9.py` dan pastikan 9/9 PASS. Guardrail INV-ATOMIC-01 sudah 40/40 & self-test HIJAU — tidak perlu diulang. Frontend (CRM 360 tab sampel, mobile inbound label banner, panel Kunci Saga period_closings) TIDAK diuji di iterasi ini karena backend gate belum lulus. Lakukan uji frontend setelah backend 9/9.",
+  "rca of the issue": "Klaim atomik menggunakan find_one_and_update dengan precondition + unset lock di finish_set. Untuk simulate-payment: precondition hanya {saga_lock: !exists}, tanpa memasukkan paid_total/state monoton. Untuk reopen/reclose: keduanya memakai precondition status='closed'; reclose tidak mengubah status. Ketika request A sudah finish_set dan melepas lock sebelum request B mencapai claim(), request B lolos meski A sudah mengubah efek bisnis. Pola ini melindungi dari race yang benar-benar overlapping di DB, TIDAK dari dua request berurutan cepat yang keduanya melewati precondition. Perbaikan minimal: sertakan versi/state monotonik dalam precondition (mis. paid_total, journal_entry_id lama) sehingga panggilan kedua otomatis STATE_CHANGED."
+}

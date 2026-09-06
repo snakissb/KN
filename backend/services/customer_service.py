@@ -260,6 +260,11 @@ async def customer_360(customer_id: str) -> Optional[Dict[str, Any]]:
     overrides = await db.credit_overrides.find(
         {"customer_id": customer_id}, {"_id": 0}
     ).sort("created_at", -1).to_list(50)
+    # §3-C — riwayat sampel yang pernah dipotong untuk pelanggan ini (sales tahu kain apa yang sudah dicoba)
+    samples = await db.sample_requests.find(
+        {"customer_id": customer_id}, {"_id": 0, "id": 1, "number": 1, "product_name": 1, "sku": 1, "length": 1,
+                                       "unit": 1, "amount": 1, "status": 1, "child_roll_no": 1, "created_at": 1, "cut_at": 1}
+    ).sort("created_at", -1).to_list(100)
     return {
         **customer,
         "order_history": order_history,
@@ -267,9 +272,11 @@ async def customer_360(customer_id: str) -> Optional[Dict[str, Any]]:
         "special_price_history": [safe_doc(s) for s in special_prices],
         "collection_followups": [safe_doc(f) for f in followups],
         "credit_overrides": [safe_doc(o) for o in overrides],
+        "sample_history": [safe_doc(s) for s in samples],
         "stats": {
             "total_orders": len(order_history),
             "lifetime_value": round(sum(o["grand_total"] for o in order_history), 2),
+            "samples_cut": sum(1 for s in samples if s.get("status") == "done"),
         },
     }
 

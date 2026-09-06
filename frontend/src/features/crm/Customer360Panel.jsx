@@ -12,6 +12,7 @@ const HIST_TABS = [
   { key: "orders", label: "Pesanan" },
   { key: "documents", label: "Dokumen" },
   { key: "prices", label: "Harga Khusus" },
+  { key: "samples", label: "Sampel" },
   { key: "followups", label: "Penagihan" },
   { key: "overrides", label: "Override Kredit" },
 ];
@@ -179,7 +180,7 @@ export default function Customer360Panel({ customerId, currentUser, salesUsers, 
 
 function listFor(data, tab) {
   return ({ orders: data.order_history, documents: data.document_history, prices: data.special_price_history,
-    followups: data.collection_followups, overrides: data.credit_overrides }[tab]) || [];
+    samples: data.sample_history, followups: data.collection_followups, overrides: data.credit_overrides }[tab]) || [];
 }
 
 function HistoryTable({ data, tab }) {
@@ -203,6 +204,13 @@ function HistoryTable({ data, tab }) {
         <div key={i} className="flex items-center justify-between py-2 text-[11.5px]">
           <div><p className="font-semibold">{p.product_name || p.product_id}</p><p className="text-[10px] text-[#6B6B73]">{p.status} · {fmtDate(p.created_at)}</p></div>
           <span className="tabular-nums font-semibold">{formatCurrency(p.approved_price || p.special_price || p.price)}</span>
+        </div>
+      ))}
+      {tab === "samples" && rows.map((s) => (
+        <div key={s.id} className="flex items-center justify-between py-2 text-[11.5px]" data-testid={`customer-360-sample-${s.id}`}>
+          <div><p className="font-semibold">{s.product_name} <span className="font-mono text-[10px] text-[#6B6B73]">{s.sku}</span></p>
+            <p className="text-[10px] text-[#6B6B73]">{s.number} · {s.length} {s.unit} · {s.status === "done" ? `dipotong ${fmtDate(s.cut_at)} (${s.child_roll_no})` : s.status === "cancelled" ? "dibatalkan" : "menunggu potong"}</p></div>
+          <span className="tabular-nums font-semibold">{formatCurrency(s.amount)}</span>
         </div>
       ))}
       {tab === "followups" && rows.map((fu, i) => (

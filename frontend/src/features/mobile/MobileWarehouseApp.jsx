@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { ClipboardList, ScanLine, Tags, PackageCheck, AlertTriangle, CheckCircle2, Loader2, Scissors, Printer } from "lucide-react";
 import axios, { API } from "../../services/apiClient";
 import MobileShell from "./MobileShell";
-import { InboundActions, OutboundActions, SampleCutActions, printSampleLabel } from "./MobileTaskActions";
+import { InboundActions, OutboundActions, SampleCutActions, printSampleLabel, printInboundRollLabels } from "./MobileTaskActions";
 
 const STATUS_ID = { pending: "Menunggu", receiving: "Menerima", qc_check: "Cek QC", put_away: "Simpan", picking: "Ambil", packing: "Kemas", escalated: "Eskalasi", completed: "Selesai", shipped: "Terkirim" };
 
@@ -11,6 +11,7 @@ function TaskList({ type }) {
   const [err, setErr] = useState("");
   const [open, setOpen] = useState("");
   const [lastCut, setLastCut] = useState(null);
+  const [lastInbound, setLastInbound] = useState(null);
   const load = () => axios.get(`${API}/wms/tasks`).then((r) => setRows((Array.isArray(r.data) ? r.data : r.data.items || r.data.tasks || []).filter((t) => (t.flow_type || t.type) === type && !["completed", "shipped", "cancelled", "done"].includes(t.status))))
     .catch((e) => setErr(e.response?.data?.detail || "Gagal memuat tugas."));
   useEffect(() => { load(); }, [type]); // eslint-disable-line
@@ -21,6 +22,13 @@ function TaskList({ type }) {
   const Actions = { inbound: InboundActions, outbound: OutboundActions, sample_cut: SampleCutActions }[type];
   return (
     <div className="space-y-2 p-3" data-testid={`mw-task-list-${type}`}>
+      {lastInbound && (
+        <div className="m-card p-3 bg-[#E6F6EC] space-y-2" data-testid={`mw-inbound-done-${lastInbound.task.id}`}>
+          <div className="notice-bar success" data-testid={`mw-action-msg-${lastInbound.task.id}`}>SELESAI · {lastInbound.task.product_name} · {lastInbound.rolls.length} roll baru masuk stok{lastInbound.rolls.length ? `: ${lastInbound.rolls.map((r) => r.roll_no).join(", ")}` : ""}</div>
+          {lastInbound.rolls.length > 0 && <button className="primary-button w-full py-3 flex items-center justify-center gap-2" onClick={() => printInboundRollLabels(lastInbound.task, lastInbound.rolls)} data-testid={`mw-inbound-print-${lastInbound.task.id}`}><Printer size={16} /> Cetak label {lastInbound.rolls.length} roll</button>}
+          <button className="secondary-button w-full py-2" onClick={() => setLastInbound(null)} data-testid={`mw-inbound-done-close-${lastInbound.task.id}`}>Tutup</button>
+        </div>
+      )}
       {lastCut && (
         <div className="m-card p-3 bg-[#E6F6EC] space-y-2" data-testid={`mw-sample-done-${lastCut.taskId}`}>
           <div className="notice-bar success" data-testid={`mw-action-msg-${lastCut.taskId}`}>DIPOTONG · {lastCut.res.cut_roll_no} → <b>{lastCut.res.child_roll_no}</b> · {lastCut.res.sales_order_number}{lastCut.res.receipt_number ? ` · ${lastCut.res.receipt_number}` : ""}</div>
@@ -33,7 +41,7 @@ function TaskList({ type }) {
           <div className="flex items-center justify-between"><b className="text-[15px]">{t.product_name || t.product_id}</b>
             <span className={`status-pill ${t.status === "escalated" ? "pill-danger" : "pill-warning"}`}>{STATUS_ID[t.status] || t.status}</span></div>
           <div className="text-xs text-[#6E6E73] mt-1">{t.warehouse_name || t.warehouse_id} · qty <b className="tabular-nums">{t.quantity}</b> {t.unit || ""}{t.order_number ? ` · ${t.order_number}` : ""}{t.po_number ? ` · ${t.po_number}` : ""}{t.sample_number ? ` · ${t.sample_number}` : ""}</div>
-          {open === t.id && Actions && <div onClick={(e) => e.stopPropagation()}><Actions task={t} onDone={load} onCut={(res) => { setLastCut({ taskId: t.id, res }); load(); }} /></div>}
+          {open === t.id && Actions && <div onClick={(e) => e.stopPropagation()}><Actions task={t} onDone={load} onCut={(res) => { setLastCut({ taskId: t.id, res }); load(); }} onCompleted={(res) => { setLastInbound(res); load(); }} /></div>}
         </div>
       ))}
     </div>

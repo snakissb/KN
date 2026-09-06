@@ -330,6 +330,7 @@ async def complete_inbound_receiving(
     qc_cfg = await get_effective_settings(owner_entity_id)
     qc_on_receipt = bool((qc_cfg.get("purchasing", {}) or {}).get("qc_on_receipt", True))
     roll_status = "quarantine" if qc_on_receipt else "available"
+    _created_rolls: List[Dict[str, Any]] = []
     next_stage = "qc_pending" if qc_on_receipt else "completed"
 
     # Buat roll + update PO untuk kedua jalur (available langsung / karantina)
@@ -565,6 +566,8 @@ async def complete_inbound_receiving(
                 "created_by": actor.get("id") or "system", "created_by_name": actor["name"],
             }
             await db.inventory_rolls.insert_one(dict(roll_doc))
+            _created_rolls.append({"id": roll_doc["id"], "roll_no": roll_doc.get("roll_no"), "length": roll_doc.get("length_initial"),
+                                   "unit": roll_doc.get("unit"), "grade": roll_doc.get("grade"), "lot": roll_doc.get("lot"), "dye_lot": roll_doc.get("dye_lot")})
 
             # Log movement (owner-scoped, link roll)
             await db.inventory_movements.insert_one({
@@ -702,6 +705,7 @@ async def complete_inbound_receiving(
         logging.getLogger(__name__).warning("PS-21 notifikasi po_arrival gagal: %s", exc)
 
     out = safe_doc(updated_task) or {}
+    out["created_rolls"] = _created_rolls   # label roll baru (HP gudang) — nomor, panjang, grade, lot
     # FASE I — SPK INSPEKSI LAHIR OTOMATIS begitu barang masuk antrean QC (user story
     # I.1: kepala gudang hanya menugaskan petugas, tidak membuat dokumen dari nol).
     # Idempotent (`ensure_for_qc_task` memeriksa `task_id`), jadi penyelesaian ulang

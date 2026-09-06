@@ -22,13 +22,36 @@ export function printSampleLabel(r) {
 }
 
 /** Aksi tugas gudang di mobile (Tahap 2): satu tombol besar per langkah, hasil = ikon + teks. */
-export function InboundActions({ task, onDone }) {
+/** Label roll baru inbound (58×40 mm per roll): nomor roll besar, produk, panjang, grade, lot. */
+export function printInboundRollLabels(task, rolls) {
+  const pages = (rolls || []).map((r) => `<section><div class="no">${esc(r.roll_no)}</div>
+<div class="row b">${esc(task.product_name || task.product_id)}</div>
+<div class="row"><span class="b">${esc(r.length)} ${esc(r.unit || task.unit || "")}</span> · Grade ${esc(r.grade || "A")}</div>
+<div class="row">Lot ${esc(r.lot || "-")}${r.dye_lot ? ` · Dye ${esc(r.dye_lot)}` : ""}</div>
+<div class="small">${esc(task.po_number || "")} · ${esc(task.warehouse_name || task.warehouse_id || "")} · ${new Date().toLocaleDateString("id-ID")}</div></section>`).join("");
+  const html = `<!doctype html><html lang="id"><head><meta charset="utf-8"><title>Label roll</title>
+<style>@page{size:58mm 40mm;margin:2mm}body{font-family:Arial,sans-serif;margin:0;width:54mm}section{page-break-after:always;padding-bottom:2mm}
+.no{font-size:20px;font-weight:800;letter-spacing:.5px}.row{font-size:11px;margin-top:2px}.b{font-weight:700}.small{font-size:9px;color:#444;margin-top:4px}</style></head>
+<body>${pages}<script>window.onload=function(){window.print();}</script></body></html>`;
+  const w = window.open("", "_blank", "width=420,height=360");
+  if (!w) return;
+  w.document.open(); w.document.write(html); w.document.close();
+}
+
+export function InboundActions({ task, onDone, onCompleted }) {
   const [qty, setQty] = useState(String(task.expected_qty ?? task.quantity ?? ""));
   const [lot, setLot] = useState(""); const [dye, setDye] = useState("");
   const [msg, setMsg] = useState(null); const [busy, setBusy] = useState(false);
   const run = async (fn, ok) => { setBusy(true); setMsg(null); try { await fn(); setMsg({ ok: true, text: ok }); onDone?.(); } catch (e) { setMsg({ ok: false, text: errText(e, "Gagal.") }); } finally { setBusy(false); } };
   const receive = () => run(() => axios.post(`${API}/inbound/tasks/${task.id}/scan-receive`, { product_id: task.product_id, actual_qty: parseFloat(qty) || 0 }), "Diterima. Lanjut Selesai bila semua sudah dihitung.");
-  const complete = () => run(() => axios.post(`${API}/inbound/tasks/${task.id}/complete`, { supplier_lot: lot, dye_lot: dye }), "Tugas selesai — barang masuk stok.");
+  const complete = async () => {
+    setBusy(true); setMsg(null);
+    try {
+      const { data } = await axios.post(`${API}/inbound/tasks/${task.id}/complete`, { supplier_lot: lot, dye_lot: dye });
+      // Hasil + tombol cetak label diangkat ke induk (bertahan setelah kartu hilang dari daftar).
+      onCompleted?.({ task, rolls: data.created_rolls || [] });
+    } catch (e) { setMsg({ ok: false, text: errText(e, "Gagal.") }); } finally { setBusy(false); }
+  };
   return (
     <div className="mt-2 space-y-2" data-testid={`mw-inbound-actions-${task.id}`}>
       {["pending", "receiving", "in_progress"].includes(task.status) && (

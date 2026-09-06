@@ -37,6 +37,9 @@ Admin · Manajer · Admin Sales · Finance · Sales · Gudang · Desainer · Sop
 - Lingkungan: `backend/.env` wajib `CORS_ORIGINS` eksplisit (template `*` membuat backend menolak start).
 - Testing agent iteration_314: semua PASS. `gate.sh --quick`: 5 merah pra-eksisting saja.
 
+## Yang dikerjakan 2026-09-05 sesi 9 (laporan: `memory/LAPORAN_SESI_2026-09-05_SESI9.md`)
+- Ratchet INV-ATOMIC-01 51 → 49 (ship-to-supplier, simulate-payment, closing reopen/reclose); tab Sampel di 360 pelanggan; label roll baru inbound dari HP gudang.
+
 ## Yang dikerjakan 2026-09-05 sesi 8 (laporan: `memory/LAPORAN_SESI_2026-09-05_SESI8.md`)
 - Ratchet INV-ATOMIC-01 54 → 51 (lead convert, goods-back retur beli, resolve-exception putaway); label cetak potongan sampel di HP gudang; peta lacak lapangan memuat jejak per halaman.
 
@@ -62,7 +65,7 @@ Admin · Manajer · Admin Sales · Finance · Sales · Gudang · Desainer · Sop
 
 ## Backlog (prioritas)
 - P1 COGS eksplisit per potongan sampel bila kebijakan menuntut; `simulate-payment` (invoices.py) tinjau sebagai compensate/log-only.
-- P0 51 endpoint multi-koleksi BELUM DITINJAU (INV-ATOMIC-01 ratchet).
+- P0 49 endpoint multi-koleksi BELUM DITINJAU (INV-ATOMIC-01 ratchet): berikutnya rfid/ingest, transfer-ownership retur, POST/DELETE transfers, POST wms/tasks.
 - P1 T-05: 2 REGISTRY GAP (P2); T-04 perbaiki 2 lokasi `PERBAIKI`.
 - P1 `warehouse_id` saran reorder (keputusan pemilik masih terbuka).
 - P2 5 gate `--quick` merah pra-eksisting (INV-UI-01/UI-10/UX-01/i18n); T-10 daftar saudara 459 endpoint; jalankan CI di GitHub.

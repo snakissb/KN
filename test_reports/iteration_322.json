@@ -1,0 +1,34 @@
+{
+  "summary": "Sesi 9 RETEST — 2 temuan iteration_321 + 3 verifikasi frontend. Frontend 3/3 PASS. Backend: closing reopen∥reclose sekarang PASS (codes=[200,400], akhir status='reopened', tanpa saga_lock). simulate-payment gagar klik-ganda MASIH gagal untuk asyncio.gather murni: 2× bersamaan menghasilkan [200,200], paid_total naik 2× (1400 alih-alih 700), 2 invoices ditulis, kode DUPLICATE_PAYMENT tidak pernah dipicu. Guard di /app/backend/routers/invoices.py L90-102 membaca payments dari snapshot `order` yang di-fetch SEBELUM claim, jadi kedua request bersamaan melihat payments yang sama (belum tertulis) dan lolos. Pembayaran identik ke-2 setelah tunggu 11 detik (berurutan lambat) memang 200 (sah) ✓.",
+  "backend_issues": {
+    "critical": [
+      {"endpoint": "POST /api/sales-orders/{id}/simulate-payment", "issue": "Pagar klik-ganda DUPLICATE_PAYMENT tidak menutup jalur bersamaan (asyncio.gather). Kedua request membaca snapshot `order` sebelum salah satu menulis `payments`, jadi guard L94 `_last = (order.get('payments') or [])[-1]` melihat payments lama identik pada keduanya (atau None) → tidak match, guard lewat. claim() juga tidak menangkap karena finish_set melepas lock terlalu cepat / dua request truly-concurrent yang lolos precondition sama. Hasil: 2 invoice ditulis, paid_total +1400 alih-alih +700. Reproduksi: 2× POST bersamaan dengan amount+method identik pada SO belum lunas.", "priority": "CRITICAL"}
+    ],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/scripts/probe_sesi9_retest.py",
+    "/app/scripts/probe_sesi9.py"
+  ],
+  "action_items": [
+    "simulate-payment: pindahkan pengecekan DUPLICATE_PAYMENT ke SETELAH claim() sukses, ATAU re-fetch order di dalam claim precondition dan sertakan hash/paid_total sebagai bagian precondition (mis. `{payment_status: prev_status, paid_total: prev_paid}`). Solusi lain: unique index pada (order_id, amount, method, floor(created_at/10s)) supaya insert invoice kedua yang identik ditolak DB langsung.",
+    "Tambah asyncio.gather race test khusus di CI: 2× simulate-payment identik bersamaan HARUS menghasilkan tepat 1× 200 dan 1× 409 (kode SAGA_IN_PROGRESS atau DUPLICATE_PAYMENT)."
+  ],
+  "critical_code_review_comments": [
+    "routers/invoices.py:simulate_payment (L90-102): guard DUPLICATE_PAYMENT bergantung pada `order.get('payments')` yang dibaca di baris awal fungsi — dua request bersamaan sama-sama membaca snapshot pra-tulis, jadi guard tidak pernah aktif untuk race murni. Guard ini hanya efektif untuk klik-ganda BERURUTAN dengan jeda >jaringan tapi <10 detik (kasus itu memang 200 di menit-detik ke-11 sesuai retest — PASS).",
+    "services/atomic_claim.py: klaim tanpa precondition state-berubah tidak mencegah dua panggilan berurutan cepat yang sama-sama valid — perbaikan minimal: precondition menyertakan `paid_total` atau `updated_at` snapshot supaya panggilan kedua otomatis STATE_CHANGED."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "closing PASS · simulate-payment race FAIL", "frontend": "3/3 PASS (CRM 360 sampel, mobile inbound label+popup, panel Kunci Saga)"},
+  "test_credentials": "admin@kainnusantara.id/demo12345, wh.admin@kainnusantara.id/demo12345",
+  "seed_data_creation": "Dibersihkan semua dokumen sintetis: task_qafe_* (wms_tasks + rolls + lots + inspection_orders + movements), period_closings cls_qafe_* & cls_retest_*, journal_entries.source_id terkait. rebuild_balance() dipanggil untuk prod_batik_mega/wh_jakarta.",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Frontend 3/3 sudah PASS di sesi ini — tidak perlu diulang kecuali ada perubahan mobile/CRM. Backend gate tersisa: simulate-payment DUPLICATE_PAYMENT untuk race asyncio.gather. Jalankan ulang: `python3 /app/scripts/probe_sesi9_retest.py` — target 6 PASS pertama (test klik-ganda) + PASS pembayaran setelah 11s + closing block. Guard mesti bekerja pada asyncio.gather, bukan hanya berurutan cepat via jaringan.",
+  "rca of the issue": "simulate_payment mem-fetch order sekali di awal handler. Dua request async paralel yang tiba pada FastAPI/motor sama-sama menyelesaikan fetch sebelum salah satu masuk claim(). Guard DUPLICATE_PAYMENT membandingkan payment TERAKHIR pada snapshot order yang identik → keduanya melihat state yang sama (payment lama berbeda amount/method, atau tidak ada), guard tidak match. claim() satu-satunya barisan pertahanan lain: request A klaim, tulis invoice, finish_set lepas lock; request B mengklaim SETELAH A lepas — bisa lolos karena precondition (hanya `saga_lock`-not-exists) sudah true lagi. Perbaikan: re-baca order dan bandingkan payments SETELAH claim, atau tambah precondition `paid_total: prev_paid` di claim sehingga panggilan kedua otomatis 409 STATE_CHANGED."
+}

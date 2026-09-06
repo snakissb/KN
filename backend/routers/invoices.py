@@ -87,17 +87,32 @@ async def simulate_payment(order_id: str, payload: PaymentSimulationCreate, requ
         "created_by": payload.created_by,
         "created_at": now_iso(),
     }
+    # Pagar klik-ganda (sesi 9): pembayaran IDENTIK (nominal+metode) dalam 10 detik terakhir
+    # ditolak — klaim saga hanya menutup jalur yang tumpang-tindih, bukan yang berurutan cepat.
+    from datetime import datetime, timedelta, timezone
+    _last = (order.get("payments") or [])[-1] if order.get("payments") else None
+    if _last and abs(float(_last.get("amount") or 0) - amount) < 0.01 and _last.get("method") == payload.method:
+        try:
+            _age = datetime.now(timezone.utc) - datetime.fromisoformat(str(_last.get("created_at")).replace("Z", "+00:00"))
+        except Exception:  # noqa: BLE001
+            _age = timedelta(days=1)
+        if _age < timedelta(seconds=10):
+            raise HTTPException(status_code=409, detail={"code": "DUPLICATE_PAYMENT",
+                                "message": f"Pembayaran identik {amount:,.0f} ({payload.method}) baru saja dicatat "
+                                           f"({_last.get('number', '')}). Tunggu 10 detik bila memang pembayaran kedua."})
+    # INV-ATOMIC-01 — klaim pesanan SEBELUM invoice ditulis: dua simulasi bayar bersamaan
+    # tidak boleh menambah paid_total dua kali dari satu klik ganda.
+    from services import atomic_claim as _saga
+    await _saga.claim("sales_orders", order_id, "simulate_payment", actor=actor.get("name", ""))
     await db.invoices.insert_one(dict(invoice))   # insert COPY → _id tak mencemari original
     # Status pembayaran: lunas bila menutup grand_total, jika tidak parsial
     total_paid = sum(float(p.get("amount", 0) or 0)
                      for p in order.get("payments", [])) + amount
     pay_status = "paid" if total_paid + 0.01 >= grand_total else "paid_partial"
-    await db.sales_orders.update_one(
-        {"id": order_id},
-        {"$set": {"payment_status": pay_status, "updated_at": now_iso()},
-         "$inc": {"paid_total": amount},
-         "$push": {"payments": invoice}}     # invoice masih bersih (tanpa _id)
-    )
+    _upd = _saga.finish_set({"payment_status": pay_status, "updated_at": now_iso()})
+    _upd["$inc"] = {"paid_total": amount}
+    _upd["$push"] = {"payments": invoice}     # invoice masih bersih (tanpa _id)
+    await db.sales_orders.update_one({"id": order_id}, _upd)
     await audit(actor["name"], "payment_simulated", "invoice", invoice["id"],
                 {"amount": amount, "method": payload.method, "ppn_amount": invoice["ppn_amount"]})
     # F3 — Auto-posting penjualan → GL (idempotent per SO). Best-effort: kegagalan GL

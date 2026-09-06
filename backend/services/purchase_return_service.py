@@ -359,6 +359,10 @@ async def ship_to_supplier(return_id: str, actor: str, notes: str = "",
     if ret.get("status") != "approved":
         raise ValueError(f"Retur harus 'approved' dulu (status: {ret.get('status')}).")
     prs.assert_transition(ret.get("supplier_status") or prs.REQUESTED, prs.SHIPPED)
+    # INV-ATOMIC-01 — klaim retur beli (belum SHIPPED) sebelum roll dikarantina/balance ditulis.
+    from services import atomic_claim as _saga
+    await _saga.claim("purchase_returns", return_id, "purchase_return_ship_to_supplier",
+                      precondition={"supplier_status": {"$ne": prs.SHIPPED}}, actor=actor)
 
     now = now_iso()
     segments = set()
@@ -377,9 +381,9 @@ async def ship_to_supplier(return_id: str, actor: str, notes: str = "",
         if pid and wid and eid:
             await rebuild_balance(pid, wid, eid)
 
-    await db.purchase_returns.update_one({"id": return_id}, {"$set": {
+    await db.purchase_returns.update_one({"id": return_id}, _saga.finish_set({
         "supplier_status": prs.SHIPPED, "shipped_at": now, "shipped_by": actor,
-        "ship_notes": notes, "carrier": carrier, "tracking_no": tracking_no, "updated_at": now}})
+        "ship_notes": notes, "carrier": carrier, "tracking_no": tracking_no, "updated_at": now}))
     return safe_doc(await db.purchase_returns.find_one({"id": return_id}, {"_id": 0}))
 
 
