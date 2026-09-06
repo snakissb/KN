@@ -100,10 +100,14 @@ async def simulate_payment(order_id: str, payload: PaymentSimulationCreate, requ
             raise HTTPException(status_code=409, detail={"code": "DUPLICATE_PAYMENT",
                                 "message": f"Pembayaran identik {amount:,.0f} ({payload.method}) baru saja dicatat "
                                            f"({_last.get('number', '')}). Tunggu 10 detik bila memang pembayaran kedua."})
-    # INV-ATOMIC-01 — klaim pesanan SEBELUM invoice ditulis: dua simulasi bayar bersamaan
-    # tidak boleh menambah paid_total dua kali dari satu klik ganda.
+    # INV-ATOMIC-01 — klaim pesanan SEBELUM invoice ditulis. Pagar klik-ganda ikut dalam
+    # PRASYARAT klaim (atomik di Mongo): pembayaran identik ≤10 dtk terakhir → klaim gagal 409,
+    # sehingga dua permintaan yang membaca snapshot lama pun tidak bisa sama-sama menang.
     from services import atomic_claim as _saga
-    await _saga.claim("sales_orders", order_id, "simulate_payment", actor=actor.get("name", ""))
+    _cutoff = (datetime.now(timezone.utc) - timedelta(seconds=10)).isoformat()
+    await _saga.claim("sales_orders", order_id, "simulate_payment", actor=actor.get("name", ""),
+                      precondition={"payments": {"$not": {"$elemMatch": {
+                          "amount": amount, "method": payload.method, "created_at": {"$gte": _cutoff}}}}})
     await db.invoices.insert_one(dict(invoice))   # insert COPY → _id tak mencemari original
     # Status pembayaran: lunas bila menutup grand_total, jika tidak parsial
     total_paid = sum(float(p.get("amount", 0) or 0)

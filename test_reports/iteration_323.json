@@ -1,0 +1,18 @@
+{
+  "summary": "Iter 323 RETEST simulate-payment race — SEMUA PASS (14/14). 3 ronde asyncio.gather 2× POST /api/sales-orders/{id}/simulate-payment dengan amount 800/801/802 pada SO KSC/SO-00010: tiap ronde tepat [200,409], tanpa 5xx. Kode 409: ronde1=DUPLICATE_PAYMENT (klaim atomik dg precondition $not $elemMatch memblok request kedua yang tiba setelah invoice pertama tertulis + lock dilepas), ronde2/3=SAGA_IN_PROGRESS (klaim kedua kalah saat request pertama masih memegang saga_lock). paid_total naik tepat 2403 (800+801+802), invoices +3 (10→13), tanpa saga_lock. Setelah tunggu 11 dtk, POST identik amount=802 → 200 (invoices 13→14). Perbaikan di /app/backend/routers/invoices.py:106-110 (klaim dengan precondition payments $not $elemMatch {amount, method, created_at ≥ now-10s}) berfungsi sebagaimana dirancang.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": ["/app/scripts/probe_sesi9_iter323.py"],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Perbaikan iter323 solid: precondition atomik pada claim() menutup kedua jalur race — request kedua yang menang tulis pertama akan gagal precondition (DUPLICATE_PAYMENT), request kedua yang datang saat lock masih dipegang gagal karena saga_lock exists (SAGA_IN_PROGRESS). Tidak ada 5xx dalam 6× uji race berturut."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100% (14/14 checks)", "frontend": "N/A (backend only)"},
+  "test_credentials": "admin@kainnusantara.id/demo12345 X-Entity-Id ent_ksc",
+  "seed_data_creation": "Tidak ada seed sintetis baru. SO KSC/SO-00010 mendapat +4 invoice pembayaran (INV-KSC/00010-18..24) dan paid_total naik 3205 dari demo — sesuai instruksi user (pembayaran simulasi menambah paid_total SO demo dikehendaki).",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Semua item sesi 9 (iter 321/322/323) sekarang PASS. simulate-payment race precondition atomik terverifikasi via 3 ronde × 2 request bersamaan.",
+  "rca of the issue": "N/A — bug iter322 sudah diperbaiki dan lulus retest."
+}
