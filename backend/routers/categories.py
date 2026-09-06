@@ -86,39 +86,6 @@ async def create_category(payload: CategoryPayload, request: Request) -> Dict[st
     return doc
 
 
-@router.patch("/product-categories/{category_id}")
-async def update_category(category_id: str, payload: GenericPatch, request: Request) -> Dict[str, Any]:
-    actor = await require_permission(request, "product", "update")
-    allowed = ["code", "name", "base_unit", "description", "sort_order", "status"]
-    data = {k: v for k, v in payload.data.items() if k in allowed}
-    if "name" in data:
-        data["name"] = (data["name"] or "").strip()
-        if not data["name"]:
-            raise HTTPException(status_code=400, detail="Nama kategori tidak boleh kosong")
-        dup = await db.product_categories.find_one(
-            {"name": data["name"], "id": {"$ne": category_id}}, {"_id": 0})
-        if dup:
-            raise HTTPException(status_code=409, detail="Nama kategori sudah digunakan")
-    if "code" in data:
-        data["code"] = (data["code"] or "").strip().upper()
-    existing = await db.product_categories.find_one({"id": category_id}, {"_id": 0})
-    if not existing:
-        raise HTTPException(status_code=404, detail="Kategori tidak ditemukan")
-    # Jika nama berubah, propagasikan rename ke produk yang memakainya (jaga konsistensi).
-    new_name = data.get("name")
-    if new_name and new_name != existing.get("name"):
-        await db.products.update_many({"category": existing.get("name")}, {"$set": {"category": new_name}})
-    data["updated_at"] = now_iso()
-    category = await db.product_categories.find_one_and_update(
-        {"id": category_id}, {"$set": data},
-        projection={"_id": 0}, return_document=ReturnDocument.AFTER,
-    )
-    await audit(actor["name"], "category_updated", "product", category_id, category)
-    doc = safe_doc(category)
-    doc["product_count"] = await db.products.count_documents({"category": doc.get("name")})
-    return doc
-
-
 @router.delete("/product-categories/{category_id}")
 async def delete_category(category_id: str, request: Request) -> Dict[str, Any]:
     actor = await require_permission(request, "product", "delete")
@@ -138,3 +105,43 @@ async def delete_category(category_id: str, request: Request) -> Dict[str, Any]:
     )
     await audit(actor["name"], "category_deactivated", "product", category_id, category)
     return safe_doc(category)
+
+
+@router.patch("/product-categories/{category_id}")
+async def update_category(category_id: str, payload: GenericPatch, request: Request) -> Dict[str, Any]:
+    actor = await require_permission(request, "product", "update")
+    allowed = ["code", "name", "base_unit", "description", "sort_order", "status"]
+    data = {k: v for k, v in payload.data.items() if k in allowed}
+    if "name" in data:
+        data["name"] = (data["name"] or "").strip()
+        if not data["name"]:
+            raise HTTPException(status_code=400, detail="Nama kategori tidak boleh kosong")
+        dup = await db.product_categories.find_one(
+            {"name": data["name"], "id": {"$ne": category_id}}, {"_id": 0})
+        if dup:
+            raise HTTPException(status_code=409, detail="Nama kategori sudah digunakan")
+    if "code" in data:
+        data["code"] = (data["code"] or "").strip().upper()
+    existing = await db.product_categories.find_one({"id": category_id}, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Kategori tidak ditemukan")
+    # Klaim atomik SESUDAH validasi: rename kategori menyentuh product_categories + products
+    # (update_many). Klik ganda / balapan → 409 SAGA_IN_PROGRESS, bukan dua rename beruntun.
+    from services import atomic_claim as _saga
+    await _saga.claim("product_categories", category_id, "category_update", actor=actor["name"])
+    new_name = data.get("name")
+    try:
+        if new_name and new_name != existing.get("name"):
+            await db.products.update_many({"category": existing.get("name")}, {"$set": {"category": new_name}})
+    except Exception as e:  # noqa: BLE001
+        await _saga.mark_failed("product_categories", category_id, str(e))
+        raise
+    data["updated_at"] = now_iso()
+    category = await db.product_categories.find_one_and_update(
+        {"id": category_id}, _saga.finish_set(data),
+        projection={"_id": 0}, return_document=ReturnDocument.AFTER,
+    )
+    await audit(actor["name"], "category_updated", "product", category_id, category)
+    doc = safe_doc(category)
+    doc["product_count"] = await db.products.count_documents({"category": doc.get("name")})
+    return doc

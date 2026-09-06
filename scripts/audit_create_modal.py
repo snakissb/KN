@@ -132,6 +132,9 @@ INLINE_DIBOLEHKAN: Dict[str, str] = {
     "features/sales/mobile/MobileSalesNative.jsx":
         "Layar HP (Sesi 16): form create MENUKAR seluruh layar (sub-halaman dengan tombol Kembali), "
         "bukan menyelip di tengah daftar — pola standar mobile; pop-up desktop tidak muat di HP.",
+    "features/sales/mobile/MobileLeads.jsx":
+        "Layar HP (Sesi 17): form catat prospek MENUKAR seluruh layar (sub-halaman dengan tombol Kembali) — "
+        "pola sama dengan MobileSalesNative; pop-up desktop tidak muat di HP.",
 }
 
 #: Create NAVIGATE yang disetujui pemilik (alur kompleks tetap halaman penuh).

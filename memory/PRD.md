@@ -37,6 +37,12 @@ Admin · Manajer · Admin Sales · Finance · Sales · Gudang · Desainer · Sop
 - Lingkungan: `backend/.env` wajib `CORS_ORIGINS` eksplisit (template `*` membuat backend menolak start).
 - Testing agent iteration_314: semua PASS. `gate.sh --quick`: 5 merah pra-eksisting saja.
 
+## Yang dikerjakan 2026-09-06 sesi 17 (laporan: `memory/LAPORAN_SESI_2026-09-06_SESI17.md`)
+- HP sales: **Prospek (Lead)** di menu Lainnya (`MobileLeads.jsx`) — kartu per tahap, catat prospek (offline-queue), geser tahap (KNSelect), **Jadikan pelanggan** (`POST /crm/leads/{id}/convert`).
+- HP manajer/finance (`MobileOpsApp`): tab **Persetujuan** = `MobileApprovalInbox` (harga khusus & pesanan khusus pending → Setujui/Tolak langsung, dialog alasan), tab **Notifikasi** (belum dibaca; klik → tandai terbaca; notifikasi persetujuan → lompat ke tab Persetujuan), tab Antrean (my-queue) & Ringkas tetap.
+- Ratchet INV-ATOMIC-01 26 → **24**: klaim `PATCH /product-categories/{id}` (rename kaskade produk), klaim `convert-to-so` (special_orders belum tertaut SO; release bila create_order gagal), klaim `outbound-from-order` (sales_orders, release di finally; tak masuk hitungan inventaris). RFID devices ternyata koleksi tunggal → tidak diklaim. Guard 67 cek.
+- Probe `scripts/probe_sesi17.py` SEMUA PASS · gate `--quick` hijau · testing agent iteration_334 (bug: `useEffect(load)` mengembalikan Promise → crash NotifPanel; diperbaiki) + retest 335 PASS.
+
 ## Yang dikerjakan 2026-09-06 sesi 16 (laporan: `memory/LAPORAN_SESI_2026-09-06_SESI16.md`)
 - Mobile sales native: Pelanggan (360 + piutang + kwitansi dari HP), Retur Jual, Pesanan Khusus, Daftar Harga — menggantikan komponen desktop yang terpotong; `MobilePendingQueue` (pesanan/aksi antre offline, bisa dibatalkan).
 - Kebijakan: peran `sales` diberi `ar_receipt.create` (kwitansi dari HP) — bootstrap GRANT idempoten.
@@ -107,8 +113,8 @@ Admin · Manajer · Admin Sales · Finance · Sales · Gudang · Desainer · Sop
 
 ## Backlog (prioritas)
 - P1 COGS eksplisit per potongan sampel bila kebijakan menuntut; `simulate-payment` (invoices.py) tinjau sebagai compensate/log-only.
-- P0 26 endpoint multi-koleksi BELUM DITINJAU (INV-ATOMIC-01 ratchet): berikutnya categories PATCH, rfid devices, wms outbound-from-order, hr payroll.
-- P1 Mobile sales: Leads pipeline, inbox persetujuan harga untuk manajer di HP, target/komisi sales.
+- P0 24 endpoint multi-koleksi BELUM DITINJAU (INV-ATOMIC-01 ratchet): berikutnya product-templates DELETE, users POST/PATCH, hr payroll runs, special-orders create-pr/create-sku.
+- P1 Mobile sales: target/komisi sales di HP; follow-up/interaksi per prospek dari HP; inbox HP untuk SO kredit & makloon (baru tampil di Antrean).
 - P1 Offline: katalog/pelanggan tersimpan cache (SW sudah menyimpan GET /products, /customers, /dashboard); antrean pesanan offline butuh UI daftar pesanan tertunda.
 - P1 T-05: 2 REGISTRY GAP (P2); T-04 perbaiki 2 lokasi `PERBAIKI`.
 - P1 `warehouse_id` saran reorder (keputusan pemilik masih terbuka).

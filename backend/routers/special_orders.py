@@ -606,19 +606,29 @@ async def convert_special_order_to_so(order_id: str, request: Request) -> Dict[s
         sales_name=so.get("created_by", "Sales"),
     )
 
+    # Klaim atomik SESUDAH semua validasi: special_orders (belum tertaut SO) sebelum SO lahir.
+    # Klik ganda / balapan → 409, bukan dua SO dari satu pesanan khusus.
+    from services import atomic_claim as _saga
+    await _saga.claim("special_orders", order_id, "special_order_convert_to_so",
+                      precondition={"linked_sales_order_id": {"$in": [None, ""]}},
+                      actor=user.get("name", ""))
     # Reuse penuh create_order (local import → hindari circular import).
     from routers.sales_orders import create_order as _create_sales_order
-    sales_order = await _create_sales_order(so_payload, request)
+    try:
+        sales_order = await _create_sales_order(so_payload, request)
+    except Exception:
+        await _saga.release("special_orders", order_id)   # SO belum lahir → aman dilepas
+        raise
 
     await db.special_orders.update_one(
         {"id": order_id},
-        {"$set": {
+        _saga.finish_set({
             "linked_sales_order_id": sales_order["id"],
             "linked_sales_order_number": sales_order["number"],
             "converted_at": now_iso(),
             "converted_by": user.get("email", user.get("name", "")),
             "updated_at": now_iso(),
-        }})
+        }))
     await audit(user.get("name", ""), "special_order_converted_to_so", "special_order", order_id,
                 {"so_id": sales_order["id"], "so_number": sales_order["number"]})
 

@@ -26,7 +26,7 @@ import inventaris_multi_koleksi as inv  # noqa: E402
 
 # Baseline "BELUM DITINJAU" saat penjaga lahir (2026-09-05). Turunkan angka ini setiap
 # kali satu endpoint selesai ditinjau — jangan pernah dinaikkan.
-BASELINE_UNREVIEWED = 26
+BASELINE_UNREVIEWED = 24
 
 # (berkas router, potongan path) → (mekanisme, alasan). mekanisme ∈ {claim, cas, service, log}
 REVIEWED: dict[tuple[str, str], tuple[str, str]] = {
@@ -93,6 +93,9 @@ REVIEWED: dict[tuple[str, str], tuple[str, str]] = {
     ("entities.py", "/entities/{entity_id}"): ("service_cas", "DELETE (=archive): CAS status ≠ archived di lifecycle.archive_entity → 409 bila kalah", "entity_lifecycle_service.archive_entity"),
     ("config.py", "/impact-apply"): ("service", "klaim products sesudah validasi alasan/cakupan (ImpactError), master + SO ditulis ulang di dalam klaim; mark_failed bila gagal; release di finally", "config_impact_service.apply"),
     ("auth.py", "/auth/login"): ("service", "login_attempts + sessions + users(last_login): tulisan independen, tidak ada saldo/stok — aman diulang"),
+    ("categories.py", "/product-categories/{category_id}"): ("claim", "PATCH: klaim product_categories sesudah validasi nama/duplikat, sebelum products.update_many (rename kaskade); mark_failed bila gagal; finish_set"),
+    ("special_orders.py", "/special-orders/{order_id}/convert-to-so"): ("claim", "klaim special_orders (linked_sales_order_id kosong) sesudah validasi status/SKU, sebelum SO lahir; release bila create_order gagal; finish_set tautan SO"),
+    ("wms.py", "/wms/tasks/outbound-from-order/{order_id}"): ("claim", "klaim sales_orders sesudah validasi status, sebelum tugas outbound lahir (cek 'belum ada tugas' + insert tak lagi bisa balapan); release di finally"),
 }
 
 RE_CLAIM = re.compile(r"atomic_claim|_saga\.claim\(")

@@ -1,0 +1,30 @@
+{
+  "summary": "Sesi 17 verification: backend probe scripts/probe_sesi17.py ALL PASS (categories PATCH cascade+lock, convert-to-so 409 under lock, outbound-from-order concurrent single-set, leads CRUD+convert, manager inbox APIs). Frontend mobile flows tested at 390x800 with kn_force_mobile='1'. Sales leads (create/list/convert) WORK end-to-end. Manager MobileOpsApp inbox WORKS for reject price approval (reason dialog + confirm-modal-confirm). CRITICAL BUG found: clicking any notification in Notifikasi tab crashes the React tree with pageerror 'o is not a function' — screen goes blank, root div empty, does NOT jump to Persetujuan tab as intended.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "MobileOpsApp / NotifPanel", "issue": "Clicking any mo-notif-ntf_* item throws pageerror 'o is not a function' (minified). Body becomes empty, MobileShell unmounts, mo-inbox never renders. Notifikasi → Persetujuan jump is broken. Regression blocking the notif→inbox UX advertised in the sesi17 spec.", "selector": "[data-testid^='mo-notif-ntf_']", "priority": "CRITICAL"}
+    ],
+    "integration_issues": [
+      {"flow": "Notifikasi tab click → Persetujuan (mo-inbox) hop", "issue": "setTab('queue') path in NotifPanel.open() likely crashes downstream (unhandled error post axios.post /notifications/{id}/read or during MobileApprovalInbox remount). No console log, only pageerror. Same MobileApprovalInbox renders fine on initial default-tab mount, so the crash is triggered on the re-mount path after the read POST.", "affected_selectors": ["mo-notif-ntf_*", "mo-inbox"]}
+    ],
+    "design_issues": []
+  },
+  "test_report_links": ["/app/scripts/probe_sesi17.py", "/app/tests/sesi17_fixtures.py"],
+  "action_items": [
+    "Investigate NotifPanel.open() → setTab('queue') crash. Suspected: unhandled promise from POST /api/notifications/{id}/read (maybe response shape) or MobileApprovalInbox render on incomplete price-approval row (e.g., normal_price null → NaN in formatCurrency/Math.round). Add try/catch around setTab logic and defensive checks in MobileApprovalInbox render (guard p.normal_price / p.requested_price)."
+  ],
+  "critical_code_review_comments": [
+    "MobileApprovalInbox.jsx line 35: Math.round(((p.normal_price - p.requested_price) / (p.normal_price || 1)) * 100) — if normal_price is missing this yields NaN but formatCurrency(undefined) may throw depending on impl. Add nullish guards.",
+    "MobileOpsApp.jsx NotifPanel.open(): setTab('queue') is called even when the POST /notifications/{id}/read fails silently; no error boundary wraps tab renderers so a downstream throw takes down the whole shell.",
+    "Consider wrapping MobileShell main content in an ErrorBoundary so a broken tab doesn't blank the app."
+  ],
+  "updated_files": ["/app/tests/sesi17_fixtures.py"],
+  "success_rate": {"backend": "100%", "frontend": "80%"},
+  "test_credentials": "admin/manager/sales @kainnusantara.id · demo12345 · X-Entity-Id ent_ksc",
+  "seed_data_creation": "Created 1 pending price_approval (SESI17UI tag) via tests/sesi17_fixtures.py create; cleaned after test (delete_many by reason regex SESI17UI). Sales lead + converted customer also cleaned.",
+  "retest_needed": true,
+  "main_agent_can_self_test": false,
+  "context_for_next_testing_agent": "Fixture helper at /app/tests/sesi17_fixtures.py (create|clean). Re-run scripts/probe_sesi17.py for backend regression. For the notif→inbox bug, reproduce as manager on mobile: login manager, tab Notifikasi (mobile-tab-btn-notif), click any mo-notif-ntf_* related to 'Harga menunggu persetujuan' — expect pageerror 'o is not a function' and blank root. Non-approval notif path (load()) not yet tested in isolation.",
+  "rca of the issue": "Reproduction: mobile 390x800, localStorage kn_force_mobile='1', login manager@kainnusantara.id / demo12345 → wait mo-inbox → click mobile-tab-btn-notif → click any mo-notif-ntf_* card marked 'Putuskan di HP'. Result: page.on('pageerror') fires 'o is not a function'; document.body.innerHTML retains only <noscript>+<div id='root'></div> (root emptied). Suspected root cause: either (a) NotifPanel.open awaits axios.post that returns unexpected shape and the microtask throws after setTab, or (b) MobileApprovalInbox render throws on a price-approval row without normal_price when re-mounted via tab switch (initial mount worked because data on first load did have prices — but data may have grown or been mutated by our reject). Mitigation: add nullish guards + ErrorBoundary."
+}

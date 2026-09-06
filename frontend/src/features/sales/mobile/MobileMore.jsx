@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { Users, RotateCcw, FileStack, Tags, Monitor, LogOut, ChevronRight, ArrowLeft, UserCircle } from "lucide-react";
+import { Users, RotateCcw, FileStack, Tags, Monitor, LogOut, ChevronRight, ArrowLeft, UserCircle, Target } from "lucide-react";
 import { roleLabel } from "../../../config/roles";
 import MobileCustomers from "./MobileCustomers";
+import MobileLeads from "./MobileLeads";
 import { MobileReturns, MobileSpecialOrders, MobilePricelist } from "./MobileSalesNative";
 import MobilePendingQueue from "./MobilePendingQueue";
 import { BadgePercent, MapPin, Boxes, Scissors } from "lucide-react";
@@ -13,13 +14,14 @@ const MENU = [
   { id: "sample", label: "Jual Sampel", desc: "Minta gudang memotong sampel untuk pelanggan", icon: Scissors },
   { id: "visits", label: "Kunjungan Sales", desc: "Check-in / check-out di lokasi pelanggan", icon: MapPin },
   { id: "stock", label: "Status Stok", desc: "Tersedia vs dipesan per gudang (hanya-lihat)", icon: Boxes },
+  { id: "leads", label: "Prospek (Lead)", desc: "Catat calon pelanggan, geser tahap, jadikan pelanggan", icon: Target },
   { id: "crm", label: "Pelanggan (CRM)", desc: "Kelola pelanggan & insentif", icon: Users },
   { id: "returns", label: "Retur Jual", desc: "Pengajuan & status retur", icon: RotateCcw },
   { id: "special", label: "Pesanan Khusus (OD)", desc: "Pesanan khusus / dibuat sesuai pesanan", icon: FileStack },
   { id: "pricelist", label: "Daftar Harga", desc: "Lihat harga per entitas", icon: Tags },
 ];
 
-const TITLES = { crm: "Pelanggan (CRM)", returns: "Retur Jual", special: "Special Order", pricelist: "Daftar Harga" };
+const TITLES = { leads: "Prospek (Lead)", crm: "Pelanggan (CRM)", returns: "Retur Jual", special: "Special Order", pricelist: "Daftar Harga" };
 
 export default function MobileMore({ user, token, selectedEntity, entities, onLogout, onForceDesktop }) {
   const [sub, setSub] = useState(null);
@@ -36,6 +38,7 @@ export default function MobileMore({ user, token, selectedEntity, entities, onLo
           {sub === "sample" && <div className="p-3"><SampleRequestForm compact /></div>}
           {sub === "visits" && <MobileVisits />}
           {sub === "stock" && <MobileStock />}
+          {sub === "leads" && <MobileLeads />}
           {sub === "crm" && <MobileCustomers selectedEntity={selectedEntity} />}
           {sub === "returns" && <MobileReturns user={user} />}
           {sub === "special" && <MobileSpecialOrders />}

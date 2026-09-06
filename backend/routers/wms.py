@@ -123,8 +123,15 @@ async def create_outbound_from_order(order_id: str, request: Request) -> List[Di
         raise HTTPException(status_code=409, detail="Hanya order confirmed yang bisa dibuat outbound task")
     # Sub-fase 1.8 — idempotent via service (cegah duplikasi dgn auto-create saat confirm)
     from services.fulfillment_status import create_outbound_tasks_for_order, recompute_so_status
-    created_tasks = await create_outbound_tasks_for_order(order_id, actor["name"])
-    await recompute_so_status(order_id)
+    # Klaim atomik sales_orders SESUDAH validasi: dua permintaan serentak tidak boleh sama-sama
+    # lolos cek "belum ada tugas" lalu masing-masing melahirkan tugas outbound → 409 untuk yang kalah.
+    from services import atomic_claim as _saga
+    await _saga.claim("sales_orders", order_id, "outbound_tasks_from_order", actor=actor["name"])
+    try:
+        created_tasks = await create_outbound_tasks_for_order(order_id, actor["name"])
+        await recompute_so_status(order_id)
+    finally:
+        await _saga.release("sales_orders", order_id)
     await audit(actor["name"], "outbound_tasks_created", "wms_task", order_id,
                 {"order_number": order["number"], "tasks_count": len(created_tasks)})
     return created_tasks

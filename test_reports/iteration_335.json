@@ -1,0 +1,23 @@
+{
+  "summary": "Retest of iteration_334 crash bug in MobileOpsApp NotifPanel. Login manager@kainnusantara.id at 390x800 with kn_force_mobile='1'. All 3 scenarios PASS: (1) Non-approval notif click (mo-notif-ntf_a6a6669cd8f8, 'Label tertahan') → no crash, root not emptied, still on Notifikasi tab, zero pageerrors. (2) Approval-related notif click (mo-notif-ntf_b184f74132e9, 'Persetujuan klaim makloon' with 'Putuskan di HP' badge) → switched to Persetujuan tab (mo-inbox visible), no errors. (3) Regression on Persetujuan tab: mo-inbox renders 2 cards (Toko Kain Sejahtera & Butik Bali Indah) each with Setujui/Tolak buttons visible in screenshot. The 'o is not a function' crash from iteration_334 is FIXED by the NotifPanel useEffect wrap.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "MobileOpsApp NotifPanel.load() is defined inside the component body but not memoized; it is intentionally only invoked in useEffect on mount and in open() for non-approval branch — acceptable for a small list, no fix needed.",
+    "Approve/reject buttons on mo-inbox use testids other than mo-approve-*/mo-reject-* (visible as 'Setujui'/'Tolak' in screenshot); if E1 wants uniform test IDs, consider standardising."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (skipped)", "frontend": "100%"},
+  "test_credentials": "manager@kainnusantara.id / demo12345 · X-Entity-Id ent_ksc",
+  "seed_data_creation": "None — 41 real notifications already existed in demo data (mix of approval and non-approval), no fixture needed.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Sesi 17 notif→inbox hop verified working. Non-approval notifs correctly stay on tab and trigger load() re-fetch. Approval notifs (title/link containing harga khusus, pesanan khusus, price-approval, special-order, persetujuan) correctly setTab('queue') to MobileApprovalInbox. No ErrorBoundary added but bug does not reproduce in current build (18:11 UTC).",
+  "rca of the issue": "Root cause of iteration_334 crash was fixed in the current source (/app/frontend/src/features/mobile/MobileOpsApp.jsx line 47: useEffect(() => { load(); }, [])). Previously the useEffect was likely returning the promise from load() as its cleanup, causing React to invoke it as a cleanup function (`o is not a function`) on unmount/re-render. Wrapping the call in a block statement returns undefined, so React no longer tries to call the promise. Verified across 41 real notifications: no pageerror, no blank root."
+}
