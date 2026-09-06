@@ -31,6 +31,12 @@ export async function printInboundRollLabels(task, rolls) {
 <body>${pages}<script>window.onload=function(){window.print();}</script></body></html>`);
 }
 
+export async function printRollLabelsBulk(rolls, ctx = {}) {
+  const groups = new Map();
+  (rolls || []).forEach((r) => { const k = r.product_name || r.product_id || ""; if (!groups.has(k)) groups.set(k, []); groups.get(k).push(r); });
+  for (const [name, rs] of groups) await printInboundRollLabels({ product_name: name, po_number: ctx.po_number, warehouse_id: rs[0]?.warehouse_id }, rs);
+}
+
 /** Cetak ulang label QR satu roll (label rusak/hilang) dari dokumen roll apa adanya. */
 export function reprintRollLabel(roll, productName) {
   return printInboundRollLabels(

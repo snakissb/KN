@@ -26,7 +26,7 @@ import inventaris_multi_koleksi as inv  # noqa: E402
 
 # Baseline "BELUM DITINJAU" saat penjaga lahir (2026-09-05). Turunkan angka ini setiap
 # kali satu endpoint selesai ditinjau — jangan pernah dinaikkan.
-BASELINE_UNREVIEWED = 41
+BASELINE_UNREVIEWED = 38
 
 # (berkas router, potongan path) → (mekanisme, alasan). mekanisme ∈ {claim, cas, service, log}
 REVIEWED: dict[tuple[str, str], tuple[str, str]] = {
@@ -73,6 +73,9 @@ REVIEWED: dict[tuple[str, str], tuple[str, str]] = {
     ("sales_returns.py", "/sales-returns/{return_id}/rolls/{roll_id}/transfer-ownership"): ("service", "klaim sales_returns sesudah semua validasi (roll/entitas/E9.3), sebelum roll direservasi/ownership dipindah/JE; release bila CAS roll kalah atau engine gagal; finish_set + $push ownership_transfers", "return_service.transfer_return_roll_ownership"),
     ("transfers.py", "/transfers"): ("compensate", "POST: id transfer baru per permintaan; reservasi roll + insert dokumen dalam satu try, except → release_wh_transfer_rolls melepas reservasi parsial (kompensasi saga)"),
     ("wms.py", "/wms/tasks"): ("compensate", "POST: id tugas baru per permintaan; inbound manual → create_inbound_roll dalam try, except → rollback_task_shell menghapus tugas tanpa roll (kompensasi saga)"),
+    ("outbound_picking.py", "/outbound/tasks/{task_id}/scan-pick"): ("cas", "find_one_and_update wms_tasks berprasyarat status hidup + picked_qty sama seperti saat dibaca → 409 STATE_CHANGED bila kalah; SO status diturunkan sesudahnya (idempoten)"),
+    ("outbound_picking.py", "/outbound/tasks/{task_id}/dispatch"): ("service", "klaim wms_tasks (status dispatchable) sesudah validasi qty, sebelum roll dikirim/surat jalan; release bila ship_order_rolls gagal; finish_set status+shipped_qty", "shipment_service.dispatch_task"),
+    ("inbound_receiving_extra.py", "/inbound/tasks/{task_id}/qc-decision"): ("service", "klaim wms_tasks (status qc_pending) sesudah validasi qty/grade/disposisi, sebelum roll karantina dikonsumsi/retur/balance; mark_failed bila gagal; finish_set status+jejak QC", "qc_service.process_qc_decision"),
     ("auth.py", "/auth/login"): ("service", "login_attempts + sessions + users(last_login): tulisan independen, tidak ada saldo/stok — aman diulang"),
 }
 

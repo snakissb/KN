@@ -148,9 +148,11 @@ async def scan_pick_item(
     # If fully picked, advance to packing
     if new_picked_qty >= expected_qty:
         update_data["status"] = "packing"
-    
+
+    # Sesi 12 — CAS: prasyarat status hidup + picked_qty tak berubah sejak dibaca → klik ganda/balapan kalah = 409.
     updated_task = await db.wms_tasks.find_one_and_update(
-        {"id": task_id},
+        {"id": task_id, "status": {"$nin": ["scheduled", "dispatched", "cancelled", "completed"]},
+         "$or": [{"picked_qty": task.get("picked_qty", 0.0)}, {"picked_qty": {"$exists": False}}] if not task.get("picked_qty") else [{"picked_qty": task.get("picked_qty")}]},
         {
             "$set": update_data,
             "$push": {"scan_log": scan_entry}
@@ -158,6 +160,9 @@ async def scan_pick_item(
         projection={"_id": 0},
         return_document=ReturnDocument.AFTER
     )
+    if not updated_task:
+        raise HTTPException(status_code=409, detail={"code": "STATE_CHANGED",
+                            "message": "Tugas sudah berubah (pick lain masuk lebih dulu). Muat ulang layar."})
     
     await audit(actor["name"], "outbound_scan_pick", "wms_task", task_id, {
         "actual_qty": actual_qty,

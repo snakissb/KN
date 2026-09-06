@@ -114,10 +114,38 @@ async def lookup_code(request: Request, code: str = Query(..., min_length=1)) ->
         ors.append({"transfer_id": ref["id"], "product_id": roll.get("product_id")})
     open_tasks = await db.wms_tasks.find(
         {"status": {"$nin": ["completed", "shipped", "dispatched", "cancelled", "done"]}, "$or": ors},
-        {"_id": 0, "id": 1, "flow_type": 1, "status": 1, "product_name": 1, "product_id": 1,
+        {"_id": 0, "id": 1, "flow_type": 1, "status": 1, "product_name": 1, "product_id": 1, "customer_name": 1,
          "order_number": 1, "po_number": 1, "sample_number": 1, "quantity": 1, "unit": 1}).sort("created_at", -1).to_list(5)
     return {"via": via, "roll": safe_doc(roll), "product_name": (product or {}).get("name"), "sku": (product or {}).get("sku"),
             "tagged": bool(roll.get("rfid_tag_id")), "open_tasks": open_tasks}
+
+
+@router.get("/rfid/labels")
+async def labels_for_document(request: Request, po_id: Optional[str] = None, lot_id: Optional[str] = None,
+                              task_id: Optional[str] = None) -> Dict[str, Any]:
+    """Cetak massal label QR: semua roll satu PO / lot / tugas penerimaan (hanya-baca)."""
+    await require_permission(request, "wms", "view")
+    if not (po_id or lot_id or task_id):
+        raise HTTPException(status_code=400, detail="Sebutkan po_id, lot_id, atau task_id")
+    ctx = await entity_ctx(request)
+    scope = resolve_scope_ids(ctx, None)
+    q: Dict[str, Any] = {"owner_entity_id": {"$in": scope}} if scope else {}
+    if po_id:
+        q["po_id"] = po_id
+    if lot_id:
+        q["lot_id"] = lot_id
+    if task_id:
+        q["$or"] = [{"acquired.ref_id": task_id}, {"inbound_task_id": task_id}, {"qc_task_id": task_id}]
+    rolls = await db.inventory_rolls.find(q, {"_id": 0, "id": 1, "roll_no": 1, "product_id": 1, "length_initial": 1, "length_remaining": 1,
+                                             "unit": 1, "grade": 1, "lot": 1, "supplier_lot": 1, "dye_lot": 1, "warehouse_id": 1, "status": 1}).sort("roll_no", 1).to_list(500)
+    pids = list({r.get("product_id") for r in rolls})
+    names = {p["id"]: p.get("name") for p in await db.products.find({"id": {"$in": pids}}, {"_id": 0, "id": 1, "name": 1}).to_list(len(pids) or 1)}
+    po = await db.purchase_orders.find_one({"id": po_id}, {"_id": 0, "po_number": 1}) if po_id else None
+    for r in rolls:
+        r["product_name"] = names.get(r.get("product_id"))
+        r["length"] = r.get("length_remaining", r.get("length_initial"))
+        r["lot"] = r.get("lot") or r.get("supplier_lot")
+    return {"count": len(rolls), "rolls": rolls, "po_number": (po or {}).get("po_number")}
 
 
 @router.get("/rfid/untagged-rolls")

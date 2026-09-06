@@ -205,6 +205,28 @@ async def process_qc_decision(
     # Snapshot grade sebelum konsumsi (untuk riwayat before → after, PS-09).
     _grade_before = {r["id"]: (r.get("grade") or "") for r in qrolls if r.get("id")}
 
+    # Sesi 12 — klaim saga SESUDAH semua validasi, SEBELUM roll karantina dikonsumsi/retur/balance.
+    from services import atomic_claim as _saga
+    await _saga.claim("wms_tasks", task_id, "qc_decision", actor=actor.get("name", ""),
+                      precondition={"status": "qc_pending"})
+    try:
+        result, set_fields = await _apply_qc_decision(task, po, owner, qrolls, _grade_before, accept_qty, reject_qty,
+                                                      reject_disposition, reason, actor, accept_grade, defects, result, doc_ref)
+    except Exception as e:
+        await _saga.mark_failed("wms_tasks", task_id, str(e))
+        raise
+    # 5) Update task — status + jejak QC + cabut kunci (tulisan akhir saga)
+    await db.wms_tasks.update_one({"id": task_id}, _saga.finish_set(set_fields))
+    return result
+
+
+async def _apply_qc_decision(task, po, owner, qrolls, _grade_before, accept_qty, reject_qty,
+                             reject_disposition, reason, actor, accept_grade, defects, result, doc_ref):
+    from services import grade_service
+    task_id = task["id"]
+    product_id = task["product_id"]
+    warehouse_id = task["warehouse_id"]
+
     # 1) ACCEPT → available
     if accept_qty > 0.01:
         acc = await _consume_quarantine(
@@ -271,7 +293,9 @@ async def process_qc_decision(
         new_status = "qc_rejected"
     qc_result = ("passed" if result["rejected_qty"] <= 0.01
                  else ("rejected" if result["accepted_qty"] <= 0.01 else "partial"))
-    await db.wms_tasks.update_one({"id": task_id}, {"$set": {
+    result["task_status"] = new_status
+    result["qc_status"] = qc_result
+    return result, {
         "status": new_status,
         "qc_status": qc_result,
         "qc_accept_qty": result["accepted_qty"],
@@ -281,8 +305,4 @@ async def process_qc_decision(
         "qc_by": actor.get("name", "system"),
         "qc_at": now_iso(),
         "updated_at": now_iso(),
-    }})
-
-    result["task_status"] = new_status
-    result["qc_status"] = qc_result
-    return result
+    }

@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { AlertTriangle, GitBranch, Layers3, Printer, RefreshCw, Save, Scissors,
          Merge, Repeat, ShieldCheck, X } from "lucide-react";
 import { formatQty } from "../../../utils/formatters";
-import { reprintRollLabel } from "../../../utils/rollLabels";
+import { reprintRollLabel, printRollLabelsBulk } from "../../../utils/rollLabels";
 import LotGenealogyTree from "./LotGenealogyTree";
 import LotRecallPanel from "./LotRecallPanel";
 import { LotSourcePill, LotStatusPill } from "./LotParts";
@@ -89,6 +89,11 @@ export default function LotDetailPanel({
         <button data-testid="lot-action-label" className="btn-secondary !px-2 !py-1 !text-[10.5px]"
           onClick={onLabel} title="Cetak label / QR lot">
           <span className="flex items-center gap-1"><Printer size={11} /> Label / QR</span>
+        </button>
+        <button data-testid="lot-action-print-roll-labels" className="btn-secondary !px-2 !py-1 !text-[10.5px]"
+          disabled={rolls.length === 0} onClick={() => printRollLabelsBulk(rolls.map((r) => ({ ...r, product_name: lot.product_name, lot: r.lot || lot.supplier_lot || lot.lot_number, dye_lot: r.dye_lot || lot.dye_lot })))}
+          title="Cetak label QR semua roll di lot ini (58×40 mm per roll)">
+          <span className="flex items-center gap-1"><Printer size={11} /> Label {rolls.length} roll</span>
         </button>
         <div className="ml-auto flex items-center gap-1">
           {TABS.map((t) => (

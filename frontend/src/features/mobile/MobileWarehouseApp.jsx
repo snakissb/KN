@@ -121,7 +121,7 @@ function ScanPanel({ onOpenTask }) {
               {tasks.length > 0 && <div className="text-xs font-semibold text-[#3C3C43]" data-testid="mw-scan-tasks">Tugas terbuka untuk roll ini:</div>}
               {tasks.map((t) => (
                 <button key={t.id} className="primary-button w-full py-3 flex items-center justify-between px-3" onClick={() => onOpenTask?.(TAB_OF[t.flow_type] || "inbound", t.id)} data-testid={`mw-scan-task-${t.id}`}>
-                  <span>{LABEL_OF[t.flow_type] || t.flow_type} · {t.product_name || t.product_id}</span><span className="text-xs opacity-80">{t.sample_number || t.order_number || t.po_number || STATUS_ID[t.status] || t.status}</span>
+                  <span>{LABEL_OF[t.flow_type] || t.flow_type} · {t.product_name || t.product_id}{t.flow_type === "sample_cut" && t.customer_name ? ` · ${t.customer_name}` : ""}</span><span className="text-xs opacity-80">{t.sample_number || t.order_number || t.po_number || STATUS_ID[t.status] || t.status}</span>
                 </button>
               ))}
             </div>

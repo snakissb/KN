@@ -51,15 +51,23 @@ async def dispatch_task(
             status_code=400,
             detail=f"Qty kirim ({qty}) melebihi yang siap dikirim ({max_ship}).")
 
-    # Pindahkan roll order → in_transit_sales (SSOT-safe)
-    res = await ship_order_rolls(task["order_id"], task["product_id"], task["warehouse_id"], qty)
+    # Sesi 12 — klaim saga SESUDAH semua validasi, SEBELUM roll dipindah/surat jalan ditulis.
+    from services import atomic_claim as _saga
+    await _saga.claim("wms_tasks", task["id"], "dispatch", actor=actor_name,
+                      precondition={"status": {"$nin": list(NON_DISPATCHABLE)}})
+    try:
+        # Pindahkan roll order → in_transit_sales (SSOT-safe)
+        res = await ship_order_rolls(task["order_id"], task["product_id"], task["warehouse_id"], qty)
+    except Exception:
+        await _saga.release("wms_tasks", task["id"])
+        raise
     shipped_now = round(res["shipped"], 2)
     new_shipped = round(already + shipped_now, 2)
     new_status = "dispatched" if new_shipped + EPS >= quantity else "partially_shipped"
 
     updated = await db.wms_tasks.find_one_and_update(
         {"id": task["id"]},
-        {"$set": {"shipped_qty": new_shipped, "status": new_status, "updated_at": now_iso()},
+        {**_saga.finish_set({"shipped_qty": new_shipped, "status": new_status, "updated_at": now_iso()}),
          "$push": {"scan_log": {"id": new_id("scan"), "scan_type": "dispatch",
                                 "actual_qty": shipped_now, "actor": actor_name, "timestamp": now_iso()}}},
         projection={"_id": 0}, return_document=ReturnDocument.AFTER,

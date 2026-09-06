@@ -137,6 +137,8 @@ async def qc_decision(task_id: str, payload: QCDecision, request: Request) -> Di
             task, payload.accept_qty, payload.reject_qty,
             payload.reject_disposition, payload.reason, actor,
             accept_grade=payload.accept_grade, defects=payload.defects)
+    except HTTPException:
+        raise   # 409 SAGA_IN_PROGRESS / STATE_CHANGED dari klaim atomik
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     await audit(actor["name"], "qc_decision", "wms_task", task_id, result)

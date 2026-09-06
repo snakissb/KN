@@ -1,0 +1,15 @@
+{
+  "summary": "Sesi 12 verifikasi lengkap. Backend: python3 scripts/probe_sesi12.py SEMUA PASS (ratchet CAS scan-pick balapan 6 request → 200,200,400,400,400,409 dgn picked=8 log=2 tidak melebihi 10; dispatch 409 SAGA_IN_PROGRESS saat terkunci; dispatch 400 tanpa qty ter-pick TIDAK meninggalkan kunci; qc-decision 409 saat terkunci; qc-decision qty 0 → 400 tanpa kunci; lookup roll saran FIFO mengembalikan open_tasks sample_cut + customer_name; GET /rfid/labels?po_id → 200 count=2 po=KANDA/PO-00012; GET /rfid/labels tanpa filter → 400). verify_atomic_claim.py PASS 48 checks (baseline 38). Frontend Desktop (1920x900, admin@kainnusantara.id): Lot detail — lot idx 8 dgn '1 roll' → data-testid lot-action-print-roll-labels teks 'Label 1 roll' → popup memuat 1 QR img + RL-00056. PO detail KANDA/PO-00012 (completed) → dialog + Cetak Label Semua Roll (data-testid popup-print-roll-labels) → popup 4 imgs + rolls unik ['RL-00056','RTN-00001'] + teks '4 label dikirim ke printer' terlihat pada halaman detail. Frontend Mobile (390x800, kn_force_mobile=1, warehouse@kainnusantara.id): Sisip tugas sample_cut sintetis (ent_ksc, suggested_roll_no=RL-00049, customer='PelangganUji'); tab Pindai isi RL-00049 → data-testid mw-scan-task-{tid} teks berisi 'Potong · TestProdSample · PelangganUjiSMP-TEST' → klik → mobile-view-sample + mw-task-{tid} + mw-sample-actions-{tid} semua terlihat; tugas sintetis dihapus. Regresi tab Pindai RL-00025 masih menampilkan mw-scan-reprint + mw-scan-task Ambil SO-0005. RfidTagsView rfid-reprint dikonfirmasi pada iterasi sebelumnya.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": ["/app/scripts/probe_sesi12.py", "/app/scripts/guardrails/verify_atomic_claim.py"],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "admin@kainnusantara.id / demo12345 (Admin); warehouse@kainnusantara.id / demo12345 (Gudang)",
+  "seed_data_creation": "Tugas sample_cut sintetis id=wms_TEST_sc_83d050 (suggested_roll_id RL-00049, customer PelangganUji) — sudah DIHAPUS setelah pengujian.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Untuk membuka detail PO gunakan search 'PO-00012' lalu klik 'Lihat detail lengkap' — tombol popup-print-roll-labels ada di dalam dialog detail. Untuk lot yang punya roll di data demo, iterasi lot pertama biasanya '0 roll' — lot dgn 1+ roll ada di indeks ~8 (RL-00056). Popup Cetak label memakai window.open — pakai context.expect_page()."
+}
