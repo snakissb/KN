@@ -37,6 +37,12 @@ Admin · Manajer · Admin Sales · Finance · Sales · Gudang · Desainer · Sop
 - Lingkungan: `backend/.env` wajib `CORS_ORIGINS` eksplisit (template `*` membuat backend menolak start).
 - Testing agent iteration_314: semua PASS. `gate.sh --quick`: 5 merah pra-eksisting saja.
 
+## Yang dikerjakan 2026-09-06 sesi 14 (laporan: `memory/LAPORAN_SESI_2026-09-06_SESI14.md`)
+- Offline HP gudang: middleware `Idempotency-Key` (replay balasan pertama, `X-Idempotent-Replay`), antrean localStorage + `OfflineBanner`, `POST /rfid/roll-scans` (replay pindai offline, last_scan hanya maju).
+- Ratchet INV-ATOMIC-01 36 → 34: klaim verify/cycle-count complete; kompensasi transfer antar-PT; guard 55 cek.
+- `GET /rfid/printer-status` + `PrinterStatusWidget` (Kesehatan gudang & HP Pindai); bin/lokasi terakhir roll (HP input bin, Lot roll table, Jejak Barang).
+- Probe `scripts/probe_sesi14.py` 14/14 PASS · gate hijau · testing agent iteration_329 semua PASS.
+
 ## Yang dikerjakan 2026-09-06 sesi 13 (laporan: `memory/LAPORAN_SESI_2026-09-06_SESI13.md`)
 - Ratchet INV-ATOMIC-01 38 → 36: encode tag CAS+kompensasi, retire tag CAS, advance CAS + `expected_status`; guard mekanisme `service_cas`.
 - Label saat penerimaan desktop (banner inbound: popup / antrean); antrean printer bersama `kind=qr_label` (ZPL QR) di Lot/PO/inbound; panel Print & Verify menandai job QR.
@@ -87,8 +93,8 @@ Admin · Manajer · Admin Sales · Finance · Sales · Gudang · Desainer · Sop
 
 ## Backlog (prioritas)
 - P1 COGS eksplisit per potongan sampel bila kebijakan menuntut; `simulate-payment` (invoices.py) tinjau sebagai compensate/log-only.
-- P0 36 endpoint multi-koleksi BELUM DITINJAU (INV-ATOMIC-01 ratchet): berikutnya verify-sessions & cycle-count complete, transfers inter-company, wms outbound-from-order, bank-reconciliation lines.
-- P1 Offline HP gudang: antrean pindai/aksi di IndexedDB + `Idempotency-Key` di endpoint aksi gudang (scan-receive, complete, scan-pick, cut) — disepakati untuk sesi berikutnya.
+- P0 34 endpoint multi-koleksi BELUM DITINJAU (INV-ATOMIC-01 ratchet): berikutnya bank-reconciliation lines (book-charge/holding), access role-reality apply, categories PATCH, wms outbound-from-order.
+- P1 Offline HP: perluas ke sales mobile (kunjungan/pesanan), service worker untuk buka app tanpa sinyal (saat ini antrean aksi saja; app tetap perlu dimuat online).
 - P1 T-05: 2 REGISTRY GAP (P2); T-04 perbaiki 2 lokasi `PERBAIKI`.
 - P1 `warehouse_id` saran reorder (keputusan pemilik masih terbuka).
 - P2 5 gate `--quick` merah pra-eksisting (INV-UI-01/UI-10/UX-01/i18n); T-10 daftar saudara 459 endpoint; jalankan CI di GitHub.
