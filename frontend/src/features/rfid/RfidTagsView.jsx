@@ -5,6 +5,7 @@ import ErrorNotice from "../../components/ErrorNotice";
 import axios, { API } from "../../services/apiClient";
 import { nf, q, fmtTime, Stat, EmptyBox, TabBtn, SectionCard, RfidHeader, useWarehouses } from "./rfidShared";
 import RfidPrintVerifyPanel from "./RfidPrintVerifyPanel";
+import { reprintRollLabel } from "../../utils/rollLabels";
 
 export default function RfidTagsView({ currentUser, selectedEntity }) {
   const [tab, setTab] = useState("tags");
@@ -16,6 +17,13 @@ export default function RfidTagsView({ currentUser, selectedEntity }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const [msg, setMsg] = useState("");
+  // Cetak ulang label QR roll (rusak/hilang) — data roll segar dari /rfid/lookup.
+  const reprintByCode = async (code) => {
+    if (!code) return;
+    setBusy(true);
+    try { const { data } = await axios.get(`${API}/rfid/lookup`, { params: { code } }); await reprintRollLabel(data.roll, data.product_name); setMsg(`Label ${data.roll?.roll_no} dikirim ke printer.`); }
+    catch (e) { setError(e); } finally { setBusy(false); }
+  };
 
   const load = async () => {
     setLoading(true); setError(null);
@@ -98,6 +106,10 @@ export default function RfidTagsView({ currentUser, selectedEntity }) {
                           <td className="pr-2">{t.roll_no} · {t.lot || "—"}</td>
                           <td className="pr-2 text-[#6B6B73]">{t.last_seen_at ? `${fmtTime(t.last_seen_at)} @ ${t.last_seen_location || "?"}` : "belum terbaca"}</td>
                           <td className="pr-2 text-right">
+                            <button data-testid={`rfid-reprint-${t.id}`} disabled={busy} onClick={() => reprintByCode(t.roll_id || t.roll_no)}
+                              className="inline-flex items-center gap-1 text-[#0058CC] hover:bg-[#EAF2FF] rounded px-2 py-1 disabled:opacity-40" title="Cetak ulang label QR">
+                              <Printer size={13} /> Label
+                            </button>
                             <button data-testid={`rfid-retire-${t.id}`} disabled={busy} onClick={() => retire(t.id)}
                               className="inline-flex items-center gap-1 text-[#C0341D] hover:bg-[#FBE9E7] rounded px-2 py-1 disabled:opacity-40">
                               <Trash2 size={13} /> Retire
@@ -126,6 +138,10 @@ export default function RfidTagsView({ currentUser, selectedEntity }) {
                         <p className="text-[12px] font-semibold">{r.roll_no} · {r.sku || "—"}</p>
                         <p className="text-[11px] text-[#6B6B73]">{r.product_name} — {q(r.length_remaining)} {r.unit} · Lot {r.lot || "—"} · {r.status}</p>
                       </div>
+                      <button data-testid={`rfid-untagged-reprint-${r.id}`} disabled={busy} onClick={() => reprintByCode(r.id)}
+                        className="flex items-center gap-1 rounded-lg border border-[#0058CC] text-[#0058CC] px-3 py-1.5 text-[12px] font-semibold disabled:opacity-40" title="Cetak ulang label QR">
+                        <Printer size={13} /> Label
+                      </button>
                       <button data-testid={`rfid-encode-${r.id}`} disabled={busy} onClick={() => encode(r.id)}
                         className="flex items-center gap-1 rounded-lg bg-[#0058CC] text-white px-3 py-1.5 text-[12px] font-semibold disabled:opacity-40">
                         <Tag size={13} /> Encode

@@ -1091,12 +1091,16 @@ async def transfer_return_roll_ownership(return_id: str, roll_id: str,
     now = now_iso()
     transfer_id = new_id("xfer")
     qty = round(float(roll.get("length_remaining", roll.get("length", 0)) or 0), 2)
+    # Sesi 11 — klaim saga atas dokumen retur SESUDAH semua validasi, SEBELUM roll/JE/transfer ditulis.
+    from services import atomic_claim as _saga
+    await _saga.claim("sales_returns", return_id, "transfer_ownership", actor=actor)
     # Reservasi roll SPESIFIK ini untuk transfer (agar execute_ownership_transfer memindah tepat roll ini).
     upd = await db.inventory_rolls.update_one(
         {"id": roll_id, "status": "available"},
         {"$set": {"status": "reserved", "reserved_ref": {"type": "transfer", "id": transfer_id},
                   "updated_at": now}})
     if upd.modified_count != 1:
+        await _saga.release("sales_returns", return_id)
         raise ValueError("Roll berubah status saat memulai transfer. Coba lagi.")
 
     transfer = {
@@ -1122,19 +1126,19 @@ async def transfer_return_roll_ownership(return_id: str, roll_id: str,
         await db.inventory_rolls.update_one(
             {"id": roll_id, "reserved_ref.id": transfer_id},
             {"$set": {"status": "available", "reserved_ref": None, "updated_at": now_iso()}})
+        await _saga.release("sales_returns", return_id)
         raise
     transfer["ownership_moved"] = moved
     transfer["je_intercompany"] = je
     from services import line_scope as _lines            # FASE L
     await _lines.stamp_doc(db, transfer)
     await db.warehouse_transfers.insert_one(dict(transfer))
-    await db.sales_returns.update_one(
-        {"id": return_id},
-        {"$push": {"ownership_transfers": {
-            "transfer_id": transfer_id, "code": transfer["code"], "roll_id": roll_id,
-            "from_entity": src, "to_entity": dest_entity_id, "qty": qty,
-            "je_posted": je.get("posted"), "je_total": je.get("total", 0), "at": now}},
-         "$set": {"updated_at": now}})
+    fin = _saga.finish_set({"updated_at": now})
+    fin["$push"] = {"ownership_transfers": {
+        "transfer_id": transfer_id, "code": transfer["code"], "roll_id": roll_id,
+        "from_entity": src, "to_entity": dest_entity_id, "qty": qty,
+        "je_posted": je.get("posted"), "je_total": je.get("total", 0), "at": now}}
+    await db.sales_returns.update_one({"id": return_id}, fin)
     updated_roll = await db.inventory_rolls.find_one({"id": roll_id}, {"_id": 0})
     return {"transfer_id": transfer_id, "code": transfer["code"], "from_entity": src,
             "to_entity": dest_entity_id, "qty": qty, "moved": moved, "je": je, "roll": updated_roll}

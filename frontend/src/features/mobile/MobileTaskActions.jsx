@@ -1,40 +1,25 @@
 import { useState } from "react";
-import { Loader2 } from "lucide-react";
-import QRCode from "qrcode";
+import { Loader2, Printer } from "lucide-react";
 import axios, { API } from "../../services/apiClient";
+import { printSampleLabel, printInboundRollLabels, reprintRollLabel } from "../../utils/rollLabels";
+
+export { printSampleLabel, printInboundRollLabels, reprintRollLabel };
 
 const errText = (e, fb) => { const d = e.response?.data?.detail; return (d && (d.message || (typeof d === "string" ? d : JSON.stringify(d)))) || fb; };
-const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-/** QR berisi NOMOR ROLL → HP gudang memindai label tanpa RFID (GET /rfid/lookup?code=). */
-const qrFor = async (text) => { try { return await QRCode.toDataURL(String(text || ""), { margin: 0, width: 120 }); } catch (_) { return ""; } };
-const openPrint = (html) => { const w = window.open("", "_blank", "width=420,height=360"); if (!w) return; w.document.open(); w.document.write(html); w.document.close(); };
-const LABEL_CSS = `@page{size:58mm 40mm;margin:2mm}body{font-family:Arial,sans-serif;margin:0;width:54mm}section{page-break-after:always;padding-bottom:2mm;display:flex;gap:2mm}
-.qr{width:22mm;height:22mm;flex:none}.txt{flex:1;min-width:0}.no{font-size:17px;font-weight:800;letter-spacing:.3px;word-break:break-all}.row{font-size:10px;margin-top:2px}.b{font-weight:700}.small{font-size:8.5px;color:#444;margin-top:3px}`;
 
-/** Label kecil 58mm untuk potongan sampel: QR nomor roll anak, pelanggan, panjang, produk, SO. */
-export async function printSampleLabel(r) {
-  const qr = await qrFor(r.child_roll_no);
-  openPrint(`<!doctype html><html lang="id"><head><meta charset="utf-8"><title>Label ${esc(r.child_roll_no)}</title><style>${LABEL_CSS}</style></head>
-<body><section>${qr ? `<img class="qr" src="${qr}" alt="QR ${esc(r.child_roll_no)}">` : ""}<div class="txt"><div class="no">${esc(r.child_roll_no)}</div>
-<div class="row b">${esc(r.customer_name)}</div>
-<div class="row">${esc(r.product_name)} · ${esc(r.sku)}</div>
-<div class="row"><span class="b">${esc(r.length)} ${esc(r.unit)}</span> · dari ${esc(r.cut_roll_no)}</div>
-<div class="small">${esc(r.number)} · ${esc(r.sales_order_number || "")} · ${new Date().toLocaleDateString("id-ID")}</div></div></section>
-<script>window.onload=function(){window.print();}</script></body></html>`);
+/** Tombol cetak ulang label QR untuk roll yang sudah terikat ke tugas (label rusak/hilang). */
+export function ReprintRollButton({ task }) {
+  const [busy, setBusy] = useState(false);
+  if (!task?.roll_id) return null;
+  const go = async (e) => {
+    e.stopPropagation(); setBusy(true);
+    try { const { data } = await axios.get(`${API}/rfid/lookup`, { params: { code: task.roll_id } }); if (data?.roll) await reprintRollLabel(data.roll, data.product_name || task.product_name); }
+    catch (_) { /* roll belum ada / tidak ditemukan */ } finally { setBusy(false); }
+  };
+  return <button className="secondary-button w-full py-2 flex items-center justify-center gap-2" disabled={busy} onClick={go} data-testid={`mw-reprint-${task.id}`}><Printer size={14} /> Cetak ulang label QR roll</button>;
 }
 
 /** Aksi tugas gudang di mobile (Tahap 2): satu tombol besar per langkah, hasil = ikon + teks. */
-/** Label roll baru inbound (58×40 mm per roll): QR nomor roll, produk, panjang, grade, lot. */
-export async function printInboundRollLabels(task, rolls) {
-  const qrs = await Promise.all((rolls || []).map((r) => qrFor(r.roll_no)));
-  const pages = (rolls || []).map((r, i) => `<section>${qrs[i] ? `<img class="qr" src="${qrs[i]}" alt="QR ${esc(r.roll_no)}">` : ""}<div class="txt"><div class="no">${esc(r.roll_no)}</div>
-<div class="row b">${esc(task.product_name || task.product_id)}</div>
-<div class="row"><span class="b">${esc(r.length)} ${esc(r.unit || task.unit || "")}</span> · Grade ${esc(r.grade || "A")}</div>
-<div class="row">Lot ${esc(r.lot || "-")}${r.dye_lot ? ` · Dye ${esc(r.dye_lot)}` : ""}</div>
-<div class="small">${esc(task.po_number || "")} · ${esc(task.warehouse_name || task.warehouse_id || "")} · ${new Date().toLocaleDateString("id-ID")}</div></div></section>`).join("");
-  openPrint(`<!doctype html><html lang="id"><head><meta charset="utf-8"><title>Label roll</title><style>${LABEL_CSS}</style></head>
-<body>${pages}<script>window.onload=function(){window.print();}</script></body></html>`);
-}
 
 export function InboundActions({ task, onDone, onCompleted }) {
   const [qty, setQty] = useState(String(task.expected_qty ?? task.quantity ?? ""));
@@ -67,6 +52,7 @@ export function InboundActions({ task, onDone, onCompleted }) {
           <button className="secondary-button w-full py-3" disabled={busy} onClick={complete} data-testid={`mw-complete-btn-${task.id}`}>{busy ? <Loader2 size={14} className="animate-spin inline" /> : null} Selesai (masuk stok)</button>
         </div>
       )}
+      <ReprintRollButton task={task} />
       {msg && <div className={`notice-bar ${msg.ok ? "success" : "danger"}`} data-testid={`mw-action-msg-${task.id}`}>{msg.text}</div>}
     </div>
   );
@@ -89,6 +75,7 @@ export function OutboundActions({ task, onDone }) {
       {["picked", "packing", "packed", "ready"].includes(task.status) && (
         <button className="secondary-button w-full py-3" disabled={busy} onClick={dispatch} data-testid={`mw-dispatch-btn-${task.id}`}>Berangkatkan</button>
       )}
+      <ReprintRollButton task={task} />
       {msg && <div className={`notice-bar ${msg.ok ? "success" : "danger"}`} data-testid={`mw-action-msg-${task.id}`}>{msg.text}</div>}
     </div>
   );

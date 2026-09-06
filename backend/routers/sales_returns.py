@@ -547,6 +547,8 @@ async def transfer_roll_ownership(
         result = await return_service.transfer_return_roll_ownership(
             return_id, roll_id, payload.dest_entity_id,
             user.get("name", user.get("email", "")), notes=payload.notes)
+    except HTTPException:
+        raise   # 409 SAGA_IN_PROGRESS dari klaim atomik diteruskan apa adanya
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     await audit(user.get("name", ""), "sales_return_roll_ownership_transferred", "sales_return", return_id,

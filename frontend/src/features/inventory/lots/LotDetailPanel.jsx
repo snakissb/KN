@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { AlertTriangle, GitBranch, Layers3, Printer, RefreshCw, Save, Scissors,
          Merge, Repeat, ShieldCheck, X } from "lucide-react";
 import { formatQty } from "../../../utils/formatters";
+import { reprintRollLabel } from "../../../utils/rollLabels";
 import LotGenealogyTree from "./LotGenealogyTree";
 import LotRecallPanel from "./LotRecallPanel";
 import { LotSourcePill, LotStatusPill } from "./LotParts";
@@ -232,6 +233,7 @@ export default function LotDetailPanel({
                     <th className="px-2 py-1.5 font-bold">Gudang / Bin</th>
                     <th className="px-2 py-1.5 font-bold">Dye lot</th>
                     <th className="px-2 py-1.5 font-bold">Terikat</th>
+                    <th className="px-2 py-1.5 font-bold">Label</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -246,6 +248,13 @@ export default function LotDetailPanel({
                       <td className="px-2 py-1.5">{r.dye_lot || "—"}</td>
                       <td className="px-2 py-1.5 text-[10px] text-[#6B6B73]">
                         {(r.reserved_ref || {}).id || (r.earmarked_for || {}).id || "—"}
+                      </td>
+                      <td className="px-2 py-1.5">
+                        <button type="button" className="icon-button" data-testid={`lot-roll-reprint-${r.id}`}
+                          aria-label={`Cetak ulang label QR ${r.roll_no}`} title="Cetak ulang label QR (rusak/hilang)"
+                          onClick={() => reprintRollLabel({ ...r, lot: r.lot || lot.supplier_lot || lot.lot_number, dye_lot: r.dye_lot || lot.dye_lot }, lot.product_name)}>
+                          <Printer size={12} />
+                        </button>
                       </td>
                     </tr>
                   ))}

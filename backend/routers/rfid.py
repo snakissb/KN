@@ -105,8 +105,19 @@ async def lookup_code(request: Request, code: str = Query(..., min_length=1)) ->
     ctx = await entity_ctx(request)
     assert_entity_access({"entity_id": roll.get("owner_entity_id")}, "inventory_rolls", ctx)
     product = await db.products.find_one({"id": roll.get("product_id")}, {"_id": 0, "name": 1, "sku": 1})
+    # Sesi 11 — pindai → aksi: tugas WMS terbuka yang menyentuh roll ini (ambil / terima / potong).
+    ors: list = [{"roll_id": roll["id"]}, {"suggested_roll_id": roll["id"]}, {"roll_ids": roll["id"]}, {"roll_id": roll.get("roll_no")}]
+    ref = roll.get("reserved_ref") or roll.get("earmarked_for") or {}
+    if isinstance(ref, dict) and ref.get("id"):
+        # roll dicadangkan untuk SO/transfer → tugas ambil (outbound) atas dokumen itu & produk yang sama
+        ors.append({"order_id": ref["id"], "product_id": roll.get("product_id")})
+        ors.append({"transfer_id": ref["id"], "product_id": roll.get("product_id")})
+    open_tasks = await db.wms_tasks.find(
+        {"status": {"$nin": ["completed", "shipped", "dispatched", "cancelled", "done"]}, "$or": ors},
+        {"_id": 0, "id": 1, "flow_type": 1, "status": 1, "product_name": 1, "product_id": 1,
+         "order_number": 1, "po_number": 1, "sample_number": 1, "quantity": 1, "unit": 1}).sort("created_at", -1).to_list(5)
     return {"via": via, "roll": safe_doc(roll), "product_name": (product or {}).get("name"), "sku": (product or {}).get("sku"),
-            "tagged": bool(roll.get("rfid_tag_id"))}
+            "tagged": bool(roll.get("rfid_tag_id")), "open_tasks": open_tasks}
 
 
 @router.get("/rfid/untagged-rolls")

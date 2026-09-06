@@ -37,6 +37,12 @@ Admin · Manajer · Admin Sales · Finance · Sales · Gudang · Desainer · Sop
 - Lingkungan: `backend/.env` wajib `CORS_ORIGINS` eksplisit (template `*` membuat backend menolak start).
 - Testing agent iteration_314: semua PASS. `gate.sh --quick`: 5 merah pra-eksisting saja.
 
+## Yang dikerjakan 2026-09-06 sesi 11 (laporan: `memory/LAPORAN_SESI_2026-09-06_SESI11.md`)
+- Ratchet INV-ATOMIC-01 48 → 41: klaim `transfer_return_roll_ownership` (service), kompensasi `POST /transfers` & `POST /wms/tasks` (rollback_task_shell + safe_unlink_all), `rfid/ingest` ditinjau service (append-only).
+- Cetak ulang label QR roll: `utils/rollLabels.js` (sumber tunggal); HP (Pindai + kartu tugas ber-roll), desktop (RFID Tags, Belum Ber-tag, Lot detail tab Roll).
+- Pindai → Aksi: `GET /rfid/lookup` + `open_tasks` (roll_id/suggested/roll reserved SO → tugas ambil); HP membuka kartu tugas otomatis (`focusTaskId`).
+- Probe `scripts/probe_sesi11.py` SEMUA PASS · gate `--quick` hijau · testing agent iteration_325 semua PASS.
+
 ## Yang dikerjakan 2026-09-05 sesi 10 (laporan: `memory/LAPORAN_SESI_2026-09-05_SESI10.md`)
 - QR nomor roll pada label potongan & roll inbound; `GET /rfid/lookup` + pindai HP gudang (ketik/kamera) tanpa RFID; ratchet 49 → 48 (DELETE transfers).
 
@@ -68,7 +74,7 @@ Admin · Manajer · Admin Sales · Finance · Sales · Gudang · Desainer · Sop
 
 ## Backlog (prioritas)
 - P1 COGS eksplisit per potongan sampel bila kebijakan menuntut; `simulate-payment` (invoices.py) tinjau sebagai compensate/log-only.
-- P0 48 endpoint multi-koleksi BELUM DITINJAU (INV-ATOMIC-01 ratchet): berikutnya rfid/ingest (log_only), transfer-ownership retur (CAS → find_one_and_update), POST transfers & POST wms/tasks (compensate).
+- P0 41 endpoint multi-koleksi BELUM DITINJAU (INV-ATOMIC-01 ratchet): berikutnya inbound qc-decision, outbound scan-pick/dispatch, rfid tags encode/DELETE, verify-sessions & cycle-count complete, transfers inter-company, wms outbound-from-order/advance.
 - P1 T-05: 2 REGISTRY GAP (P2); T-04 perbaiki 2 lokasi `PERBAIKI`.
 - P1 `warehouse_id` saran reorder (keputusan pemilik masih terbuka).
 - P2 5 gate `--quick` merah pra-eksisting (INV-UI-01/UI-10/UX-01/i18n); T-10 daftar saudara 459 endpoint; jalankan CI di GitHub.

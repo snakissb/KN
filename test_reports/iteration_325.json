@@ -1,0 +1,15 @@
+{
+  "summary": "Sesi 11 verifikasi lengkap. Backend: probe_sesi11.py SEMUA PASS; verify_atomic_claim.py PASS (45 checks, 0 pelanggaran, baseline 41). Frontend mobile (Gudang, viewport 390x800, kn_force_mobile=1): Pindai RL-00025 menampilkan 'TERIKAT PESANAN', mw-scan-reprint dan mw-scan-tasks/mw-scan-task-wms_96710451e4ca terlihat; klik reprint membuka popup dgn 'RL-00025' + QR data:image; klik tugas → mobile-view-outbound + mw-task-wms_96710451e4ca + mw-outbound-actions-wms_96710451e4ca terlihat; kode 'XXX-999' → 'TIDAK DIKENAL'. Tab Masuk/Sampel tidak menampilkan mw-reprint-{id} karena tidak ada tugas terbuka dgn roll_id di data demo (catat sesuai brief). Desktop (Admin, 1920x1080): RfidTagsView (view=cs-rfid-tags) memuat 43 tombol rfid-reprint-{tagId} dan tab Belum Ber-tag memuat 26 tombol rfid-untagged-reprint-{rollId}; popup memuat roll_no RL-00001/RL-00045 + QR. Lot detail (view=inventory-lots) → buka lot dgn roll → tab Roll → tombol lot-roll-reprint-{rollId} membuka popup label memuat kode roll (mis. RTN-00001) + QR.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": ["/app/scripts/probe_sesi11.py", "/app/scripts/guardrails/verify_atomic_claim.py"],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "admin@kainnusantara.id / demo12345 (Admin); warehouse@kainnusantara.id / demo12345 (Gudang)",
+  "seed_data_creation": "Tidak ada; hanya menggunakan data demo.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Untuk desktop, gunakan URL langsung: ?view=cs-rfid-tags (RfidTagsView) dan ?view=inventory-lots (LotsView). Tombol untuk membuka detail lot adalah lot-open-{id} (bukan lot-row klik). Popup Cetak label memakai window.open — gunakan context.expect_page() untuk menangkap popup. Data demo saat ini tidak berisi tugas inbound/sample terbuka dengan roll_id → mw-reprint-{id} tidak akan tampak di tab Masuk/Sampel; ini bukan bug."
+}

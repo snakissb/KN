@@ -219,12 +219,20 @@ async def create_transfer(payload: TransferCreate, request: Request) -> Dict[str
                 **(await _dual.stamp(item, rolls=len(roll_refs))),
             })
             items_out.append(item_doc)
-    except HTTPException:
-        # rollback reservasi parsial bila ada item gagal
-        await release_wh_transfer_rolls(transfer_id)
+        transfer = _build_transfer_doc(transfer_id, code, payload, prefer_owner, ctx, items_out)
+        await db.warehouse_transfers.insert_one(transfer)
+    except Exception:
+        await release_wh_transfer_rolls(transfer_id)   # kompensasi saga: reservasi parsial dilepas
         raise
 
-    transfer = {
+    await audit(actor["name"], "transfer_created", "transfer", transfer["id"],
+                {"code": code, "items": len(items_out)})
+    
+    return safe_doc(transfer)
+
+
+def _build_transfer_doc(transfer_id, code, payload, prefer_owner, ctx, items_out) -> Dict[str, Any]:
+    return {
         "id": transfer_id,
         "code": code,
         "transfer_kind": "intra_entity",
@@ -246,12 +254,6 @@ async def create_transfer(payload: TransferCreate, request: Request) -> Dict[str
         "created_at": now_iso(),
         "updated_at": now_iso()
     }
-    
-    await db.warehouse_transfers.insert_one(transfer)
-    await audit(actor["name"], "transfer_created", "transfer", transfer["id"],
-                {"code": code, "items": len(items_out)})
-    
-    return safe_doc(transfer)
 
 
 @router.post("/transfers/inter-company")

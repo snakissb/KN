@@ -46,6 +46,12 @@ async def list_tasks(request: Request, line: str = "") -> List[Dict[str, Any]]:
     return tasks
 
 
+async def rollback_task_shell(task_id: str) -> None:
+    from services.doc_refs_service import safe_unlink_all
+    await safe_unlink_all("wms_tasks", task_id)
+    await db.wms_tasks.delete_one({"id": task_id, "roll_id": {"$in": [None, ""]}})
+
+
 @router.post("/wms/tasks")
 async def create_task(payload: WMSTaskCreate, request: Request) -> Dict[str, Any]:
     actor = await require_permission(request, "wms", "create")
@@ -87,12 +93,16 @@ async def create_task(payload: WMSTaskCreate, request: Request) -> Dict[str, Any
         # Roll-as-SSOT (KN_15 §10): inbound manual MEMBUAT roll available (bukan $inc balance),
         # sehingga stok punya backing roll nyata (bisa dialokasi & tak drift saat rebuild).
         owner = DEFAULT_ENTITY_ID if getattr(ctx, "view_all", False) else (ctx.active_entity_id or DEFAULT_ENTITY_ID)
-        roll = await create_inbound_roll(
-            payload.product_id, payload.warehouse_id, owner, payload.quantity,
-            lot=payload.lot, batch=payload.batch, bin_id=payload.bin_id or None,
-            unit=payload.unit, acquired_via="manual_inbound", ref_id=task["id"],
-            created_by=actor["name"], roll_no=payload.roll_id or "",
-        )
+        try:
+            roll = await create_inbound_roll(
+                payload.product_id, payload.warehouse_id, owner, payload.quantity,
+                lot=payload.lot, batch=payload.batch, bin_id=payload.bin_id or None,
+                unit=payload.unit, acquired_via="manual_inbound", ref_id=task["id"],
+                created_by=actor["name"], roll_no=payload.roll_id or "",
+            )
+        except Exception:
+            await rollback_task_shell(task["id"])   # kompensasi saga: tugas tanpa roll dihapus
+            raise
         await db.wms_tasks.update_one(
             {"id": task["id"]}, {"$set": {"roll_id": roll["id"], "owner_entity_id": owner}}
         )

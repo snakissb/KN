@@ -2,19 +2,27 @@ import { useEffect, useRef, useState } from "react";
 import { ClipboardList, ScanLine, Tags, PackageCheck, AlertTriangle, CheckCircle2, Loader2, Scissors, Printer, Camera } from "lucide-react";
 import axios, { API } from "../../services/apiClient";
 import MobileShell from "./MobileShell";
-import { InboundActions, OutboundActions, SampleCutActions, printSampleLabel, printInboundRollLabels } from "./MobileTaskActions";
+import { printSampleLabel, printInboundRollLabels, reprintRollLabel } from "./MobileTaskActions";
+import { InboundActions, OutboundActions, SampleCutActions } from "./MobileTaskActions";
 
 const STATUS_ID = { pending: "Menunggu", receiving: "Menerima", qc_check: "Cek QC", put_away: "Simpan", picking: "Ambil", packing: "Kemas", escalated: "Eskalasi", completed: "Selesai", shipped: "Terkirim" };
 
-function TaskList({ type }) {
+function TaskList({ type, focusTaskId, onFocused }) {
   const [rows, setRows] = useState(null);
   const [err, setErr] = useState("");
-  const [open, setOpen] = useState("");
+  const [open, setOpen] = useState(focusTaskId || "");
   const [lastCut, setLastCut] = useState(null);
   const [lastInbound, setLastInbound] = useState(null);
   const load = () => axios.get(`${API}/wms/tasks`).then((r) => setRows((Array.isArray(r.data) ? r.data : r.data.items || r.data.tasks || []).filter((t) => (t.flow_type || t.type) === type && !["completed", "shipped", "cancelled", "done"].includes(t.status))))
     .catch((e) => setErr(e.response?.data?.detail || "Gagal memuat tugas."));
   useEffect(() => { load(); }, [type]); // eslint-disable-line
+  // Pindai → aksi: kartu tugas hasil pindai dibuka & digulir ke layar, lalu fokus dilepas.
+  useEffect(() => {
+    if (!focusTaskId || rows === null) return;
+    setOpen(focusTaskId);
+    document.querySelector(`[data-testid="mw-task-${focusTaskId}"]`)?.scrollIntoView({ block: "center" });
+    onFocused?.();
+  }, [focusTaskId, rows]); // eslint-disable-line
   if (err) return <div className="notice-bar danger m-4" data-testid="mw-task-error">{String(err)}</div>;
   if (rows === null) return <div className="p-6 text-center text-sm"><Loader2 className="animate-spin inline" size={16} /> Memuat…</div>;
   const label = { inbound: "barang masuk", outbound: "barang keluar", sample_cut: "potong sampel" }[type] || type;
@@ -37,7 +45,7 @@ function TaskList({ type }) {
         </div>
       )}
       {rows.map((t) => (
-        <div key={t.id} className="m-card p-3" data-testid={`mw-task-${t.id}`} onClick={() => setOpen(open === t.id ? "" : t.id)}>
+        <div key={t.id} className={`m-card p-3 ${focusTaskId === t.id ? "ring-2 ring-[#0058CC]" : ""}`} data-testid={`mw-task-${t.id}`} onClick={() => setOpen(open === t.id ? "" : t.id)}>
           <div className="flex items-center justify-between"><b className="text-[15px]">{t.product_name || t.product_id}</b>
             <span className={`status-pill ${t.status === "escalated" ? "pill-danger" : "pill-warning"}`}>{STATUS_ID[t.status] || t.status}</span></div>
           <div className="text-xs text-[#6E6E73] mt-1">{t.warehouse_name || t.warehouse_id} · qty <b className="tabular-nums">{t.quantity}</b> {t.unit || ""}{t.order_number ? ` · ${t.order_number}` : ""}{t.po_number ? ` · ${t.po_number}` : ""}{t.sample_number ? ` · ${t.sample_number}` : ""}</div>
@@ -48,25 +56,31 @@ function TaskList({ type }) {
   );
 }
 
-function ScanPanel() {
+function ScanPanel({ onOpenTask }) {
   const [epc, setEpc] = useState("");
   const [res, setRes] = useState(null);
+  const [tasks, setTasks] = useState([]);
   const [busy, setBusy] = useState(false);
   const [cam, setCam] = useState(false);
   const videoRef = useRef(null);
   const canCamera = typeof window !== "undefined" && "BarcodeDetector" in window && !!navigator.mediaDevices;
   const lookup = async (code) => {
     if (!code.trim()) return;
-    setBusy(true); setRes(null);
+    setBusy(true); setRes(null); setTasks([]);
     try {
       const { data } = await axios.get(`${API}/rfid/lookup`, { params: { code: code.trim() } });
       const r = data.roll || {};
       const held = ["reserved", "committed", "picked", "packed"].includes(r.status);
-      setRes({ kind: held ? "warn" : "ok", title: held ? "TERIKAT PESANAN" : "COCOK",
+      setRes({ kind: held ? "warn" : "ok", title: held ? "TERIKAT PESANAN" : "COCOK", roll: r, productName: data.product_name,
         text: `${r.roll_no} · ${data.product_name || r.product_id || ""} · status ${r.status || "-"} · ${r.warehouse_id || ""} · sisa ${r.length_remaining ?? "-"} ${r.unit || ""} · ${data.via === "rfid" ? "via tag RFID" : "via label QR"}${data.tagged ? "" : " · roll belum bertag"}` });
+      // Pindai → aksi: tugas terbuka yang menyentuh roll ini (dari backend) langsung ditawarkan.
+      setTasks(data.open_tasks || []);
     } catch (e) { const d = e.response?.data?.detail; setRes({ kind: "bad", title: e.response?.status === 404 ? "KODE TIDAK DIKENAL" : "GAGAL", text: (d && (d.message || d)) || "Pindai gagal, coba lagi." }); }
     finally { setBusy(false); }
   };
+  const reprint = () => res?.roll && reprintRollLabel(res.roll, res.productName);
+  const TAB_OF = { inbound: "inbound", outbound: "outbound", sample_cut: "sample" };
+  const LABEL_OF = { inbound: "Terima", outbound: "Ambil", sample_cut: "Potong" };
   // Kamera HP → BarcodeDetector (QR label berisi nomor roll). Fallback: ketik / pemindai fisik.
   useEffect(() => {
     if (!cam || !canCamera) return undefined;
@@ -101,6 +115,17 @@ function ScanPanel() {
           <Icon size={44} className="mx-auto" />
           <div className="text-xl font-bold mt-2">{res.title}</div>
           <div className="text-sm mt-1">{res.text}</div>
+          {res.roll && (
+            <div className="mt-3 space-y-2 text-left">
+              <button className="secondary-button w-full py-3 flex items-center justify-center gap-2" onClick={reprint} data-testid="mw-scan-reprint"><Printer size={16} /> Cetak ulang label QR</button>
+              {tasks.length > 0 && <div className="text-xs font-semibold text-[#3C3C43]" data-testid="mw-scan-tasks">Tugas terbuka untuk roll ini:</div>}
+              {tasks.map((t) => (
+                <button key={t.id} className="primary-button w-full py-3 flex items-center justify-between px-3" onClick={() => onOpenTask?.(TAB_OF[t.flow_type] || "inbound", t.id)} data-testid={`mw-scan-task-${t.id}`}>
+                  <span>{LABEL_OF[t.flow_type] || t.flow_type} · {t.product_name || t.product_id}</span><span className="text-xs opacity-80">{t.sample_number || t.order_number || t.po_number || STATUS_ID[t.status] || t.status}</span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -126,11 +151,13 @@ function UntaggedPanel() {
 }
 
 export default function MobileWarehouseApp(props) {
+  const [focus, setFocus] = useState(null);
+  const list = (type) => <TaskList type={type} focusTaskId={focus?.type === type ? focus.taskId : ""} onFocused={() => setFocus(null)} />;
   const tabs = [
-    { id: "inbound", label: "Masuk", icon: PackageCheck, render: () => <TaskList type="inbound" /> },
-    { id: "outbound", label: "Keluar", icon: ClipboardList, render: () => <TaskList type="outbound" /> },
-    { id: "sample", label: "Sampel", icon: Scissors, render: () => <TaskList type="sample_cut" /> },
-    { id: "scan", label: "Pindai", icon: ScanLine, render: () => <ScanPanel /> },
+    { id: "inbound", label: "Masuk", icon: PackageCheck, render: () => list("inbound") },
+    { id: "outbound", label: "Keluar", icon: ClipboardList, render: () => list("outbound") },
+    { id: "sample", label: "Sampel", icon: Scissors, render: () => list("sample_cut") },
+    { id: "scan", label: "Pindai", icon: ScanLine, render: ({ setTab }) => <ScanPanel onOpenTask={(tab, taskId) => { setFocus({ type: { inbound: "inbound", outbound: "outbound", sample: "sample_cut" }[tab], taskId }); setTab(tab); }} /> },
     { id: "untagged", label: "Belum Tag", icon: Tags, render: () => <UntaggedPanel /> },
   ];
   return <MobileShell {...props} tabs={tabs} testId="mobile-warehouse-app" />;

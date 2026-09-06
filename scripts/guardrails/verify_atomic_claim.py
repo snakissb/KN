@@ -26,7 +26,7 @@ import inventaris_multi_koleksi as inv  # noqa: E402
 
 # Baseline "BELUM DITINJAU" saat penjaga lahir (2026-09-05). Turunkan angka ini setiap
 # kali satu endpoint selesai ditinjau — jangan pernah dinaikkan.
-BASELINE_UNREVIEWED = 48
+BASELINE_UNREVIEWED = 41
 
 # (berkas router, potongan path) → (mekanisme, alasan). mekanisme ∈ {claim, cas, service, log}
 REVIEWED: dict[tuple[str, str], tuple[str, str]] = {
@@ -69,6 +69,10 @@ REVIEWED: dict[tuple[str, str], tuple[str, str]] = {
     ("inbound_receiving.py", "/inbound/tasks/{task_id}/resolve-escalation"): ("cas", "find_one_and_update wms_tasks berprasyarat escalation.status != resolved → 409 bila kalah (pola outbound)"),
     ("putaway_orders.py", "/putaway-orders/{order_id}/confirm-arrival"): ("service", "klaim putaway_orders di service sebelum bulk roll/tag/mutasi; finish_set", "putaway_order_service.confirm_arrival"),
     ("sales_orders.py", "/sales-orders"): ("compensate", "id SO baru per permintaan (tak ada dokumen bersama); roll direservasi lebih dulu dan DILEPAS (release_order_rolls) di except bila insert gagal — kompensasi saga"),
+    ("rfid.py", "/rfid/ingest"): ("service", "rfid_reads append-only (id baru per baca) + rfid_tags.last_seen idempoten + rfid_devices.status; tidak ada saldo/stok/status dokumen — aman diulang, tak butuh kunci"),
+    ("sales_returns.py", "/sales-returns/{return_id}/rolls/{roll_id}/transfer-ownership"): ("service", "klaim sales_returns sesudah semua validasi (roll/entitas/E9.3), sebelum roll direservasi/ownership dipindah/JE; release bila CAS roll kalah atau engine gagal; finish_set + $push ownership_transfers", "return_service.transfer_return_roll_ownership"),
+    ("transfers.py", "/transfers"): ("compensate", "POST: id transfer baru per permintaan; reservasi roll + insert dokumen dalam satu try, except → release_wh_transfer_rolls melepas reservasi parsial (kompensasi saga)"),
+    ("wms.py", "/wms/tasks"): ("compensate", "POST: id tugas baru per permintaan; inbound manual → create_inbound_roll dalam try, except → rollback_task_shell menghapus tugas tanpa roll (kompensasi saga)"),
     ("auth.py", "/auth/login"): ("service", "login_attempts + sessions + users(last_login): tulisan independen, tidak ada saldo/stok — aman diulang"),
 }
 
