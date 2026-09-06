@@ -13,4 +13,4 @@
 - **Belum ditinjau (jujur)**: `POST /rfid/ingest` (log bacaan + `last_seen` — sifatnya append/idempoten, kandidat mekanisme `log_only`), `POST /sales-returns/{id}/rolls/{roll}/transfer-ownership` (sudah CAS `update_one` berprasyarat di service — perlu dipindah ke `find_one_and_update` agar terbaca guard), `POST /transfers` & `POST /wms/tasks` (pembuatan dokumen baru — kandidat `compensate`). Sisa anggaran sesi tidak cukup untuk empat sekaligus; angka 48.
 
 ## 3. Bukti
-- Gate `--quick` lihat `.gate_quick.log`; probe cepat transfer cancel di log sesi; testing agent `test_reports/iteration_324.json`.
+- Gate `--quick` 57 PASS / 0 merah; probe cepat transfer cancel (kunci → 409; balapan `[200, 400]`); testing agent `test_reports/iteration_324.json` **SEMUA PASS** (backend 12/12 + frontend pindai label & QR di popup).
