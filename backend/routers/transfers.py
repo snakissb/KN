@@ -629,7 +629,12 @@ async def cancel_transfer(transfer_id: str, request: Request,
     transfer, _ctx = await _guard_transfer(request, transfer_id, side="source")  # FASE E-0 (L13)
     if transfer["status"] in ["completed", "rejected", "cancelled"]:
         raise HTTPException(status_code=400, detail=f"Transfer tidak bisa dibatalkan (status: {transfer['status']})")
-    
+    # INV-ATOMIC-01 — klaim transfer (status masih hidup) SEBELUM roll dilepas: dua pembatalan
+    # bersamaan / bersaing dengan approve tidak boleh melepas roll dua kali.
+    from services import atomic_claim as _saga
+    await _saga.claim("warehouse_transfers", transfer_id, "transfer_cancel",
+                      precondition={"status": {"$nin": ["completed", "rejected", "cancelled"]}}, actor=actor["name"])
+
     # Lepas roll yang tertahan (reserved ATAU in_transit_transfer) → available di gudang asal.
     if transfer.get("transfer_kind") == "inter_entity":
         await release_transfer_rolls(transfer_id)
@@ -638,15 +643,13 @@ async def cancel_transfer(transfer_id: str, request: Request,
 
     updated = await db.warehouse_transfers.find_one_and_update(
         {"id": transfer_id},
-        {
-            "$set": {
-                "status": "cancelled",
-                "cancelled_by": actor["name"],
-                "cancelled_at": now_iso(),
-                "cancelled_reason": (reason or "").strip(),
-                "updated_at": now_iso()
-            }
-        },
+        _saga.finish_set({
+            "status": "cancelled",
+            "cancelled_by": actor["name"],
+            "cancelled_at": now_iso(),
+            "cancelled_reason": (reason or "").strip(),
+            "updated_at": now_iso()
+        }),
         projection={"_id": 0},
         return_document=ReturnDocument.AFTER
     )

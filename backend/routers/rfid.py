@@ -7,11 +7,13 @@ Endpoint prefix /api. Perizinan:
 """
 from typing import Any, Dict, Optional
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel
 
+from core_utils import safe_doc
+from db import db
 from dependencies import require_permission, require_role, audit
-from entity_scope import entity_ctx, resolve_scope_ids
+from entity_scope import entity_ctx, resolve_scope_ids, assert_entity_access
 import services.rfid_service as rfid
 
 router = APIRouter(prefix="/api")
@@ -86,6 +88,25 @@ async def get_tags(request: Request, warehouse_id: Optional[str] = None,
     scope = resolve_scope_ids(ctx, entity_id)
     tags = await rfid.list_tags(scope, warehouse_id, status)
     return {"count": len(tags), "tags": tags}
+
+
+@router.get("/rfid/lookup")
+async def lookup_code(request: Request, code: str = Query(..., min_length=1)) -> Dict[str, Any]:
+    """Pindai label (QR = nomor roll) ATAU tag EPC → satu roll. Hanya-baca; untuk HP gudang tanpa RFID."""
+    await require_permission(request, "wms", "view")
+    code = code.strip()
+    tag = await db.rfid_tags.find_one({"epc": code}, {"_id": 0})
+    roll = await db.inventory_rolls.find_one({"id": tag["roll_id"]}, {"_id": 0}) if tag else None
+    via = "rfid" if roll else "label"
+    if not roll:
+        roll = await db.inventory_rolls.find_one({"$or": [{"roll_no": code}, {"id": code}]}, {"_id": 0})
+    if not roll:
+        raise HTTPException(status_code=404, detail={"code": "CODE_UNKNOWN", "message": "Kode tidak dikenal (bukan EPC tag maupun nomor roll)."})
+    ctx = await entity_ctx(request)
+    assert_entity_access({"entity_id": roll.get("owner_entity_id")}, "inventory_rolls", ctx)
+    product = await db.products.find_one({"id": roll.get("product_id")}, {"_id": 0, "name": 1, "sku": 1})
+    return {"via": via, "roll": safe_doc(roll), "product_name": (product or {}).get("name"), "sku": (product or {}).get("sku"),
+            "tagged": bool(roll.get("rfid_tag_id"))}
 
 
 @router.get("/rfid/untagged-rolls")

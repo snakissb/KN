@@ -1,0 +1,20 @@
+{
+  "summary": "Iter 324 sesi 10 — SEMUA PASS. Backend (12/12): (a) GET /api/rfid/lookup — code=roll_no untagged → 200 via='label' tagged=false; code=EPC aktif → 200 via='rfid'; code='XYZ' → 404 detail.code=CODE_UNKNOWN. (b) Potong sampel via nomor roll: sales membuat KSC/SMP-00043 (produk prod_batik_mega), wh.admin POST /cut {epc:'<roll_no saran>'} → 200, child roll rfid_tag_id=None. (c) Transfer cancel (dokumen sintetis intra_entity ent_ksc): saga_lock manual → DELETE 409 SAGA_IN_PROGRESS; release lock → 200; 2× DELETE concurrent → [200,409 SAGA_IN_PROGRESS]; final status=cancelled tanpa saga_lock. Guardrail INV-ATOMIC-01 PASS 41 cek. Frontend (mobile 390x800, kn_force_mobile=1, login wh.admin, mobile-warehouse-app terlihat): tab Pindai — RL-00049 → mw-scan-result-ok memuat 'via label QR' + 'roll belum bertag'; 'XYZ' → mw-scan-result-bad 'KODE TIDAK DIKENAL'. Tab Sampel — buka mw-task-<id> → klik mw-sample-cut-suggested → mw-sample-done tampil → klik mw-sample-print → popup window terbuka & memuat '<img class=\"qr\" src=\"data:image/png' (QR base64 nomor roll ter-render).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": ["/app/scripts/probe_sesi10_iter324.py"],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "rfid.lookup_code() rapi: tag EPC dulu, lalu roll_no/id; scoping via assert_entity_access. Bagus.",
+    "sample_sale_service._resolve_roll(): fallback label QR (roll_no) sudah didukung dengan pesan error jelas.",
+    "transfers.cancel_transfer: klaim atomik dengan precondition status $nin cancelled/completed/rejected + finish_set() membersihkan saga_lock — race 2 DELETE menghasilkan tepat satu 200 dan satu 409 SAGA_IN_PROGRESS."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100% (12/12)", "frontend": "100% flows verified (scan ok/bad + sample print popup QR)"},
+  "test_credentials": "wh.admin@kainnusantara.id / demo12345 (X-Entity-Id ent_ksc); sales@; admin@",
+  "seed_data_creation": "Dokumen transfer sintetis trf_test_* sudah dihapus setelah uji. Sampel dipotong 2 kali tak-terelakkan (backend probe + UI test) — sesuai kebutuhan pengujian ini iter.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Sesi 10 lulus penuh: lookup label/rfid/unknown, sample cut via roll_no, transfer cancel race + saga guard, UI mobile scan + sample print popup QR. Skrip regresi: /app/scripts/probe_sesi10_iter324.py (12 checks).",
+  "rca of the issue": "N/A"
+}

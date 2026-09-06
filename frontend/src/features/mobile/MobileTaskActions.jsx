@@ -1,41 +1,39 @@
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
+import QRCode from "qrcode";
 import axios, { API } from "../../services/apiClient";
 
 const errText = (e, fb) => { const d = e.response?.data?.detail; return (d && (d.message || (typeof d === "string" ? d : JSON.stringify(d)))) || fb; };
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+/** QR berisi NOMOR ROLL → HP gudang memindai label tanpa RFID (GET /rfid/lookup?code=). */
+const qrFor = async (text) => { try { return await QRCode.toDataURL(String(text || ""), { margin: 0, width: 120 }); } catch (_) { return ""; } };
+const openPrint = (html) => { const w = window.open("", "_blank", "width=420,height=360"); if (!w) return; w.document.open(); w.document.write(html); w.document.close(); };
+const LABEL_CSS = `@page{size:58mm 40mm;margin:2mm}body{font-family:Arial,sans-serif;margin:0;width:54mm}section{page-break-after:always;padding-bottom:2mm;display:flex;gap:2mm}
+.qr{width:22mm;height:22mm;flex:none}.txt{flex:1;min-width:0}.no{font-size:17px;font-weight:800;letter-spacing:.3px;word-break:break-all}.row{font-size:10px;margin-top:2px}.b{font-weight:700}.small{font-size:8.5px;color:#444;margin-top:3px}`;
 
-/** Label kecil 58mm untuk potongan sampel: nomor roll anak, pelanggan, panjang, produk, SO. */
-export function printSampleLabel(r) {
-  const html = `<!doctype html><html lang="id"><head><meta charset="utf-8"><title>Label ${esc(r.child_roll_no)}</title>
-<style>@page{size:58mm 40mm;margin:2mm}body{font-family:Arial,sans-serif;margin:0;width:54mm}
-.no{font-size:20px;font-weight:800;letter-spacing:.5px}.row{font-size:11px;margin-top:2px}.b{font-weight:700}.small{font-size:9px;color:#444;margin-top:4px}</style></head>
-<body><div class="no">${esc(r.child_roll_no)}</div>
+/** Label kecil 58mm untuk potongan sampel: QR nomor roll anak, pelanggan, panjang, produk, SO. */
+export async function printSampleLabel(r) {
+  const qr = await qrFor(r.child_roll_no);
+  openPrint(`<!doctype html><html lang="id"><head><meta charset="utf-8"><title>Label ${esc(r.child_roll_no)}</title><style>${LABEL_CSS}</style></head>
+<body><section>${qr ? `<img class="qr" src="${qr}" alt="QR ${esc(r.child_roll_no)}">` : ""}<div class="txt"><div class="no">${esc(r.child_roll_no)}</div>
 <div class="row b">${esc(r.customer_name)}</div>
 <div class="row">${esc(r.product_name)} · ${esc(r.sku)}</div>
 <div class="row"><span class="b">${esc(r.length)} ${esc(r.unit)}</span> · dari ${esc(r.cut_roll_no)}</div>
-<div class="small">${esc(r.number)} · ${esc(r.sales_order_number || "")} · ${new Date().toLocaleDateString("id-ID")}</div>
-<script>window.onload=function(){window.print();}</script></body></html>`;
-  const w = window.open("", "_blank", "width=420,height=360");
-  if (!w) return;
-  w.document.open(); w.document.write(html); w.document.close();
+<div class="small">${esc(r.number)} · ${esc(r.sales_order_number || "")} · ${new Date().toLocaleDateString("id-ID")}</div></div></section>
+<script>window.onload=function(){window.print();}</script></body></html>`);
 }
 
 /** Aksi tugas gudang di mobile (Tahap 2): satu tombol besar per langkah, hasil = ikon + teks. */
-/** Label roll baru inbound (58×40 mm per roll): nomor roll besar, produk, panjang, grade, lot. */
-export function printInboundRollLabels(task, rolls) {
-  const pages = (rolls || []).map((r) => `<section><div class="no">${esc(r.roll_no)}</div>
+/** Label roll baru inbound (58×40 mm per roll): QR nomor roll, produk, panjang, grade, lot. */
+export async function printInboundRollLabels(task, rolls) {
+  const qrs = await Promise.all((rolls || []).map((r) => qrFor(r.roll_no)));
+  const pages = (rolls || []).map((r, i) => `<section>${qrs[i] ? `<img class="qr" src="${qrs[i]}" alt="QR ${esc(r.roll_no)}">` : ""}<div class="txt"><div class="no">${esc(r.roll_no)}</div>
 <div class="row b">${esc(task.product_name || task.product_id)}</div>
 <div class="row"><span class="b">${esc(r.length)} ${esc(r.unit || task.unit || "")}</span> · Grade ${esc(r.grade || "A")}</div>
 <div class="row">Lot ${esc(r.lot || "-")}${r.dye_lot ? ` · Dye ${esc(r.dye_lot)}` : ""}</div>
-<div class="small">${esc(task.po_number || "")} · ${esc(task.warehouse_name || task.warehouse_id || "")} · ${new Date().toLocaleDateString("id-ID")}</div></section>`).join("");
-  const html = `<!doctype html><html lang="id"><head><meta charset="utf-8"><title>Label roll</title>
-<style>@page{size:58mm 40mm;margin:2mm}body{font-family:Arial,sans-serif;margin:0;width:54mm}section{page-break-after:always;padding-bottom:2mm}
-.no{font-size:20px;font-weight:800;letter-spacing:.5px}.row{font-size:11px;margin-top:2px}.b{font-weight:700}.small{font-size:9px;color:#444;margin-top:4px}</style></head>
-<body>${pages}<script>window.onload=function(){window.print();}</script></body></html>`;
-  const w = window.open("", "_blank", "width=420,height=360");
-  if (!w) return;
-  w.document.open(); w.document.write(html); w.document.close();
+<div class="small">${esc(task.po_number || "")} · ${esc(task.warehouse_name || task.warehouse_id || "")} · ${new Date().toLocaleDateString("id-ID")}</div></div></section>`).join("");
+  openPrint(`<!doctype html><html lang="id"><head><meta charset="utf-8"><title>Label roll</title><style>${LABEL_CSS}</style></head>
+<body>${pages}<script>window.onload=function(){window.print();}</script></body></html>`);
 }
 
 export function InboundActions({ task, onDone, onCompleted }) {

@@ -26,7 +26,7 @@ import inventaris_multi_koleksi as inv  # noqa: E402
 
 # Baseline "BELUM DITINJAU" saat penjaga lahir (2026-09-05). Turunkan angka ini setiap
 # kali satu endpoint selesai ditinjau — jangan pernah dinaikkan.
-BASELINE_UNREVIEWED = 49
+BASELINE_UNREVIEWED = 48
 
 # (berkas router, potongan path) → (mekanisme, alasan). mekanisme ∈ {claim, cas, service, log}
 REVIEWED: dict[tuple[str, str], tuple[str, str]] = {
@@ -63,6 +63,7 @@ REVIEWED: dict[tuple[str, str], tuple[str, str]] = {
     ("invoices.py", "/sales-orders/{order_id}/simulate-payment"): ("claim", "klaim sales_orders sesudah validasi outstanding, sebelum invoices ditulis; finish_set + $inc paid_total + $push payments dalam satu update"),
     ("closing.py", "/finance/closing/{closing_id}/reopen"): ("service", "klaim period_closings (status closed) sebelum JE penutup di-void; finish_set status reopened", "closing_service.reopen_period"),
     ("closing.py", "/finance/closing/{closing_id}/reclose"): ("service", "klaim period_closings (status closed) sebelum JE lama di-void & JE baru dibuat; finish_set angka penutup", "closing_service.reclose_period"),
+    ("transfers.py", "/transfers/{transfer_id}"): ("claim", "DELETE: klaim warehouse_transfers (status hidup) sesudah guard, SEBELUM roll dilepas; finish_set status cancelled dalam find_one_and_update"),
     ("ar_receipts.py", "/ar-receipts/{receipt_id}/void"): ("service", "klaim ar_receipts (status != void) sebelum keputusan selisih/payments SO/kas/deposit dibalik; release bila reverse_decision gagal; finish_set status void", "ar_receipt_service.void_receipt"),
     ("inventory.py", "/inventory/initial-stock"): ("compensate", "roll baru per permintaan (tak ada dokumen bersama); mutasi+rebuild di try, except → rollback_initial_stock menghapus roll & mutasi yang lahir"),
     ("inbound_receiving.py", "/inbound/tasks/{task_id}/resolve-escalation"): ("cas", "find_one_and_update wms_tasks berprasyarat escalation.status != resolved → 409 bila kalah (pola outbound)"),

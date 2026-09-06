@@ -78,10 +78,16 @@ async def create_request(payload: Dict[str, Any], actor: Dict[str, Any], entity_
 async def _resolve_roll(req: Dict[str, Any], roll_id: str, epc: str) -> Dict[str, Any]:
     if epc and not roll_id:
         tag = await db.rfid_tags.find_one({"epc": epc.strip()}, {"_id": 0})
-        if not tag:
-            raise HTTPException(status_code=404, detail={"code": "TAG_UNKNOWN", "message": "Tag tidak dikenal — periksa tag atau pilih roll manual."})
-        roll_id = tag.get("roll_id")
+        if tag:
+            roll_id = tag.get("roll_id")
+        else:   # label QR berisi NOMOR ROLL (tanpa RFID) → cari roll_no
+            by_no = await db.inventory_rolls.find_one({"roll_no": epc.strip()}, {"_id": 0, "id": 1})
+            if not by_no:
+                raise HTTPException(status_code=404, detail={"code": "TAG_UNKNOWN", "message": "Kode tidak dikenal (bukan EPC tag maupun nomor roll) — periksa label atau pilih roll manual."})
+            roll_id = by_no["id"]
     roll = await db.inventory_rolls.find_one({"id": roll_id}, {"_id": 0}) if roll_id else None
+    if not roll and roll_id:
+        roll = await db.inventory_rolls.find_one({"roll_no": roll_id}, {"_id": 0})
     if not roll:
         raise HTTPException(status_code=404, detail="Roll tidak ditemukan")
     if roll.get("product_id") != req["product_id"]:

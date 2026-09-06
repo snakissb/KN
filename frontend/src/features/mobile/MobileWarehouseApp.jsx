@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { ClipboardList, ScanLine, Tags, PackageCheck, AlertTriangle, CheckCircle2, Loader2, Scissors, Printer } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ClipboardList, ScanLine, Tags, PackageCheck, AlertTriangle, CheckCircle2, Loader2, Scissors, Printer, Camera } from "lucide-react";
 import axios, { API } from "../../services/apiClient";
 import MobileShell from "./MobileShell";
 import { InboundActions, OutboundActions, SampleCutActions, printSampleLabel, printInboundRollLabels } from "./MobileTaskActions";
@@ -52,26 +52,50 @@ function ScanPanel() {
   const [epc, setEpc] = useState("");
   const [res, setRes] = useState(null);
   const [busy, setBusy] = useState(false);
-  const scan = async () => {
-    if (!epc.trim()) return;
+  const [cam, setCam] = useState(false);
+  const videoRef = useRef(null);
+  const canCamera = typeof window !== "undefined" && "BarcodeDetector" in window && !!navigator.mediaDevices;
+  const lookup = async (code) => {
+    if (!code.trim()) return;
     setBusy(true); setRes(null);
     try {
-      const { data } = await axios.get(`${API}/rfid/tags`);
-      const tags = Array.isArray(data) ? data : data.tags || data.items || [];
-      const hit = tags.find((t) => (t.epc || "").toLowerCase() === epc.trim().toLowerCase() || t.id === epc.trim());
-      if (!hit) { setRes({ kind: "bad", title: "TAG TIDAK DIKENAL", text: "EPC ini tidak terdaftar. Periksa tag atau tempel tag baru." }); return; }
-      const held = ["reserved", "committed", "picked", "packed"].includes(hit.roll_status);
+      const { data } = await axios.get(`${API}/rfid/lookup`, { params: { code: code.trim() } });
+      const r = data.roll || {};
+      const held = ["reserved", "committed", "picked", "packed"].includes(r.status);
       setRes({ kind: held ? "warn" : "ok", title: held ? "TERIKAT PESANAN" : "COCOK",
-        text: `${hit.roll_no || hit.roll_id} · ${hit.product_name || hit.product_id || ""} · status ${hit.roll_status || "-"} · ${hit.warehouse_id || ""}` });
-    } catch (e) { setRes({ kind: "bad", title: "GAGAL", text: e.response?.data?.detail || "Pindai gagal, coba lagi." }); }
+        text: `${r.roll_no} · ${data.product_name || r.product_id || ""} · status ${r.status || "-"} · ${r.warehouse_id || ""} · sisa ${r.length_remaining ?? "-"} ${r.unit || ""} · ${data.via === "rfid" ? "via tag RFID" : "via label QR"}${data.tagged ? "" : " · roll belum bertag"}` });
+    } catch (e) { const d = e.response?.data?.detail; setRes({ kind: "bad", title: e.response?.status === 404 ? "KODE TIDAK DIKENAL" : "GAGAL", text: (d && (d.message || d)) || "Pindai gagal, coba lagi." }); }
     finally { setBusy(false); }
   };
+  // Kamera HP → BarcodeDetector (QR label berisi nomor roll). Fallback: ketik / pemindai fisik.
+  useEffect(() => {
+    if (!cam || !canCamera) return undefined;
+    let stream; let timer; let stop = false;
+    (async () => {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+        if (videoRef.current) { videoRef.current.srcObject = stream; await videoRef.current.play(); }
+        const det = new window.BarcodeDetector({ formats: ["qr_code", "code_128"] });
+        const tick = async () => {
+          if (stop) return;
+          try { const codes = await det.detect(videoRef.current); if (codes.length) { const v = codes[0].rawValue; setEpc(v); setCam(false); lookup(v); return; } } catch (_) { /* frame belum siap */ }
+          timer = setTimeout(tick, 350);
+        };
+        tick();
+      } catch (_) { setCam(false); setRes({ kind: "bad", title: "KAMERA TIDAK TERSEDIA", text: "Izinkan kamera atau ketik nomor roll / EPC." }); }
+    })();
+    return () => { stop = true; clearTimeout(timer); if (stream) stream.getTracks().forEach((t) => t.stop()); };
+  }, [cam]); // eslint-disable-line
   const Icon = res?.kind === "ok" ? CheckCircle2 : AlertTriangle;
   return (
     <div className="p-4 space-y-3" data-testid="mw-scan">
-      <p className="text-sm text-[#6E6E73]">Pindai / ketik EPC tag roll. Hasil ditampilkan besar: ikon + teks, bukan warna saja.</p>
-      <input className="w-full rounded-xl border-2 border-[#E5E5EA] p-4 text-lg" placeholder="EPC tag…" value={epc} onChange={(e) => setEpc(e.target.value)} data-testid="mw-scan-input" autoFocus />
-      <button className="primary-button w-full py-4 text-lg" disabled={busy} onClick={scan} data-testid="mw-scan-btn">{busy ? "Mengirim…" : "Pindai"}</button>
+      <p className="text-sm text-[#6E6E73]">Pindai QR label (nomor roll) atau tag EPC. Hasil ditampilkan besar: ikon + teks, bukan warna saja.</p>
+      <input className="w-full rounded-xl border-2 border-[#E5E5EA] p-4 text-lg" placeholder="Nomor roll / EPC tag…" value={epc} onChange={(e) => setEpc(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") lookup(epc); }} data-testid="mw-scan-input" autoFocus />
+      <div className="flex gap-2">
+        <button className="primary-button flex-1 py-4 text-lg" disabled={busy} onClick={() => lookup(epc)} data-testid="mw-scan-btn">{busy ? "Mencari…" : "Pindai"}</button>
+        {canCamera && <button className="secondary-button px-4" onClick={() => setCam((c) => !c)} data-testid="mw-scan-camera-btn" aria-label="Kamera"><Camera size={20} /></button>}
+      </div>
+      {cam && <video ref={videoRef} className="w-full rounded-xl bg-black" muted playsInline data-testid="mw-scan-video" />}
       {res && (
         <div className={`rounded-2xl p-5 text-center ${res.kind === "ok" ? "bg-[#E6F6EC]" : res.kind === "warn" ? "bg-[#FFF4E5]" : "bg-[#FDECEC]"}`} data-testid={`mw-scan-result-${res.kind}`}>
           <Icon size={44} className="mx-auto" />
